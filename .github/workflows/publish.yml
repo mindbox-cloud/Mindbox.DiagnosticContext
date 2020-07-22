@@ -1,0 +1,23 @@
+name: master
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Setup .NET Core 3.0
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 3.1.100
+      - name: Build
+        run: dotnet build src/DiagnosticContext.sln --configuration Release
+      - name: Pack
+        run: dotnet pack src/DiagnosticContext.sln -c Release
+      - name: Publish
+        run: dotnet nuget push **/*.nupkg -k ${{secrets.MyGet_Token}} -s https://www.myget.org/F/mindbox-private/api/v2

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\AspNetCore\AspNetCore.csproj" />
+      <ProjectReference Include="..\Prometheus\Prometheus.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="prometheus-net" Version="3.6.0" />
+      <PackageReference Include="prometheus-net.AspNetCore" Version="3.6.0" />
+    </ItemGroup>
+
+</Project>

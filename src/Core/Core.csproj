@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <RootNamespace>Mindbox.DiagnosticContext</RootNamespace>
+        <LangVersion>8</LangVersion>
+        <AssemblyName>Mindbox.DiagnosticContext.Core</AssemblyName>
+    </PropertyGroup>
+    
+    <ItemGroup>
+        <PackageReference Include="Mindbox.Commons.Model" Version="59.0.805" />
+    </ItemGroup>
+</Project>
