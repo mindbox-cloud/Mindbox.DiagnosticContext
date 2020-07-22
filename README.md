@@ -1,5 +1,20 @@
 # Mindbox.DiagnosticContext
 
+![](https://github.com/mindbox-moscow/Mindbox.DiagnosticContext/workflows/master/badge.svg)
+
+## Adding diagnostic context to a Asp.Net Core app
+
+Add a reference to `Mindbox.DiagnosticContext.AspNetCore` package. This will allow you to instrument your action methods with diagnostic context:
+
+```csharp
+[UseDiagnosticContext("order")]
+public ActionResult CreateOrder()
+{ 
+  var diagnosticContext = HttpContext.GetDiagnosticContext();
+  // ...   
+}
+```
+
 ## Setting up diagnostic context factory
 
 You must setup dependency injection in order to use diagnostic context. `IDiagnosticContextFactory` implementation controls what type of diagnostic context gets created and how the collected metrics are exposed. 
@@ -19,18 +34,5 @@ If your application doesn't yet expose prometheus metrics, add the following cod
 
 ```csharp
 app.UseMetricServer();
-```
-
-## Adding DiagnosticContext to a Asp.Net Core app
-
-Add a reference to `Mindbox.DiagnosticContext.AspNetCore` package. This will allow you to instrument your action methods with diagnostic context:
-
-```csharp
-[UseDiagnosticContext("order")]
-public ActionResult CreateOrder()
-{ 
-  var diagnosticContext = HttpContext.GetDiagnosticContext();
-  // ...   
-}
 ```
 
