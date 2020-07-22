@@ -1,6 +1,6 @@
 # Mindbox.DiagnosticContext
 
-## Setting up DiagnosticContext factory
+## Setting up diagnostic context factory
 
 You must setup dependency injection in order to use diagnostic context. `IDiagnosticContextFactory` implementation controls what type of diagnostic context gets created and how the collected metrics are exposed. 
 
