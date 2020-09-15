@@ -13,6 +13,7 @@ namespace Mindbox.DiagnosticContext.Prometheus
 		
 		private readonly DynamicStepsPrometheusAdapter dynamicStepsAdapter = new DynamicStepsPrometheusAdapter();
 		private readonly CountersPrometheusAdapter countersAdapter = new CountersPrometheusAdapter();
+		private readonly ReportedValuesPrometheusAdapter reportedValuesAdapter = new ReportedValuesPrometheusAdapter();
 		
 		private readonly object syncRoot = new object();
 		
@@ -27,6 +28,7 @@ namespace Mindbox.DiagnosticContext.Prometheus
 
 					dynamicStepsAdapter.Update(metricsItem, storage);
 					countersAdapter.Update(metricsItem, storage);
+					reportedValuesAdapter.Update(metricsItem, storage);
 				}
 			}
 			catch (Exception ex)

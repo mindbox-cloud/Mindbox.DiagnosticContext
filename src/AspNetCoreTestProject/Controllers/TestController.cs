@@ -1,5 +1,7 @@
+using System;
 using Microsoft.AspNetCore.Mvc;
 using Mindbox.DiagnosticContext.AspNetCore;
+using Mindbox.DiagnosticContext.Prometheus;
 
 namespace AspNetCoreTestProject.Controllers
 {
@@ -13,6 +15,7 @@ namespace AspNetCoreTestProject.Controllers
 
 			using (diagnosticContext.Measure("outer"))
 			{
+				diagnosticContext.ReportValue("reported", DateTime.Now.Minute);
 				using (diagnosticContext.Measure("inner"))
 					return Ok();
 			}
