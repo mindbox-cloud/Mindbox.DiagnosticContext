@@ -30,19 +30,25 @@ namespace Mindbox.DiagnosticContext.Prometheus
 				{	
 					var prometheusCounterSet = GetOrCreateMetricCounterSet(metricsItem, metricValue, tags);
 
-					prometheusCounterSet.CountCounter.IncTo(metricValue.TotalValue.Count);
-					prometheusCounterSet.TotalCounter.IncTo(metricValue.TotalValue.Total);
+					var totalLabelValues = tags.Values.ToArray();
+					
+					prometheusCounterSet.CountCounter
+						.WithLabels(totalLabelValues)
+						.IncTo(metricValue.TotalValue.Count);
+					prometheusCounterSet.TotalCounter
+						.WithLabels(totalLabelValues)
+						.IncTo(metricValue.TotalValue.Total);
 					
 					foreach (var step in metricValue.StepValues)
 					{
-						var labelValues = tags.Values
+						var stepLabelValues = tags.Values
 							.Append(step.Key)
 							.Append(metricValue.MetricsType.Units)
 							.ToArray();
 						
 						prometheusCounterSet
 							.StepCounter
-							.WithLabels(labelValues)
+							.WithLabels(stepLabelValues)
 							.IncTo(step.Value.Total);
 					}
 				}
@@ -63,7 +69,8 @@ namespace Mindbox.DiagnosticContext.Prometheus
 				string metricDescriptionBase =
 					$"Diagnostic context for {metricsItem.MetricPrefix} ({metricValue.MetricsType.SystemName})";
 
-				var labelNames = tags.Keys
+				var totalLabelNames = tags.Keys.ToArray();
+				var stepLabelNames = tags.Keys
 					.Append("step")
 					.Append("unit")
 					.ToArray();
@@ -71,14 +78,16 @@ namespace Mindbox.DiagnosticContext.Prometheus
 				counterSet = new StepPrometheusCounterSet(
 					metricFactory.CreateCounter(
 						MetricNameHelper.BuildFullMetricName($"{metricNameBase}_Count"),
-						$"{metricDescriptionBase} - total count"),
+						$"{metricDescriptionBase} - total count",
+						totalLabelNames),
 					metricFactory.CreateCounter(
 						MetricNameHelper.BuildFullMetricName($"{metricNameBase}_Total"),
-						$"{metricDescriptionBase} - total value"),
+						$"{metricDescriptionBase} - total value",
+						totalLabelNames),
 					metricFactory.CreateCounter(
 						MetricNameHelper.BuildFullMetricName(metricNameBase),
 						metricDescriptionBase,
-						labelNames)
+						stepLabelNames)
 					);
 
 				dynamicStepsPrometheusCounters[counterSetKey] = counterSet;

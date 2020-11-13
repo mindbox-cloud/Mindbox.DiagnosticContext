@@ -41,7 +41,7 @@ namespace Mindbox.DiagnosticContext.Prometheus
 				string metricName = MetricNameHelper.BuildFullMetricName($"{metricsItem.MetricPrefix}_counters");
 				string metricDescription = $"Diagnostic context counters for {metricsItem.MetricPrefix}";
 
-				prometheusCounter = Metrics.CreateCounter(
+				prometheusCounter = metricFactory.CreateCounter(
 					metricName,
 					metricDescription,
 					"name");
