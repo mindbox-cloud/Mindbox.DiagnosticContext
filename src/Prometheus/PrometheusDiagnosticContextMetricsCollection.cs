@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 using Itc.Commons;
 using Itc.Commons.Model;
+using Prometheus;
 
 namespace Mindbox.DiagnosticContext.Prometheus
 {
@@ -11,12 +12,21 @@ namespace Mindbox.DiagnosticContext.Prometheus
 		private readonly Dictionary<string, DiagnosticContextMetricsStorage> storagesByMetricPrefix =
 			new Dictionary<string, DiagnosticContextMetricsStorage>();
 		
-		private readonly DynamicStepsPrometheusAdapter dynamicStepsAdapter = new DynamicStepsPrometheusAdapter();
-		private readonly CountersPrometheusAdapter countersAdapter = new CountersPrometheusAdapter();
-		private readonly ReportedValuesPrometheusAdapter reportedValuesAdapter = new ReportedValuesPrometheusAdapter();
+		private readonly IDictionary<string, string> tags = new Dictionary<string, string>();
+
+		private readonly DynamicStepsPrometheusAdapter dynamicStepsAdapter;
+		private readonly CountersPrometheusAdapter countersAdapter;
+		private readonly ReportedValuesPrometheusAdapter reportedValuesAdapter;
 		
 		private readonly object syncRoot = new object();
-		
+
+		public PrometheusDiagnosticContextMetricsCollection(MetricFactory metricFactory)
+		{
+			dynamicStepsAdapter = new DynamicStepsPrometheusAdapter(metricFactory);
+			countersAdapter = new CountersPrometheusAdapter(metricFactory);
+			reportedValuesAdapter = new ReportedValuesPrometheusAdapter(metricFactory);
+		}
+
 		public void CollectItemData(DiagnosticContextMetricsItem metricsItem)
 		{
 			try
@@ -26,7 +36,7 @@ namespace Mindbox.DiagnosticContext.Prometheus
 					var storage = GetOrCreateMetricStorageForMetric(metricsItem);
 					storage.CollectItemData(metricsItem);
 
-					dynamicStepsAdapter.Update(metricsItem, storage);
+					dynamicStepsAdapter.Update(metricsItem, storage, tags);
 					countersAdapter.Update(metricsItem, storage);
 					reportedValuesAdapter.Update(metricsItem, storage);
 				}
@@ -35,6 +45,14 @@ namespace Mindbox.DiagnosticContext.Prometheus
 			{
 				Console.WriteLine(ex.Message);
 			}
+		}
+
+		public void SetTag(string tag, string value)
+		{
+			if (tags.TryGetValue(tag, out var existingValue))
+				throw new InvalidOperationException($"Tag '{tag}' is already set to '{existingValue}'");
+				
+			tags[tag] = value;
 		}
 
 		private DiagnosticContextMetricsStorage GetOrCreateMetricStorageForMetric(DiagnosticContextMetricsItem metricsItem)

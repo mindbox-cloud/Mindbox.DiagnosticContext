@@ -1,12 +1,18 @@
 ﻿using Itc.Commons;
 using Itc.Commons.Model;
+using Prometheus;
 
 namespace Mindbox.DiagnosticContext.Prometheus
 {
 	public class PrometheusDiagnosticContextFactory : IDiagnosticContextFactory
 	{
-		private static readonly PrometheusDiagnosticContextMetricsCollection collection =
-			new PrometheusDiagnosticContextMetricsCollection();
+		private readonly PrometheusDiagnosticContextMetricsCollection collection;
+
+		public PrometheusDiagnosticContextFactory(MetricFactory metricFactory = null)
+		{
+			collection = new PrometheusDiagnosticContextMetricsCollection(
+				metricFactory ?? Metrics.WithCustomRegistry(Metrics.DefaultRegistry));
+		}
 
 		public IDiagnosticContext CreateDiagnosticContext(
 			string metricPath,

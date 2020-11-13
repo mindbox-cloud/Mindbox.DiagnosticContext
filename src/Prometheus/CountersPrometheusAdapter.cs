@@ -7,8 +7,15 @@ namespace Mindbox.DiagnosticContext.Prometheus
 {
 	internal class CountersPrometheusAdapter
 	{
+		private readonly MetricFactory metricFactory;
+
 		private readonly Dictionary<string, Counter> prometheusCounters =
 			new Dictionary<string, Counter>();
+
+		public CountersPrometheusAdapter(MetricFactory metricFactory)
+		{
+			this.metricFactory = metricFactory;
+		}
 
 		public void Update(DiagnosticContextMetricsItem metricsItem, DiagnosticContextMetricsStorage storage)
 		{
