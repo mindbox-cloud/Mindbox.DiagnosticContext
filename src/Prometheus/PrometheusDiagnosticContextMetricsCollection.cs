@@ -49,9 +49,6 @@ namespace Mindbox.DiagnosticContext.Prometheus
 
 		public void SetTag(string tag, string value)
 		{
-			if (tags.TryGetValue(tag, out var existingValue))
-				throw new InvalidOperationException($"Tag '{tag}' is already set to '{existingValue}'");
-				
 			tags[tag] = value;
 		}
 
