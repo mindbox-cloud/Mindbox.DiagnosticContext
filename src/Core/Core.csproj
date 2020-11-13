@@ -13,6 +13,6 @@
     </PropertyGroup>
     
     <ItemGroup>
-        <PackageReference Include="Mindbox.Commons.Model" Version="59.0.805" />
+        <PackageReference Include="Mindbox.Commons.Model" Version="66.0.903" />
     </ItemGroup>
 </Project>

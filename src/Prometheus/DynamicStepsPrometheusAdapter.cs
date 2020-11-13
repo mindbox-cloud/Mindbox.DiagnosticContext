@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-
+using System.Linq;
 using Itc.Commons;
 using Itc.Commons.Model;
 
@@ -8,26 +8,47 @@ using Prometheus;
 namespace Mindbox.DiagnosticContext.Prometheus
 {
 	internal class DynamicStepsPrometheusAdapter
-	{	
+	{
+		private readonly MetricFactory metricFactory;
+
 		private readonly Dictionary<(string, MetricsType), StepPrometheusCounterSet> dynamicStepsPrometheusCounters = 
 			new Dictionary<(string, MetricsType), StepPrometheusCounterSet>();
-		
-		public void Update(DiagnosticContextMetricsItem metricsItem, DiagnosticContextMetricsStorage storage)
+
+		public DynamicStepsPrometheusAdapter(MetricFactory metricFactory)
+		{
+			this.metricFactory = metricFactory;
+		}
+
+		public void Update(
+			DiagnosticContextMetricsItem metricsItem, 
+			DiagnosticContextMetricsStorage storage, 
+			IDictionary<string, string> tags)
 		{
 			foreach (var prefixSteps in storage.DynamicStepsPerMetricPrefix)
 			{
 				foreach (var metricValue in prefixSteps.Value.MetricsAggregatedValues.GetMetricsAggregatedValues())
 				{	
-					var prometheusCounterSet = GetOrCreateMetricCounterSet(metricsItem, metricValue);
+					var prometheusCounterSet = GetOrCreateMetricCounterSet(metricsItem, metricValue, tags);
 
-					prometheusCounterSet.CountCounter.IncTo(metricValue.TotalValue.Count);
-					prometheusCounterSet.TotalCounter.IncTo(metricValue.TotalValue.Total);
+					var totalLabelValues = tags.Values.ToArray();
+					
+					prometheusCounterSet.CountCounter
+						.WithLabels(totalLabelValues)
+						.IncTo(metricValue.TotalValue.Count);
+					prometheusCounterSet.TotalCounter
+						.WithLabels(totalLabelValues)
+						.IncTo(metricValue.TotalValue.Total);
 					
 					foreach (var step in metricValue.StepValues)
 					{
+						var stepLabelValues = tags.Values
+							.Append(step.Key)
+							.Append(metricValue.MetricsType.Units)
+							.ToArray();
+						
 						prometheusCounterSet
 							.StepCounter
-							.WithLabels(step.Key, metricValue.MetricsType.Units)
+							.WithLabels(stepLabelValues)
 							.IncTo(step.Value.Total);
 					}
 				}
@@ -37,7 +58,8 @@ namespace Mindbox.DiagnosticContext.Prometheus
 		
 		private StepPrometheusCounterSet GetOrCreateMetricCounterSet(
 			DiagnosticContextMetricsItem metricsItem,
-			MetricsAggregatedValue metricValue)
+			MetricsAggregatedValue metricValue,
+			IDictionary<string, string> tags)
 		{
 			var counterSetKey = (metricsItem.MetricPrefix, metricValue.MetricsType);
 			
@@ -47,18 +69,26 @@ namespace Mindbox.DiagnosticContext.Prometheus
 				string metricDescriptionBase =
 					$"Diagnostic context for {metricsItem.MetricPrefix} ({metricValue.MetricsType.SystemName})";
 
+				var totalLabelNames = tags.Keys.ToArray();
+				var stepLabelNames = tags.Keys
+					.Append("step")
+					.Append("unit")
+					.ToArray();
+				
 				counterSet = new StepPrometheusCounterSet(
-					Metrics.CreateCounter(
+					metricFactory.CreateCounter(
 						MetricNameHelper.BuildFullMetricName($"{metricNameBase}_Count"),
-						$"{metricDescriptionBase} - total count"),
-					Metrics.CreateCounter(
+						$"{metricDescriptionBase} - total count",
+						totalLabelNames),
+					metricFactory.CreateCounter(
 						MetricNameHelper.BuildFullMetricName($"{metricNameBase}_Total"),
-						$"{metricDescriptionBase} - total value"),
-					Metrics.CreateCounter(
+						$"{metricDescriptionBase} - total value",
+						totalLabelNames),
+					metricFactory.CreateCounter(
 						MetricNameHelper.BuildFullMetricName(metricNameBase),
 						metricDescriptionBase,
-						"step",
-						"unit"));
+						stepLabelNames)
+					);
 
 				dynamicStepsPrometheusCounters[counterSetKey] = counterSet;
 			}

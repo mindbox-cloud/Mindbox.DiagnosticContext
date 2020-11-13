@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-
+using System.Linq;
 using Itc.Commons.Model;
 using Prometheus;
 
@@ -7,6 +7,8 @@ namespace Mindbox.DiagnosticContext.Prometheus
 {
 	internal class ReportedValuesPrometheusAdapter
 	{
+		private readonly MetricFactory metricFactory;
+
 		private struct ReportedValuesCounters
 		{
 			public Counter Count { get; set; }
@@ -17,23 +19,31 @@ namespace Mindbox.DiagnosticContext.Prometheus
 		private readonly Dictionary<string, ReportedValuesCounters> counters =
 			new Dictionary<string, ReportedValuesCounters>();
 
+		public ReportedValuesPrometheusAdapter(MetricFactory metricFactory)
+		{
+			this.metricFactory = metricFactory;
+		}
+
 		public void Update(DiagnosticContextMetricsItem metricsItem, DiagnosticContextMetricsStorage storage)
 		{
 			foreach (var reportedValueCounters in storage.ReportedValuesPerMetricsPrefix)
 			{
-				var prometheusCounter = GetOrCreateReportedValuesCounters(metricsItem, reportedValueCounters.Key);
-
-				foreach (var diagnosticContextCounter in reportedValueCounters.Value.ReportedValues)
+				if (reportedValueCounters.Value.ReportedValues.Any())
 				{
-					prometheusCounter
-						.Total
-						.WithLabels(diagnosticContextCounter.Key)
-						.IncTo(diagnosticContextCounter.Value.Total);
+					var prometheusCounter = GetOrCreateReportedValuesCounters(metricsItem, reportedValueCounters.Key);
 
-					prometheusCounter
-						.Count
-						.WithLabels(diagnosticContextCounter.Key)
-						.IncTo(diagnosticContextCounter.Value.Count);
+					foreach (var diagnosticContextCounter in reportedValueCounters.Value.ReportedValues)
+					{
+						prometheusCounter
+							.Total
+							.WithLabels(diagnosticContextCounter.Key)
+							.IncTo(diagnosticContextCounter.Value.Total);
+
+						prometheusCounter
+							.Count
+							.WithLabels(diagnosticContextCounter.Key)
+							.IncTo(diagnosticContextCounter.Value.Count);
+					}
 				}
 			}
 		}
@@ -54,11 +64,11 @@ namespace Mindbox.DiagnosticContext.Prometheus
 
 			counters[counterName] = new ReportedValuesCounters
 			{
-				Total = Metrics.CreateCounter(
+				Total = metricFactory.CreateCounter(
 					totalMetricName,
 					totalMetricDescription,
 					"name"),
-				Count =  Metrics.CreateCounter(
+				Count =  metricFactory.CreateCounter(
 					reportedValuesMetricName,
 					reportedValuesMetricDescription,
 					"name")
