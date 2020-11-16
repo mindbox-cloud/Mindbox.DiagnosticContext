@@ -69,6 +69,32 @@ namespace Prometheus.Tests
 				"diagnosticcontext_test_processingtime{tag=\"tagValue\",step=\"Span/InnerSpan\",unit=\"[ms]\"} 2",
 				"diagnosticcontext_test_processingtime{tag=\"tagValue\",step=\"Other\",unit=\"[ms]\"} 3");
 		}
+		
+		[TestMethod]
+		public void ZeroSpansAreNotReported()
+		{
+			using (var diagnosticContext = CreateDiagnosticContext("Test"))
+			{
+				using (diagnosticContext.Measure("Span"))
+				{
+					Controller.CurrentDateTimeUtc = Controller.CurrentDateTimeUtc.AddMilliseconds(1);
+					using (diagnosticContext.Measure("InnerSpan"))
+					{
+					}
+				}
+			}
+
+
+			AssertMetricsReported(
+				"diagnosticcontext_test_processingtime_count 1",
+				"diagnosticcontext_test_processingtime_total 1",
+				"diagnosticcontext_test_processingtime{step=\"Span\",unit=\"[ms]\"} 1");
+
+
+			AssertMetricsNotReported(
+				"diagnosticcontext_test_processingtime{step=\"Span/InnerSpan\",unit=\"[ms]\"}",
+				"diagnosticcontext_test_processingtime{step=\"Other\",unit=\"[ms]\"}");
+		}
 
 		private void AssertMetricsReported(params string[] expectedMetrics)
 		{
@@ -82,6 +108,22 @@ namespace Prometheus.Tests
 			{
 				Assert.Fail(
 					$"Following metrics where not reported:\r\n{notFoundMetrics.StringJoin("\r\n")}\r\n\r\n" +
+					$"Full metrics:\r\n{metrics}");
+			}
+		}
+
+		private void AssertMetricsNotReported(params string[] expectedMetrics)
+		{
+			var metrics = GetMetricsAsText();
+
+			var foundMetrics = expectedMetrics
+				.Where(metric => metrics.Contains(metric))
+				.ToArray();
+
+			if (foundMetrics.Any())
+			{
+				Assert.Fail(
+					$"Following metrics where reported:\r\n{foundMetrics.StringJoin("\r\n")}\r\n\r\n" +
 					$"Full metrics:\r\n{metrics}");
 			}
 		}
