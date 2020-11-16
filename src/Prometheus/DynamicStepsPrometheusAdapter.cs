@@ -39,7 +39,7 @@ namespace Mindbox.DiagnosticContext.Prometheus
 						.WithLabels(totalLabelValues)
 						.IncTo(metricValue.TotalValue.Total);
 					
-					foreach (var step in metricValue.StepValues)
+					foreach (var step in metricValue.StepValues.Where(s => s.Value.Total > 0))
 					{
 						var stepLabelValues = tags.Values
 							.Append(step.Key)
