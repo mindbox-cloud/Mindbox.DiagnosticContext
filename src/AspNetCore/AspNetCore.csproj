@@ -5,7 +5,7 @@
         <RootNamespace>Mindbox.DiagnosticContext.AspNetCore</RootNamespace>
         <LangVersion>8</LangVersion>
         <AssemblyName>Mindbox.DiagnosticContext.AspNetCore</AssemblyName>
-        <PackageVersion>1.0.5</PackageVersion>
+        <PackageVersion>1.0.6</PackageVersion>
         <Authors>Mindbox</Authors>
         <Copyright>Mindbox</Copyright>
         <RepositoryUrl>https://github.com/mindbox-moscow/Mindbox.DiagnosticContext</RepositoryUrl>

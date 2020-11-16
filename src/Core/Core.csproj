@@ -5,7 +5,7 @@
         <RootNamespace>Mindbox.DiagnosticContext</RootNamespace>
         <LangVersion>8</LangVersion>
         <AssemblyName>Mindbox.DiagnosticContext.Core</AssemblyName>
-        <PackageVersion>1.0.5</PackageVersion>
+        <PackageVersion>1.0.6</PackageVersion>
         <Authors>Mindbox</Authors>
         <Copyright>Mindbox</Copyright>
         <RepositoryUrl>https://github.com/mindbox-moscow/Mindbox.DiagnosticContext</RepositoryUrl>
