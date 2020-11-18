@@ -34,10 +34,10 @@ namespace Mindbox.DiagnosticContext.Prometheus
 					
 					prometheusCounterSet.CountCounter
 						.WithLabels(totalLabelValues)
-						.IncTo(metricValue.TotalValue.Count);
+						.Inc(metricValue.TotalValue.Count);
 					prometheusCounterSet.TotalCounter
 						.WithLabels(totalLabelValues)
-						.IncTo(metricValue.TotalValue.Total);
+						.Inc(metricValue.TotalValue.Total);
 					
 					foreach (var step in metricValue.StepValues.Where(s => s.Value.Total > 0))
 					{
@@ -49,7 +49,7 @@ namespace Mindbox.DiagnosticContext.Prometheus
 						prometheusCounterSet
 							.StepCounter
 							.WithLabels(stepLabelValues)
-							.IncTo(step.Value.Total);
+							.Inc(step.Value.Total);
 					}
 				}
 			}

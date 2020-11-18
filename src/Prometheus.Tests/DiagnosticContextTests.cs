@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using Itc.Commons;
 using Itc.Commons.Model;
+using Itc.Commons.Tests;
 using Itc.Commons.Tests.Infrastructure;
 using Itc.Commons.Tests.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -16,8 +17,17 @@ namespace Prometheus.Tests
 	[TestClass]
 	public class DiagnosticContextTests : CommonsTests
 	{
-		private readonly CollectorRegistry metricsRegistry = Metrics.NewCustomRegistry();
-		
+		private CollectorRegistry metricsRegistry;
+		private PrometheusDiagnosticContextFactory factory;
+
+		protected override void TestInitializeCore()
+		{
+			base.TestInitializeCore();
+			
+			metricsRegistry = Metrics.NewCustomRegistry();
+			factory = new PrometheusDiagnosticContextFactory(Metrics.WithCustomRegistry(metricsRegistry));
+		}
+
 		[TestMethod]
 		public void MeasureWithInnerSpan()
 		{
@@ -68,6 +78,59 @@ namespace Prometheus.Tests
 				"diagnosticcontext_test_processingtime{tag=\"tagValue\",step=\"Span\",unit=\"[ms]\"} 1",
 				"diagnosticcontext_test_processingtime{tag=\"tagValue\",step=\"Span/InnerSpan\",unit=\"[ms]\"} 2",
 				"diagnosticcontext_test_processingtime{tag=\"tagValue\",step=\"Other\",unit=\"[ms]\"} 3");
+		}
+
+		[TestMethod]
+		public void TwoMeasuresMeasureWithSameTag()
+		{
+			void Measure(int milliseconds)
+			{
+				using var diagnosticContext = CreateDiagnosticContext("Test");
+				
+				diagnosticContext.SetTag("tag", "tagValue");
+				using (diagnosticContext.Measure("Span"))
+				{
+					Controller.CurrentDateTimeUtc = Controller.CurrentDateTimeUtc.AddMilliseconds(milliseconds);
+				}
+			}
+
+
+			Measure(1);
+			Measure(2);
+
+			
+			AssertMetricsReported(
+				"diagnosticcontext_test_processingtime_count{tag=\"tagValue\"} 2",
+				"diagnosticcontext_test_processingtime_total{tag=\"tagValue\"} 3",
+				"diagnosticcontext_test_processingtime{tag=\"tagValue\",step=\"Span\",unit=\"[ms]\"} 3");
+		}
+
+		[TestMethod]
+		public void TwoMeasuresMeasureWithDifferentTags()
+		{
+			void Measure(string tagValue, int milliseconds)
+			{
+				using var diagnosticContext = CreateDiagnosticContext("Test");
+				
+				diagnosticContext.SetTag("tag", tagValue);
+				using (diagnosticContext.Measure("Span"))
+				{
+					Controller.CurrentDateTimeUtc = Controller.CurrentDateTimeUtc.AddMilliseconds(milliseconds);
+				}
+			}
+
+
+			Measure("tagValue1", 1);
+			Measure("tagValue2", 2);
+
+			
+			AssertMetricsReported(
+				"diagnosticcontext_test_processingtime_count{tag=\"tagValue1\"} 1",
+				"diagnosticcontext_test_processingtime_total{tag=\"tagValue1\"} 1",
+				"diagnosticcontext_test_processingtime{tag=\"tagValue1\",step=\"Span\",unit=\"[ms]\"} 1",
+				"diagnosticcontext_test_processingtime_count{tag=\"tagValue2\"} 1",
+				"diagnosticcontext_test_processingtime_total{tag=\"tagValue2\"} 2",
+				"diagnosticcontext_test_processingtime{tag=\"tagValue2\",step=\"Span\",unit=\"[ms]\"} 2");
 		}
 		
 		[TestMethod]
@@ -130,8 +193,12 @@ namespace Prometheus.Tests
 
 		private IDiagnosticContext CreateDiagnosticContext(string metricPath)
 		{
-			var factory = new PrometheusDiagnosticContextFactory(Metrics.WithCustomRegistry(metricsRegistry));
-			return factory.CreateDiagnosticContext(metricPath);
+			var onlyWallClockMetricTypes = DefaultMetricTypesConfiguration
+				.Instance
+				.GetAsyncMetricsTypes()
+				.MetricsTypes
+				.ToArray();
+			return factory.CreateDiagnosticContext(metricPath, metricsTypesOverride: onlyWallClockMetricTypes);
 		}
 
 		private string GetMetricsAsText()

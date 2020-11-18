@@ -37,12 +37,12 @@ namespace Mindbox.DiagnosticContext.Prometheus
 						prometheusCounter
 							.Total
 							.WithLabels(diagnosticContextCounter.Key)
-							.IncTo(diagnosticContextCounter.Value.Total);
+							.Inc(diagnosticContextCounter.Value.Total);
 
 						prometheusCounter
 							.Count
 							.WithLabels(diagnosticContextCounter.Key)
-							.IncTo(diagnosticContextCounter.Value.Count);
+							.Inc(diagnosticContextCounter.Value.Count);
 					}
 				}
 			}

@@ -27,7 +27,7 @@ namespace Mindbox.DiagnosticContext.Prometheus
 				{
 					prometheusCounter
 						.WithLabels(diagnosticContextCounter.Key)
-						.IncTo(diagnosticContextCounter.Value);
+						.Inc(diagnosticContextCounter.Value);
 				}
 			}
 		}
