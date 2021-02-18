@@ -5,7 +5,7 @@
         <RootNamespace>Mindbox.DiagnosticContext.Prometheus</RootNamespace>
         <AssemblyName>Mindbox.DiagnosticContext.Prometheus</AssemblyName>
         <LangVersion>8</LangVersion>
-        <PackageVersion>1.0.7</PackageVersion>
+        <PackageVersion>1.0.8</PackageVersion>
         <Authors>Mindbox</Authors>
         <Copyright>Mindbox</Copyright>
         <RepositoryUrl>https://github.com/mindbox-moscow/Mindbox.DiagnosticContext</RepositoryUrl>
