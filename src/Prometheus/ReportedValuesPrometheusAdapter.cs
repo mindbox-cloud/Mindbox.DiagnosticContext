@@ -24,33 +24,41 @@ namespace Mindbox.DiagnosticContext.Prometheus
 			this.metricFactory = metricFactory;
 		}
 
-		public void Update(DiagnosticContextMetricsItem metricsItem, DiagnosticContextMetricsStorage storage)
+		public void Update(
+			DiagnosticContextMetricsItem metricsItem, 
+			DiagnosticContextMetricsStorage storage,
+			IDictionary<string, string> tags)
 		{
 			foreach (var reportedValueCounters in storage.ReportedValuesPerMetricsPrefix)
 			{
 				if (reportedValueCounters.Value.ReportedValues.Any())
 				{
-					var prometheusCounter = GetOrCreateReportedValuesCounters(metricsItem, reportedValueCounters.Key);
+					var prometheusCounter = GetOrCreateReportedValuesCounters(
+						metricsItem, reportedValueCounters.Key, tags);
 
 					foreach (var diagnosticContextCounter in reportedValueCounters.Value.ReportedValues)
 					{
+						var labelValues = new List<string> {diagnosticContextCounter.Key};
+						labelValues.AddRange(tags.Values);
+
+						var labelValuesArray = labelValues.ToArray();
+						
 						prometheusCounter
 							.Total
-							.WithLabels(diagnosticContextCounter.Key)
+							.WithLabels(labelValuesArray)
 							.Inc(diagnosticContextCounter.Value.Total);
 
 						prometheusCounter
 							.Count
-							.WithLabels(diagnosticContextCounter.Key)
+							.WithLabels(labelValuesArray)
 							.Inc(diagnosticContextCounter.Value.Count);
 					}
 				}
 			}
 		}
 
-		private ReportedValuesCounters GetOrCreateReportedValuesCounters(
-			DiagnosticContextMetricsItem metricsItem,
-			string counterName)
+		private ReportedValuesCounters GetOrCreateReportedValuesCounters(DiagnosticContextMetricsItem metricsItem,
+			string counterName, IDictionary<string, string> tags)
 		{
 			if (counters.TryGetValue(counterName, out var prometheusCounter)) return prometheusCounter;
 
@@ -62,19 +70,23 @@ namespace Mindbox.DiagnosticContext.Prometheus
 			var reportedValuesMetricDescription = MetricNameHelper
 				.BuildFullMetricName($"Diagnostic context reported values count for {metricsItem.MetricPrefix}");
 
+			var labelNames = new List<string> {"name"};
+			labelNames.AddRange(tags.Keys);
+			var labelNamesArray = labelNames.ToArray();
+			
 			counters[counterName] = new ReportedValuesCounters
 			{
 				Total = metricFactory.CreateCounter(
 					totalMetricName,
 					totalMetricDescription,
-					"name"),
+					labelNamesArray),
 				Count =  metricFactory.CreateCounter(
 					reportedValuesMetricName,
 					reportedValuesMetricDescription,
-					"name")
+					labelNamesArray)
 			};
 
-			return prometheusCounter;
+			return counters[counterName];
 		}
 	}
 }

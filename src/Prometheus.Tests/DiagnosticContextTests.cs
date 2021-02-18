@@ -158,7 +158,175 @@ namespace Prometheus.Tests
 				"diagnosticcontext_test_processingtime{step=\"Span/InnerSpan\",unit=\"[ms]\"}",
 				"diagnosticcontext_test_processingtime{step=\"Other\",unit=\"[ms]\"}");
 		}
+		
+		[TestMethod]
+		public void Increment_Once_WithoutTags()
+		{
+			using (var diagnosticContext = CreateDiagnosticContext("Test"))
+			{
+				diagnosticContext.Increment("TestCounter");
+			}
 
+			AssertMetricsReported(
+				"diagnosticcontext_test_counters{name=\"TestCounter\"} 1");
+		}
+		
+		[TestMethod]
+		public void Increment_Once_WithTag()
+		{
+			using (var diagnosticContext = CreateDiagnosticContext("Test"))
+			{
+				diagnosticContext.SetTag("tag", "tagValue");
+				diagnosticContext.Increment("TestCounter");
+			}
+
+			AssertMetricsReported(
+				"diagnosticcontext_test_counters{name=\"TestCounter\",tag=\"tagValue\"} 1");
+		}
+		
+		[TestMethod]
+		public void Increment_Twice_WithoutTags()
+		{
+			using (var diagnosticContext = CreateDiagnosticContext("Test"))
+			{
+				diagnosticContext.Increment("TestCounter");
+			}
+			
+			using (var diagnosticContext = CreateDiagnosticContext("Test"))
+			{
+				diagnosticContext.Increment("TestCounter");
+			}
+
+			AssertMetricsReported(
+				"diagnosticcontext_test_counters{name=\"TestCounter\"} 2");
+		}
+		
+		[TestMethod]
+		public void Increment_Twice_WithSameTag()
+		{
+			using (var diagnosticContext = CreateDiagnosticContext("Test"))
+			{
+				diagnosticContext.SetTag("tag", "tagValue");
+				diagnosticContext.Increment("TestCounter");
+			}
+			
+			using (var diagnosticContext = CreateDiagnosticContext("Test"))
+			{
+				diagnosticContext.SetTag("tag", "tagValue");
+				diagnosticContext.Increment("TestCounter");
+			}
+
+			AssertMetricsReported(
+				"diagnosticcontext_test_counters{name=\"TestCounter\",tag=\"tagValue\"} 2");
+		}
+		
+		[TestMethod]
+		public void Increment_Twice_WithDifferentTags()
+		{
+			using (var diagnosticContext = CreateDiagnosticContext("Test"))
+			{
+				diagnosticContext.SetTag("tag", "tagValue1");
+				diagnosticContext.Increment("TestCounter");
+			}
+			
+			using (var diagnosticContext = CreateDiagnosticContext("Test"))
+			{
+				diagnosticContext.SetTag("tag", "tagValue2");
+				diagnosticContext.Increment("TestCounter");
+			}
+
+			AssertMetricsReported(
+				"diagnosticcontext_test_counters{name=\"TestCounter\",tag=\"tagValue1\"} 1",
+				"diagnosticcontext_test_counters{name=\"TestCounter\",tag=\"tagValue2\"} 1");
+		}
+
+		[TestMethod]
+		public void ReportValue_Once_WithoutTags()
+		{
+			using (var diagnosticContext = CreateDiagnosticContext("Test"))
+			{
+				diagnosticContext.ReportValue("TestValue", 1);
+			}
+
+			AssertMetricsReported(
+				"diagnosticcontext_test_reportedvalues_total{name=\"TestValue\"} 1",
+				"diagnosticcontext_test_reportedvalues_count{name=\"TestValue\"} 1");
+		}
+		
+		[TestMethod]
+		public void ReportValue_Once_WithTag()
+		{
+			using (var diagnosticContext = CreateDiagnosticContext("Test"))
+			{
+				diagnosticContext.SetTag("tag", "tagValue");
+				diagnosticContext.ReportValue("TestValue", 1);
+			}
+
+			AssertMetricsReported(
+				"diagnosticcontext_test_reportedvalues_total{name=\"TestValue\",tag=\"tagValue\"} 1",
+				"diagnosticcontext_test_reportedvalues_count{name=\"TestValue\",tag=\"tagValue\"} 1");
+		}
+		
+		[TestMethod]
+		public void ReportValue_Twice_WithoutTags()
+		{
+			using (var diagnosticContext = CreateDiagnosticContext("Test"))
+			{
+				diagnosticContext.ReportValue("TestValue", 2);
+			}
+			
+			using (var diagnosticContext = CreateDiagnosticContext("Test"))
+			{
+				diagnosticContext.ReportValue("TestValue", 1);
+			}
+			
+			AssertMetricsReported(
+				"diagnosticcontext_test_reportedvalues_total{name=\"TestValue\"} 3",
+				"diagnosticcontext_test_reportedvalues_count{name=\"TestValue\"} 2");
+		}
+		
+		[TestMethod]
+		public void ReportValue_Twice_WithSameTag()
+		{
+			using (var diagnosticContext = CreateDiagnosticContext("Test"))
+			{
+				diagnosticContext.SetTag("tag", "tagValue");
+				diagnosticContext.ReportValue("TestValue", 2);
+			}
+			
+			using (var diagnosticContext = CreateDiagnosticContext("Test"))
+			{
+				diagnosticContext.SetTag("tag", "tagValue");
+				diagnosticContext.ReportValue("TestValue", 1);
+			}
+
+			AssertMetricsReported(
+				"diagnosticcontext_test_reportedvalues_total{name=\"TestValue\",tag=\"tagValue\"} 3",
+				"diagnosticcontext_test_reportedvalues_count{name=\"TestValue\",tag=\"tagValue\"} 2");
+		}
+		
+		[TestMethod]
+		public void ReportValue_Twice_WithDifferentTags()
+		{
+			using (var diagnosticContext = CreateDiagnosticContext("Test"))
+			{
+				diagnosticContext.SetTag("tag", "tagValue1");
+				diagnosticContext.ReportValue("TestValue", 1);
+			}
+			
+			using (var diagnosticContext = CreateDiagnosticContext("Test"))
+			{
+				diagnosticContext.SetTag("tag", "tagValue2");
+				diagnosticContext.ReportValue("TestValue", 1);
+			}
+
+			AssertMetricsReported(
+				"diagnosticcontext_test_reportedvalues_total{name=\"TestValue\",tag=\"tagValue1\"} 1",
+				"diagnosticcontext_test_reportedvalues_count{name=\"TestValue\",tag=\"tagValue1\"} 1",
+				"diagnosticcontext_test_reportedvalues_total{name=\"TestValue\",tag=\"tagValue2\"} 1",
+				"diagnosticcontext_test_reportedvalues_count{name=\"TestValue\",tag=\"tagValue2\"} 1");
+		}
+		
 		private void AssertMetricsReported(params string[] expectedMetrics)
 		{
 			var metrics = GetMetricsAsText();
