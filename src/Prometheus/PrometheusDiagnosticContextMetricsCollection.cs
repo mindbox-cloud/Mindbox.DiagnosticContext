@@ -37,7 +37,7 @@ namespace Mindbox.DiagnosticContext.Prometheus
 					storage.CollectItemData(metricsItem);
 
 					dynamicStepsAdapter.Update(metricsItem, storage, tags);
-					countersAdapter.Update(metricsItem, storage);
+					countersAdapter.Update(metricsItem, storage, tags);
 					reportedValuesAdapter.Update(metricsItem, storage);
 				}
 			}

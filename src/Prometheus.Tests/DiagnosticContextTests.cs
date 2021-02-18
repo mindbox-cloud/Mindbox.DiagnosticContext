@@ -158,6 +158,87 @@ namespace Prometheus.Tests
 				"diagnosticcontext_test_processingtime{step=\"Span/InnerSpan\",unit=\"[ms]\"}",
 				"diagnosticcontext_test_processingtime{step=\"Other\",unit=\"[ms]\"}");
 		}
+		
+		[TestMethod]
+		public void Increment_Once_WithoutTags()
+		{
+			using (var diagnosticContext = CreateDiagnosticContext("Test"))
+			{
+				diagnosticContext.Increment("TestCounter");
+			}
+
+			AssertMetricsReported(
+				"diagnosticcontext_test_counters{name=\"TestCounter\"} 1");
+		}
+		
+		[TestMethod]
+		public void Increment_Once_WithTag()
+		{
+			using (var diagnosticContext = CreateDiagnosticContext("Test"))
+			{
+				diagnosticContext.SetTag("tag", "tagValue");
+				diagnosticContext.Increment("TestCounter");
+			}
+
+			AssertMetricsReported(
+				"diagnosticcontext_test_counters{name=\"TestCounter\",tag=\"tagValue\"} 1");
+		}
+		
+		[TestMethod]
+		public void Increment_Twice_WithoutTags()
+		{
+			using (var diagnosticContext = CreateDiagnosticContext("Test"))
+			{
+				diagnosticContext.Increment("TestCounter");
+			}
+			
+			using (var diagnosticContext = CreateDiagnosticContext("Test"))
+			{
+				diagnosticContext.Increment("TestCounter");
+			}
+
+			AssertMetricsReported(
+				"diagnosticcontext_test_counters{name=\"TestCounter\"} 2");
+		}
+		
+		[TestMethod]
+		public void Increment_Twice_WithSameTag()
+		{
+			using (var diagnosticContext = CreateDiagnosticContext("Test"))
+			{
+				diagnosticContext.SetTag("tag", "tagValue");
+				diagnosticContext.Increment("TestCounter");
+			}
+			
+			using (var diagnosticContext = CreateDiagnosticContext("Test"))
+			{
+				diagnosticContext.SetTag("tag", "tagValue");
+				diagnosticContext.Increment("TestCounter");
+			}
+
+			AssertMetricsReported(
+				"diagnosticcontext_test_counters{name=\"TestCounter\",tag=\"tagValue\"} 2");
+		}
+		
+		[TestMethod]
+		public void Increment_Twice_WithDifferentTags()
+		{
+			using (var diagnosticContext = CreateDiagnosticContext("Test"))
+			{
+				diagnosticContext.SetTag("tag", "tagValue1");
+				diagnosticContext.Increment("TestCounter");
+			}
+			
+			using (var diagnosticContext = CreateDiagnosticContext("Test"))
+			{
+				diagnosticContext.SetTag("tag", "tagValue2");
+				diagnosticContext.Increment("TestCounter");
+			}
+
+			AssertMetricsReported(
+				"diagnosticcontext_test_counters{name=\"TestCounter\",tag=\"tagValue1\"} 1",
+				"diagnosticcontext_test_counters{name=\"TestCounter\",tag=\"tagValue2\"} 1");
+		}
 
 		private void AssertMetricsReported(params string[] expectedMetrics)
 		{
