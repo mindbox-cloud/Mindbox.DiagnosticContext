@@ -3,15 +3,12 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>Mindbox.DiagnosticContext</RootNamespace>
-    <LangVersion>8</LangVersion>
     <AssemblyName>Mindbox.DiagnosticContext.Core</AssemblyName>
-    <PackageVersion>1.0.8</PackageVersion>
-    <Authors>Mindbox</Authors>
     <Copyright>Mindbox</Copyright>
     <RepositoryUrl>https://github.com/mindbox-moscow/Mindbox.DiagnosticContext</RepositoryUrl>
     <PackageTags>diagnostics</PackageTags>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Mindbox.Commons.Model" Version="66.0.905" />
+    <PackageReference Include="Mindbox.Commons.Model" Version="110.1.536" />
   </ItemGroup>
 </Project>

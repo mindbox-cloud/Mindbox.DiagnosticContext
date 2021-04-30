@@ -17,8 +17,8 @@ namespace Prometheus.Tests
 	[TestClass]
 	public class DiagnosticContextTests : CommonsTests
 	{
-		private CollectorRegistry metricsRegistry;
-		private PrometheusDiagnosticContextFactory factory;
+		private CollectorRegistry metricsRegistry = null!;
+		private PrometheusDiagnosticContextFactory factory = null!;
 
 		protected override void TestInitializeCore()
 		{
