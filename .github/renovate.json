@@ -1,0 +1,5 @@
+{
+   "extends":[
+      "local>mindbox-moscow/renovate-config:everyhour"
+   ]
+}

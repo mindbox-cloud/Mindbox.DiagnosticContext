@@ -8,6 +8,6 @@ namespace Mindbox.DiagnosticContext
 		IDiagnosticContext CreateDiagnosticContext(
 			string metricPath,
 			bool isFeatureBoundaryCodePoint = false,
-			MetricsType[] metricsTypesOverride = null);
+			MetricsType[]? metricsTypesOverride = null);
 	}
 }

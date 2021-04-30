@@ -2,11 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
-        <RootNamespace>Mindbox.DiagnosticContext.AspNetCore</RootNamespace>
-        <LangVersion>8</LangVersion>
-        <AssemblyName>Mindbox.DiagnosticContext.AspNetCore</AssemblyName>
-        <PackageVersion>1.0.8</PackageVersion>
-        <Authors>Mindbox</Authors>
+        <RootNamespace>Mindbox.DiagnosticContext.AspNetCore</RootNamespace>        
+        <AssemblyName>Mindbox.DiagnosticContext.AspNetCore</AssemblyName>                
         <Copyright>Mindbox</Copyright>
         <RepositoryUrl>https://github.com/mindbox-moscow/Mindbox.DiagnosticContext</RepositoryUrl>
         <PackageTags>diagnostics</PackageTags>

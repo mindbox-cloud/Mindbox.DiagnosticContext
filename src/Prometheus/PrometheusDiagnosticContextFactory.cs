@@ -1,4 +1,5 @@
-﻿using Itc.Commons;
+﻿using System;
+using Itc.Commons;
 using Itc.Commons.Model;
 using Prometheus;
 
@@ -8,7 +9,7 @@ namespace Mindbox.DiagnosticContext.Prometheus
 	{
 		private readonly MetricFactory metricFactory;
 
-		public PrometheusDiagnosticContextFactory(MetricFactory metricFactory = null)
+		public PrometheusDiagnosticContextFactory(MetricFactory? metricFactory = null)
 		{
 			this.metricFactory = metricFactory ?? Metrics.WithCustomRegistry(Metrics.DefaultRegistry);
 		}
@@ -16,7 +17,7 @@ namespace Mindbox.DiagnosticContext.Prometheus
 		public IDiagnosticContext CreateDiagnosticContext(
 			string metricPath,
 			bool isFeatureBoundaryCodePoint = false,
-			MetricsType[] metricsTypesOverride = null)
+			MetricsType[]? metricsTypesOverride = null)
 		{
 			var collection = new PrometheusDiagnosticContextMetricsCollection(metricFactory);
 				
