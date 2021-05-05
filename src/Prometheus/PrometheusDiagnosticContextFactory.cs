@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Itc.Commons;
 using Itc.Commons.Model;
 using Prometheus;
@@ -12,6 +12,11 @@ namespace Mindbox.DiagnosticContext.Prometheus
 		public PrometheusDiagnosticContextFactory(MetricFactory? metricFactory = null)
 		{
 			this.metricFactory = metricFactory ?? Metrics.WithCustomRegistry(Metrics.DefaultRegistry);
+		}
+
+		public PrometheusDiagnosticContextFactory(CollectorRegistry metricRegistry)
+		{
+			this.metricFactory = Metrics.WithCustomRegistry(metricRegistry);
 		}
 
 		public IDiagnosticContext CreateDiagnosticContext(
