@@ -14,9 +14,9 @@ namespace Mindbox.DiagnosticContext.Prometheus
 			this.metricFactory = metricFactory ?? Metrics.WithCustomRegistry(Metrics.DefaultRegistry);
 		}
 
-		public PrometheusDiagnosticContextFactory(CollectorRegistry metricRegistry)
+		public PrometheusDiagnosticContextFactory(CollectorRegistry collectorRegistry)
 		{
-			this.metricFactory = Metrics.WithCustomRegistry(metricRegistry);
+			this.metricFactory = Metrics.WithCustomRegistry(collectorRegistry);
 		}
 
 		public IDiagnosticContext CreateDiagnosticContext(
