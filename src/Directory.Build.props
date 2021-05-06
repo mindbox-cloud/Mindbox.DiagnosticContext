@@ -3,9 +3,15 @@
     <LangVersion>latest</LangVersion>
     <Authors>Mindbox</Authors>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>    
-    <PackageVersion>1.0.9</PackageVersion>
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <PropertyGroup>
+    <VersionMajor>1</VersionMajor>
+    <VersionMinor>1</VersionMinor>
+    <BuildNumber>$(BuildNumber)</BuildNumber>
+    <BuildNumber Condition="'$(BuildNumber)' == ''">0</BuildNumber>
+    <PackageVersion>$(VersionMajor).$(VersionMinor).$(BuildNumber)</PackageVersion>
   </PropertyGroup>
 
   <ItemGroup>
