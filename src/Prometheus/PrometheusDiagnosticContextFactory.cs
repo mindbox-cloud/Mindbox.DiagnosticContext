@@ -8,10 +8,12 @@ namespace Mindbox.DiagnosticContext.Prometheus
 	public class PrometheusDiagnosticContextFactory : IDiagnosticContextFactory
 	{
 		private readonly MetricFactory metricFactory;
+		private readonly PrometheusMetricNameBuilder metricNameBuilder;
 
-		public PrometheusDiagnosticContextFactory(MetricFactory? metricFactory = null)
+		public PrometheusDiagnosticContextFactory(MetricFactory? metricFactory = null, string? metricPostfix = null)
 		{
 			this.metricFactory = metricFactory ?? Metrics.WithCustomRegistry(Metrics.DefaultRegistry);
+			this.metricNameBuilder = new PrometheusMetricNameBuilder(postfix: metricPostfix);
 		}
 
 		public IDiagnosticContext CreateDiagnosticContext(
@@ -19,7 +21,7 @@ namespace Mindbox.DiagnosticContext.Prometheus
 			bool isFeatureBoundaryCodePoint = false,
 			MetricsType[]? metricsTypesOverride = null)
 		{
-			var collection = new PrometheusDiagnosticContextMetricsCollection(metricFactory);
+			var collection = new PrometheusDiagnosticContextMetricsCollection(metricFactory, metricNameBuilder);
 				
 			return DiagnosticContextFactory.BuildCustom(
 				() =>

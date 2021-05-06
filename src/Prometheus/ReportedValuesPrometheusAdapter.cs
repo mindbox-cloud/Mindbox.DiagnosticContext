@@ -9,6 +9,8 @@ namespace Mindbox.DiagnosticContext.Prometheus
 	{
 		private readonly MetricFactory metricFactory;
 
+		private readonly PrometheusMetricNameBuilder metricNameBuilder;
+
 		private struct ReportedValuesCounters
 		{
 			public Counter Count { get; set; }
@@ -19,9 +21,10 @@ namespace Mindbox.DiagnosticContext.Prometheus
 		private readonly Dictionary<string, ReportedValuesCounters> counters =
 			new Dictionary<string, ReportedValuesCounters>();
 
-		public ReportedValuesPrometheusAdapter(MetricFactory metricFactory)
+		public ReportedValuesPrometheusAdapter(MetricFactory metricFactory, PrometheusMetricNameBuilder metricNameBuilder)
 		{
 			this.metricFactory = metricFactory;
+			this.metricNameBuilder = metricNameBuilder;
 		}
 
 		public void Update(
@@ -62,12 +65,12 @@ namespace Mindbox.DiagnosticContext.Prometheus
 		{
 			if (counters.TryGetValue(counterName, out var prometheusCounter)) return prometheusCounter;
 
-			var totalMetricName = MetricNameHelper.BuildFullMetricName($"{metricsItem.MetricPrefix}_reportedvalues_total");
+			var totalMetricName = metricNameBuilder.BuildFullMetricName($"{metricsItem.MetricPrefix}_reportedvalues_total");
 			var totalMetricDescription = $"Diagnostic context reported values total for {metricsItem.MetricPrefix}";
 
-			var reportedValuesMetricName = MetricNameHelper
+			var reportedValuesMetricName = metricNameBuilder
 				.BuildFullMetricName($"{metricsItem.MetricPrefix}_reportedvalues_count");
-			var reportedValuesMetricDescription = MetricNameHelper
+			var reportedValuesMetricDescription = metricNameBuilder
 				.BuildFullMetricName($"Diagnostic context reported values count for {metricsItem.MetricPrefix}");
 
 			var labelNames = new List<string> {"name"};

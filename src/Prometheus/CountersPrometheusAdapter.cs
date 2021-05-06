@@ -9,12 +9,15 @@ namespace Mindbox.DiagnosticContext.Prometheus
 	{
 		private readonly MetricFactory metricFactory;
 
+		private readonly PrometheusMetricNameBuilder metricNameBuilder;
+
 		private readonly Dictionary<string, Counter> prometheusCounters =
 			new Dictionary<string, Counter>();
 
-		public CountersPrometheusAdapter(MetricFactory metricFactory)
+		public CountersPrometheusAdapter(MetricFactory metricFactory, PrometheusMetricNameBuilder metricNameBuilder)
 		{
 			this.metricFactory = metricFactory;
+			this.metricNameBuilder = metricNameBuilder;
 		}
 
 		public void Update(
@@ -45,7 +48,7 @@ namespace Mindbox.DiagnosticContext.Prometheus
 		{	
 			if (!prometheusCounters.TryGetValue(counterName, out var prometheusCounter))
 			{
-				string metricName = MetricNameHelper.BuildFullMetricName($"{metricsItem.MetricPrefix}_counters");
+				string metricName = metricNameBuilder.BuildFullMetricName($"{metricsItem.MetricPrefix}_counters");
 				string metricDescription = $"Diagnostic context counters for {metricsItem.MetricPrefix}";
 
 				var labelNames = new List<string> {"name"};
