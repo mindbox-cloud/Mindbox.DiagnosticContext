@@ -11,12 +11,15 @@ namespace Mindbox.DiagnosticContext.Prometheus
 	{
 		private readonly MetricFactory metricFactory;
 
+		private readonly PrometheusMetricNameBuilder metricNameBuilder;
+
 		private readonly Dictionary<(string, MetricsType), StepPrometheusCounterSet> dynamicStepsPrometheusCounters = 
 			new Dictionary<(string, MetricsType), StepPrometheusCounterSet>();
 
-		public DynamicStepsPrometheusAdapter(MetricFactory metricFactory)
+		public DynamicStepsPrometheusAdapter(MetricFactory metricFactory, PrometheusMetricNameBuilder metricNameBuilder)
 		{
 			this.metricFactory = metricFactory;
+			this.metricNameBuilder = metricNameBuilder;
 		}
 
 		public void Update(
@@ -77,15 +80,15 @@ namespace Mindbox.DiagnosticContext.Prometheus
 				
 				counterSet = new StepPrometheusCounterSet(
 					metricFactory.CreateCounter(
-						MetricNameHelper.BuildFullMetricName($"{metricNameBase}_Count"),
+						metricNameBuilder.BuildFullMetricName($"{metricNameBase}_Count"),
 						$"{metricDescriptionBase} - total count",
 						totalLabelNames),
 					metricFactory.CreateCounter(
-						MetricNameHelper.BuildFullMetricName($"{metricNameBase}_Total"),
+						metricNameBuilder.BuildFullMetricName($"{metricNameBase}_Total"),
 						$"{metricDescriptionBase} - total value",
 						totalLabelNames),
 					metricFactory.CreateCounter(
-						MetricNameHelper.BuildFullMetricName(metricNameBase),
+						metricNameBuilder.BuildFullMetricName(metricNameBase),
 						metricDescriptionBase,
 						stepLabelNames)
 					);

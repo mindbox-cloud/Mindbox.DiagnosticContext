@@ -20,11 +20,13 @@ namespace Mindbox.DiagnosticContext.Prometheus
 		
 		private readonly object syncRoot = new object();
 
-		public PrometheusDiagnosticContextMetricsCollection(MetricFactory metricFactory)
+		public PrometheusDiagnosticContextMetricsCollection(
+			MetricFactory metricFactory,
+			PrometheusMetricNameBuilder metricNameBuilder)
 		{
-			dynamicStepsAdapter = new DynamicStepsPrometheusAdapter(metricFactory);
-			countersAdapter = new CountersPrometheusAdapter(metricFactory);
-			reportedValuesAdapter = new ReportedValuesPrometheusAdapter(metricFactory);
+			dynamicStepsAdapter = new DynamicStepsPrometheusAdapter(metricFactory, metricNameBuilder);
+			countersAdapter = new CountersPrometheusAdapter(metricFactory, metricNameBuilder);
+			reportedValuesAdapter = new ReportedValuesPrometheusAdapter(metricFactory, metricNameBuilder);
 		}
 
 		public void CollectItemData(DiagnosticContextMetricsItem metricsItem)
