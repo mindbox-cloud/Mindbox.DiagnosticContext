@@ -3,9 +3,9 @@ using Itc.Commons.Model;
 
 namespace Mindbox.DiagnosticContext
 {
-	public class NullDiagnosticContextFactory
+	public class NullDiagnosticContextFactory : IDiagnosticContextFactory
 	{
-		IDiagnosticContext CreateDiagnosticContext(
+		public IDiagnosticContext CreateDiagnosticContext(
 			string metricPath,
 			bool isFeatureBoundaryCodePoint = false,
 			MetricsType[]? metricsTypesOverride = null)
