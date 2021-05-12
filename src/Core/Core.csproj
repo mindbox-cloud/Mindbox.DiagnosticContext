@@ -9,6 +9,6 @@
     <PackageTags>diagnostics</PackageTags>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Mindbox.Commons.Model" Version="111.0.552" />
+    <PackageReference Include="Mindbox.Commons.Model" Version="111.0.553" />
   </ItemGroup>
 </Project>
