@@ -38,5 +38,23 @@ namespace Prometheus.Tests
 
 			Assert.AreEqual(expected: "diagnosticcontext_test_tenant", nameBuilder.BuildFullMetricName("test"));
 		}
+
+		[TestMethod]
+		[DataRow(" ")]
+		[DataRow("-")]
+		[DataRow(".")]
+		public void BuildFullName_MetricNameHasInvalidCharacters_ReturnsValidMetricName(string badChar)
+		{
+			const string metricName = "metric_name";
+			const string postfix = "postfix";
+
+			var metricNameWithInvalidCharacters = badChar + metricName;
+			var postfixWithInvalidCharacters = badChar + postfix + badChar;
+
+			var actualMetricFullName = new PrometheusMetricNameBuilder(postfix: postfixWithInvalidCharacters)
+				.BuildFullMetricName(metricNameWithInvalidCharacters);
+			
+			Assert.AreEqual($"diagnosticcontext_{metricName}_{postfix}", actualMetricFullName);
+		}
 	}
 }
