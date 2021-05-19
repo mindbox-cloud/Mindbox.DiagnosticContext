@@ -43,7 +43,7 @@ namespace Prometheus.Tests
 		[DataRow(" ")]
 		[DataRow("-")]
 		[DataRow(".")]
-		public void BuildFullName_MetricHasInvalidCharacters_RemovesInvalidCharacters(string badChar)
+		public void BuildFullName_MetricHasInvalidCharacters_ReturnsValidMetricName(string badChar)
 		{
 			var nameBuilder = new PrometheusMetricNameBuilder(postfix: $"t{badChar}enant{badChar}test{badChar}");
 			
