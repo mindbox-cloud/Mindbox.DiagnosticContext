@@ -51,10 +51,10 @@ namespace Prometheus.Tests
 			var metricNameWithInvalidCharacters = badChar + metricName;
 			var postfixWithInvalidCharacters = badChar + postfix + badChar;
 
-			var actualMetricName = new PrometheusMetricNameBuilder(postfix: postfixWithInvalidCharacters)
+			var actualMetricFullName = new PrometheusMetricNameBuilder(postfix: postfixWithInvalidCharacters)
 				.BuildFullMetricName(metricNameWithInvalidCharacters);
 			
-			Assert.AreEqual($"diagnosticcontext_{metricName}_{postfix}", actualMetricName);
+			Assert.AreEqual($"diagnosticcontext_{metricName}_{postfix}", actualMetricFullName);
 		}
 	}
 }
