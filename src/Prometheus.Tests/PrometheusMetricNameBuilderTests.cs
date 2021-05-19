@@ -43,11 +43,19 @@ namespace Prometheus.Tests
 		[DataRow(" ")]
 		[DataRow("-")]
 		[DataRow(".")]
-		public void BuildFullName_MetricHasInvalidCharacters_ReturnsValidMetricName(string badChar)
+		public void BuildFullName_MetricNameHasInvalidCharacters_ReturnsValidMetricName(string badChar)
 		{
-			var nameBuilder = new PrometheusMetricNameBuilder(postfix: $"t{badChar}enant{badChar}test{badChar}");
+			const string metricName = "metric_name";
+			const string postfix = "postfix";
+
+			var metricNameWithInvalidCharacters = badChar + metricName;
+			var postfixWithInvalidCharacters = badChar + postfix + badChar;
+
+			var nameBuilder = new PrometheusMetricNameBuilder(postfix: postfixWithInvalidCharacters);
 			
-			Assert.AreEqual("diagnosticcontext_test_tenanttest", nameBuilder.BuildFullMetricName("test"));
+			Assert.AreEqual(
+				$"diagnosticcontext_{metricName}_{postfix}",
+				nameBuilder.BuildFullMetricName(metricNameWithInvalidCharacters));
 		}
 	}
 }

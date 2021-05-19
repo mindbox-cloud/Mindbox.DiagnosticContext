@@ -8,6 +8,9 @@ namespace Mindbox.DiagnosticContext.Prometheus
 
 		private readonly string? postfix;
 
+		private static readonly Regex InvalidCharactersRegex =
+			new("[^a-zA-Z_:][^a-zA-Z0-9_:]*", RegexOptions.Compiled);
+
 		public PrometheusMetricNameBuilder(string prefix = "diagnosticcontext", string? postfix = null)
 		{
 			this.prefix = prefix;
@@ -24,6 +27,6 @@ namespace Mindbox.DiagnosticContext.Prometheus
 		}
 
 		private static string RemoveInvalidCharactersFromMetricName(string metricName) =>
-			Regex.Replace(metricName, "[^a-zA-Z_:][^a-zA-Z0-9_:]*", "");
+			InvalidCharactersRegex.Replace(metricName, "");
 	}
 }
