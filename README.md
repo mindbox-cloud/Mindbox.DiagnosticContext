@@ -36,25 +36,25 @@ If your application doesn't yet expose prometheus metrics, add the following cod
 app.UseMetricServer();
 ```
 
-### Использование diagnostic context + prometheus в .Net Framework
+### Using diagnostic context + prometheus in .Net Framework
 
-1. [Зарегистрировать фабрику с нужными настройками](https://github.com/mindbox-moscow/DirectCRM/blob/51c6a6e418afd4a696b0f68998aaf9fa46056f62/Product/DirectCrm/DirectCrm.Core/DirectCrmCoreModule.cs#L177-L204).
-1. [Создать инстанс DiagnosticContext](https://github.com/mindbox-moscow/DirectCRM/blob/b16aca860a6c5c6d16c806c915f24af7a2703106/Product/DirectCrm/Mailings/Mailings.Model/BulkOperation/MailingBulkSendingOperation.cs#L44-L49)
-1. Использовать созданный DiagnosticContext как обычно - он имеет тот же интерфейс.
+1. [Register a factory with the desired settings](https://github.com/mindbox-moscow/DirectCRM/blob/51c6a6e418afd4a696b0f68998aaf9fa46056f62/Product/DirectCrm/DirectCrm.Core/DirectCrmCoreModule.cs#L177-L204).
+1. [Create a DiagnosticContext instance](https://github.com/mindbox-moscow/DirectCRM/blob/b16aca860a6c5c6d16c806c915f24af7a2703106/Product/DirectCrm/Mailings/Mailings.Model/BulkOperation/MailingBulkSendingOperation.cs#L44-L49)
+1. Use the generated DiagnosticContext
 
-### Использование diagnostic context в DirectCRM
+### Using the diagnostic context in DirectCRM
 
-IDiagnosticContextFactory [уже зарегистрирована]((https://github.com/mindbox-moscow/DirectCRM/blob/51c6a6e418afd4a696b0f68998aaf9fa46056f62/Product/DirectCrm/DirectCrm.Core/DirectCrmCoreModule.cs#L177-L204).
+IDiagnosticContextFactory [already registered]((https://github.com/mindbox-moscow/DirectCRM/blob/51c6a6e418afd4a696b0f68998aaf9fa46056f62/Product/DirectCrm/DirectCrm.Core/DirectCrmCoreModule.cs#L177-L204).
 
-Метрики отдаются в [специальный прометей](https://kube-infra.mindbox.ru/common-dc/prometheus/).
+Metrics are sent to [special prometheus](https://kube-infra.mindbox.ru/common-dc/prometheus/).
 
-[Пример с созданием DiagnosticContext для ModelContext](https://github.com/mindbox-moscow/DirectCRM/blob/b16aca860a6c5c6d16c806c915f24af7a2703106/Product/DirectCrm/Mailings/Mailings.Model/BulkOperation/MailingBulkSendingOperation.cs#L44-L49).
+[Eexample of creating a DiagnosticContext for a ModelContext](https://github.com/mindbox-moscow/DirectCRM/blob/b16aca860a6c5c6d16c806c915f24af7a2703106/Product/DirectCrm/Mailings/Mailings.Model/BulkOperation/MailingBulkSendingOperation.cs#L44-L49).
 
-Для использования внешнего DiagnosticContext нужно воспользоваться `IDiagnosticContextFactory` и создать инстанс IDiagnosticContext, не забыв его задиспоузить.
+To use an external DiagnosticContext, you need to use `IDiagnosticContextFactory` and create an instance of IDiagnosticContext. Remember to dispose it.
 
-#### Нюансы, которые возникнут при переносе дашбордов из ньюрелика в графану
+#### The nuances that arise when transferring dashboards from NewRelic to Grafana
 
-Метрики имеют префикс: `diagnosticcontext` и постфикс: `projectSystemName` (с удалением всех невалидных для имени метрики символов).
-Имя проекта, при создании дашборда, нужно брать из постфикса. Пример есть в переменных [дашборда рассылок](https://grafana.mindbox.ru/d/uWOO6yjGk/mailings-dc?editview=templating&orgId=1&from=now-15m&to=now&refresh=5s).
+Metrics have a prefix: `diagnosticcontext` and a postfix:` projectSystemName` (with the removal of all invalid for the metric name characters).
+The name of the project, when creating a dashboard, must be taken from the postfix. An example is in the [mailing dashboard](https://grafana.mindbox.ru/d/uWOO6yjGk/mailings-dc?editview=templating&orgId=1&from=now-15m&to=now&refresh=5s) variables.
 
-Увеличение каунтера для ньюрелика имеет вид `diagnosticContext.Increment("counter_name[message]")`. Так делать не надо, надо делать `diagnosticContext.Increment("counter_name")`. Имя каунтера попадет в лейбл `name`.
+The increment of the counter for a NewRelic looks like `diagnosticContext.Increment("counter_name[message]")`. Do not do this, do `diagnosticContext.Increment("counter_name")`. The name of the counter will end up in the `name` label.
