@@ -62,6 +62,7 @@ To use an external DiagnosticContext, you need to use `IDiagnosticContextFactory
 
 * When creating a `DiagnosticContext` using `IDiagnosticContextFactory`, the name of the metric being written is `diagnosticcontext_{metricName}_metric_projectSystemName`.
 In other words, several metrics are collected at once and `metric` can be: `processingtime`, `cpuprocessingtime`, `counters`, etc.
+
 Example:
 ```csharp
 ...
@@ -71,11 +72,12 @@ using diagnosticContext.Measure("some_step");
 ```
 The final metric name will look like: `diagnosticcontext_metric_name_[metric]_projectSystemName`.
 For example, if we want to build a pie based on the time spent, then we need to use the metric: `diagnosticcontext_metric_name_processingtime_projectSystemName`.
-The names of the steps will be recorded on the labels. The example shows one step: `some_step` - it will go to the label.
+The names of the steps will be recorded on the labels. The example shows one step: `some_step` - it will go to the label `step`.
 
 * Prometheus, unlike Relic, has a set of counters that differ in the name label.
 This metric is named: `diagnosticcontext_metricName_counters_projectSystemName`. In other words, counters is appended to the metric name specified when the `DiagnosticContext` was created.
 If you need to find out the value of a specific counter, you need to make the following request: `diagnosticcontext_metricName_counters_projectSystemName{name=~"counter_name"}`.
+
 Example:
 ```csharp
 using var diagnosticContext = diagnosticContextFactory.CreateDiagnosticContext("metric_name");
