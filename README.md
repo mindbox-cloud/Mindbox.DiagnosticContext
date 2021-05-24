@@ -75,7 +75,7 @@ For example, if we want to build a pie based on the time spent, then we need to 
 The names of the steps will be recorded on the labels. The example shows one step: `some_step` - it will go to the label `step`.
 
 * Prometheus, unlike Relic, has a set of counters that differ in the name label.
-This metric is named: `diagnosticcontext_metricName_counters_projectSystemName`. In other words, counters is appended to the metric name specified when the `DiagnosticContext` was created.
+This metric is named: `diagnosticcontext_metricName_counters_projectSystemName`. In other words, `counters` is appended to the metric name specified when the `DiagnosticContext` was created.
 If you need to find out the value of a specific counter, you need to make the following request: `diagnosticcontext_metricName_counters_projectSystemName{name=~"counter_name"}`.
 
 Example:
