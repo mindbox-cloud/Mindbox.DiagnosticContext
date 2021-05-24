@@ -44,7 +44,7 @@ app.UseMetricServer();
 
 ### Using the diagnostic context in DirectCRM
 
-IDiagnosticContextFactory [already registered]((https://github.com/mindbox-moscow/DirectCRM/blob/51c6a6e418afd4a696b0f68998aaf9fa46056f62/Product/DirectCrm/DirectCrm.Core/DirectCrmCoreModule.cs#L177-L204).
+IDiagnosticContextFactory [already registered in DirectCrmCoreModule](https://github.com/mindbox-moscow/DirectCRM/blob/51c6a6e418afd4a696b0f68998aaf9fa46056f62/Product/DirectCrm/DirectCrm.Core/DirectCrmCoreModule.cs#L177-L204).
 
 Metrics are sent to [special prometheus](https://kube-infra.mindbox.ru/common-dc/prometheus/).
 
