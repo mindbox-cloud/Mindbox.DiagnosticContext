@@ -44,17 +44,41 @@ app.UseMetricServer();
 
 ### Using the diagnostic context in DirectCRM
 
-IDiagnosticContextFactory [already registered in DirectCrmCoreModule](https://github.com/mindbox-moscow/DirectCRM/blob/51c6a6e418afd4a696b0f68998aaf9fa46056f62/Product/DirectCrm/DirectCrm.Core/DirectCrmCoreModule.cs#L177-L204).
+IDiagnosticContextFactory [already registered in DirectCrmCoreModule](https://github.com/mindbox-moscow/DirectCRM/blob/51c6a6e418afd4a696b0f68998aaf9fa46056f62/Product/DirectCrm/DirectCrm.Core/DirectCrmCoreModule.cs#L177-L204), just use it.
 
-Metrics are sent to [special prometheus](https://kube-infra.mindbox.ru/common-dc/prometheus/).
+Metrics are sent to [special prometheus](https://kube-infra.mindbox.ru/common-dc/prometheus/), here you can see the values of metrics and build queries.
 
 [Eexample of creating a DiagnosticContext for a ModelContext](https://github.com/mindbox-moscow/DirectCRM/blob/b16aca860a6c5c6d16c806c915f24af7a2703106/Product/DirectCrm/Mailings/Mailings.Model/BulkOperation/MailingBulkSendingOperation.cs#L44-L49).
 
 To use an external DiagnosticContext, you need to use `IDiagnosticContextFactory` and create an instance of IDiagnosticContext. Remember to dispose it.
 
-#### The nuances that arise when transferring dashboards from NewRelic to Grafana
+#### Things to know when switching from Relic to Prometheus in DirectCRM
 
-Metrics have a prefix: `diagnosticcontext` and a postfix:` projectSystemName` (with the removal of all invalid for the metric name characters).
-The name of the project, when creating a dashboard, must be taken from the postfix. An example is in the [mailing dashboard](https://grafana.mindbox.ru/d/uWOO6yjGk/mailings-dc?editview=templating&orgId=1&from=now-15m&to=now&refresh=5s) variables.
+Prometheus uses metrics in conjunction with labels. By labels, using promql, you can conveniently group (`sum(some_metric) by (lable)`).
 
-The increment of the counter for a NewRelic looks like `diagnosticContext.Increment("counter_name[message]")`. Do not do this, do `diagnosticContext.Increment("counter_name")`. The name of the counter will end up in the `name` label.
+When creating a `DiagnosticContext`, you must specify the name of the metric. If it contains characters invalid for the metric, they will be removed. You can read about which characters are invalid [here](https://prometheus.io/docs/concepts/data_model/).
+
+To split the dashboard by projects, the name of the project must be selected from the name of the metric using the query and regex in Grafana. An example of a dashboard using such metrics, broken down by project, [here](https://grafana.mindbox.ru/d/uWOO6yjGk/mailings-dc?editview=templating&orgId=1&from=now-15m&to=now&refresh=5s).
+
+When creating a `DiagnosticContext` using `IDiagnosticContextFactory`, the name of the metric being written is `diagnosticcontext_{metricName}_metric_projectSystemName`.
+In other words, several metrics are collected at once and `metric` can be: `processingtime`, `cpuprocessingtime`, `counters`, etc.
+Example:
+```csharp
+...
+using var diagnosticContext = diagnosticContextFactory.CreateDiagnosticContext("metric_name");
+using diagnosticContext.Measure("some_step");
+...
+```
+The final metric name will look like: `diagnosticcontext_metric_name_[metric]_projectSystemName`.
+For example, if we want to build a pie based on the time spent, then we need to use the metric: `diagnosticcontext_metric_name_processingtime_projectSystemName`.
+The names of the steps will be recorded on the labels. The example shows one step: `some_step` - it will go to the label.
+
+Prometheus, unlike Relic, has a set of counters that differ in the name label.
+This metric is named: `diagnosticcontext_metricName_counters_projectSystemName`. In other words, counters is appended to the metric name specified when the `DiagnosticContext` was created.
+If you need to find out the value of a specific counter, you need to make the following request: `diagnosticcontext_metricName_counters_projectSystemName{name=~"counter_name"}`.
+Example:
+```csharp
+using var diagnosticContext = diagnosticContextFactory.CreateDiagnosticContext("metric_name");
+using diagnosticContext.Increment("some_counter");
+```
+The final query for this counter will be as follows: `diagnosticcontext_metric_name_counters_projectSystemName{name=~"some_counter"}`.
