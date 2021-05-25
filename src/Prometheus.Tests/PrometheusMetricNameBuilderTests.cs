@@ -56,5 +56,17 @@ namespace Prometheus.Tests
 			
 			Assert.AreEqual($"diagnosticcontext_{metricName}_{postfix}", actualMetricFullName);
 		}
+
+		[TestMethod]
+		public void BuildFullName_MetricNameHasNumbers_ReturnMetricNameWithNumbers()
+		{
+			const string metricName = "metric_name_v3";
+			const string postfix = "v11_postfix";
+
+			var actualMetricFullName = new PrometheusMetricNameBuilder(postfix: postfix)
+				.BuildFullMetricName(metricName);
+			
+			Assert.AreEqual($"diagnosticcontext_{metricName}_{postfix}", actualMetricFullName);
+		}
 	}
 }
