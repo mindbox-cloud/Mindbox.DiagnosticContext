@@ -1,17 +1,20 @@
 ﻿using System;
-using Itc.Commons;
-using Itc.Commons.Model;
+using Mindbox.DiagnosticContext.MetricsTypes;
 using Prometheus;
 
 namespace Mindbox.DiagnosticContext.Prometheus
 {
 	public class PrometheusDiagnosticContextFactory : IDiagnosticContextFactory
 	{
+		private readonly DefaultMetricTypesConfiguration defaultMetricTypesConfiguration;
+		private readonly IDiagnosticContextLogger diagnosticContextLogger;
 		private readonly MetricFactory metricFactory;
 		private readonly PrometheusMetricNameBuilder metricNameBuilder;
 
-		public PrometheusDiagnosticContextFactory(MetricFactory? metricFactory = null, string? metricPostfix = null)
+		public PrometheusDiagnosticContextFactory(DefaultMetricTypesConfiguration defaultMetricTypesConfiguration, IDiagnosticContextLogger diagnosticContextLogger, MetricFactory? metricFactory = null, string? metricPostfix = null)
 		{
+			this.defaultMetricTypesConfiguration = defaultMetricTypesConfiguration;
+			this.diagnosticContextLogger = diagnosticContextLogger;
 			this.metricFactory = metricFactory ?? Metrics.WithCustomRegistry(Metrics.DefaultRegistry);
 			this.metricNameBuilder = new PrometheusMetricNameBuilder(postfix: metricPostfix);
 		}
@@ -26,16 +29,17 @@ namespace Mindbox.DiagnosticContext.Prometheus
 			return DiagnosticContextFactory.BuildCustom(
 				() =>
 				{
-					var metricTypes = metricsTypesOverride
-							?.Transform(types => new MetricsTypeCollection(types))
-						?? DefaultMetricTypesConfiguration.Instance.GetMetricsTypesWithCpuTimeTracking(metricPath);
+					var metricTypes = metricsTypesOverride != null ?
+							new MetricsTypeCollection(metricsTypesOverride) 
+							: defaultMetricTypesConfiguration.GetMetricsTypesWithCpuTimeTracking(metricPath);
 
-					return new Itc.Commons.Model.DiagnosticContext(
+					return new DiagnosticContext(
+						diagnosticContextLogger,
 						metricPath,
 						collection,
 						metricTypes,
 						isFeatureBoundaryCodePoint);
-				});
+				}, diagnosticContextLogger);
 		}
 	}
 }

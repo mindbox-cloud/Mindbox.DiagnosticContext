@@ -1,6 +1,3 @@
-using Itc.Commons;
-using Itc.Commons.Model;
-
 namespace Mindbox.DiagnosticContext
 {
 	public class NullDiagnosticContextFactory : IDiagnosticContextFactory

@@ -1,31 +1,35 @@
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading;
-using Itc.Commons;
-using Itc.Commons.Model;
-using Itc.Commons.Tests;
-using Itc.Commons.Tests.Infrastructure;
-using Itc.Commons.Tests.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Mindbox.DiagnosticContext;
+using Mindbox.DiagnosticContext.MetricsTypes;
 using Mindbox.DiagnosticContext.Prometheus;
 
 namespace Prometheus.Tests
 {
+	public class TestDateTimeAccessor : ICurrentTimeAccessor
+	{
+		public DateTime CurrentDateTimeUtc { get; set; }
+	}
+
 	[TestClass]
-	public class DiagnosticContextTests : CommonsTests
+	public class DiagnosticContextTests 
 	{
 		private CollectorRegistry metricsRegistry = null!;
 		private PrometheusDiagnosticContextFactory factory = null!;
+		private TestDateTimeAccessor currentTimeAccessor = null!;
+		private DefaultMetricTypesConfiguration defaultMetricTypesConfiguration = null!;
 
-		protected override void TestInitializeCore()
+
+		[TestInitialize]
+		public void TestInitialize()
 		{
-			base.TestInitializeCore();
-			
 			metricsRegistry = Metrics.NewCustomRegistry();
-			factory = new PrometheusDiagnosticContextFactory(Metrics.WithCustomRegistry(metricsRegistry));
+			currentTimeAccessor = new TestDateTimeAccessor() {CurrentDateTimeUtc = new DateTime(2021, 02, 03, 04, 05, 06, 07, DateTimeKind.Utc)};
+			defaultMetricTypesConfiguration = new DefaultMetricTypesConfiguration(currentTimeAccessor);
+			factory = new PrometheusDiagnosticContextFactory(defaultMetricTypesConfiguration, new NullDiagnosticContextLogger(), Metrics.WithCustomRegistry(metricsRegistry));
 		}
 
 		[TestMethod]
@@ -35,13 +39,13 @@ namespace Prometheus.Tests
 			{
 				using (diagnosticContext.Measure("Span"))
 				{
-					Controller.CurrentDateTimeUtc = Controller.CurrentDateTimeUtc.AddMilliseconds(1);
+					currentTimeAccessor.CurrentDateTimeUtc = currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(1);
 					using (diagnosticContext.Measure("InnerSpan"))
 					{
-						Controller.CurrentDateTimeUtc = Controller.CurrentDateTimeUtc.AddMilliseconds(2);
+						currentTimeAccessor.CurrentDateTimeUtc = currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(2);
 					}
 				}
-				Controller.CurrentDateTimeUtc = Controller.CurrentDateTimeUtc.AddMilliseconds(3);
+				currentTimeAccessor.CurrentDateTimeUtc = currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(3);
 			}
 
 
@@ -61,14 +65,14 @@ namespace Prometheus.Tests
 				diagnosticContext.SetTag("tag", "tagValue");
 				using (diagnosticContext.Measure("Span"))
 				{
-					Controller.CurrentDateTimeUtc = Controller.CurrentDateTimeUtc.AddMilliseconds(1);
+					currentTimeAccessor.CurrentDateTimeUtc = currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(1);
 					using (diagnosticContext.Measure("InnerSpan"))
 					{
-						Controller.CurrentDateTimeUtc = Controller.CurrentDateTimeUtc.AddMilliseconds(2);
+						currentTimeAccessor.CurrentDateTimeUtc = currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(2);
 					}
 				}
 
-				Controller.CurrentDateTimeUtc = Controller.CurrentDateTimeUtc.AddMilliseconds(3);
+				currentTimeAccessor.CurrentDateTimeUtc = currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(3);
 			}
 
 			
@@ -90,7 +94,7 @@ namespace Prometheus.Tests
 				diagnosticContext.SetTag("tag", "tagValue");
 				using (diagnosticContext.Measure("Span"))
 				{
-					Controller.CurrentDateTimeUtc = Controller.CurrentDateTimeUtc.AddMilliseconds(milliseconds);
+					currentTimeAccessor.CurrentDateTimeUtc = currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(milliseconds);
 				}
 			}
 
@@ -115,7 +119,7 @@ namespace Prometheus.Tests
 				diagnosticContext.SetTag("tag", tagValue);
 				using (diagnosticContext.Measure("Span"))
 				{
-					Controller.CurrentDateTimeUtc = Controller.CurrentDateTimeUtc.AddMilliseconds(milliseconds);
+					currentTimeAccessor.CurrentDateTimeUtc = currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(milliseconds);
 				}
 			}
 
@@ -140,7 +144,7 @@ namespace Prometheus.Tests
 			{
 				using (diagnosticContext.Measure("Span"))
 				{
-					Controller.CurrentDateTimeUtc = Controller.CurrentDateTimeUtc.AddMilliseconds(1);
+					currentTimeAccessor.CurrentDateTimeUtc = currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(1);
 					using (diagnosticContext.Measure("InnerSpan"))
 					{
 					}
@@ -338,7 +342,7 @@ namespace Prometheus.Tests
 			if (notFoundMetrics.Any())
 			{
 				Assert.Fail(
-					$"Following metrics where not reported:\r\n{notFoundMetrics.StringJoin("\r\n")}\r\n\r\n" +
+					$"Following metrics where not reported:\r\n{String.Join("\r\n", notFoundMetrics)}\r\n\r\n" +
 					$"Full metrics:\r\n{metrics}");
 			}
 		}
@@ -354,15 +358,14 @@ namespace Prometheus.Tests
 			if (foundMetrics.Any())
 			{
 				Assert.Fail(
-					$"Following metrics where reported:\r\n{foundMetrics.StringJoin("\r\n")}\r\n\r\n" +
+					$"Following metrics where reported:\r\n{String.Join("\r\n", foundMetrics)}\r\n\r\n" +
 					$"Full metrics:\r\n{metrics}");
 			}
 		}
 
 		private IDiagnosticContext CreateDiagnosticContext(string metricPath)
 		{
-			var onlyWallClockMetricTypes = DefaultMetricTypesConfiguration
-				.Instance
+			var onlyWallClockMetricTypes = defaultMetricTypesConfiguration
 				.GetAsyncMetricsTypes()
 				.MetricsTypes
 				.ToArray();
