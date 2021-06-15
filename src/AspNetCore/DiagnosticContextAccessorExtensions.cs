@@ -1,6 +1,4 @@
-﻿using Itc.Commons.Model;
-
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 
 namespace Mindbox.DiagnosticContext.AspNetCore
 {

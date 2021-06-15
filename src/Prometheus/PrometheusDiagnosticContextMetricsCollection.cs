@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-
-using Itc.Commons;
-using Itc.Commons.Model;
+using Mindbox.DiagnosticContext.MetricItem;
 using Prometheus;
 
 namespace Mindbox.DiagnosticContext.Prometheus

@@ -1,0 +1,92 @@
+﻿#nullable disable
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Mindbox.DiagnosticContext.MetricItem;
+
+namespace Mindbox.DiagnosticContext.DynamicSteps
+{
+	internal class DiagnosticContextMetricsHierarchicalValue
+	{
+		public static DiagnosticContextMetricsHierarchicalValue FromMetricsType(MetricsType metricsType)
+		{
+			return new DiagnosticContextMetricsHierarchicalValue(metricsType);
+		}
+
+		private const string OtherStepName = "Other";
+
+		private IDictionary<string, long> StepValues { get; } = new Dictionary<string, long>();
+		private long? TotalValue { get; set; }
+
+		public string MetricsTypeSystemName => metricsType.SystemName;
+
+		private readonly MetricsType metricsType;
+
+		private DiagnosticContextMetricsHierarchicalValue(MetricsType metricsType)
+		{
+			this.metricsType = metricsType;
+		}
+
+		public void SetTotal(long total)
+		{
+			if (TotalValue.HasValue)
+				throw new InvalidOperationException("TotalValue.HasValue");
+
+			TotalValue = metricsType.ConvertMetricValue(total);
+		}
+
+		public void IncrementMetricsValue(string path, long increment)
+		{
+			IncrementNamedValue(StepValues, path, metricsType.ConvertMetricValue(increment));
+		}
+
+		private static void IncrementNamedValue(IDictionary<string, long> dictionary, string name, long value)
+		{
+			if (!dictionary.TryGetValue(name, out var buf))
+				buf = 0;
+
+			dictionary[name] = buf + value;
+		}
+
+		private static long EvaluateSubStepsSum(IDictionary<string, long> dictionary, string path)
+		{
+			return dictionary
+				.Where(e => 
+					e.Key.StartsWith(path, StringComparison.OrdinalIgnoreCase)
+					&& e.Key != path
+					&& IsFirstLevelChild(path, e.Key))
+				.Sum(e => e.Value);
+		}
+
+		private static bool IsFirstLevelChild(string parent, string child)
+		{
+			return child.IndexOf('/', parent.Length + 1) == -1;
+		}
+
+		private static long EvaluateSubStepsSum(IDictionary<string, long> dictionary)
+		{
+			return dictionary
+				.Where(e => !e.Key.Contains('/'))
+				.Sum(e => e.Value);
+		}
+
+		public DiagnosticContextMetricsNormalizedValue ToNormalizedValue()
+		{
+			if (!TotalValue.HasValue)
+				throw new InvalidOperationException("!TotalValue.HasValue");
+
+			var result = new Dictionary<string, long>();
+
+			foreach(var metric in StepValues)
+			{
+				var metricSubStepsSum = EvaluateSubStepsSum(StepValues, metric.Key);
+				result[metric.Key] = metric.Value > metricSubStepsSum ? metric.Value - metricSubStepsSum : 0;
+			}
+			var subStepSum = EvaluateSubStepsSum(StepValues);
+			IncrementNamedValue(result, OtherStepName, TotalValue > subStepSum ? TotalValue.Value - subStepSum : 0);
+
+			return new DiagnosticContextMetricsNormalizedValue(MetricsTypeSystemName, result);
+		}
+	}
+}
