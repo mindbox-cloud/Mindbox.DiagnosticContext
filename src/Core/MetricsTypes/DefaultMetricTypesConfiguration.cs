@@ -11,9 +11,9 @@ namespace Mindbox.DiagnosticContext.MetricsTypes
 		private const string WallClockTimeMetricsSystemName = "ProcessingTime";
 		private const string ThreadAllocatedBytesSystemName = "ThreadAllocatedBytes";
 
-		public DefaultMetricTypesConfiguration(ICurrentTimeAccessor currentTimeAccessor)
+		public DefaultMetricTypesConfiguration(ICurrentTimeAccessor? currentTimeAccessor = null)
 		{
-			this.currentTimeAccessor = currentTimeAccessor;
+			this.currentTimeAccessor = currentTimeAccessor ?? new DefaultCurrentTimeAccessor();
 		}
 
 		public MetricsTypeCollection GetStandardMetricsTypes()
