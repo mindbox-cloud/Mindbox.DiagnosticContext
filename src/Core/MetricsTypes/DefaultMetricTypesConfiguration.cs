@@ -23,9 +23,18 @@ namespace Mindbox.DiagnosticContext.MetricsTypes
 
 		public MetricsTypeCollection GetAsyncMetricsTypes()
 		{
-			return new MetricsTypeCollection(new MetricsType[]
+			return new(new MetricsType[]
 			{
 				WallClockTimeMetricsType.Create(currentTimeAccessor, WallClockTimeMetricsSystemName)
+			});
+		}
+
+		public MetricsTypeCollection GetMetricTypesWithThreadAllocatedBytes()
+		{
+			return new(new MetricsType[]
+			{
+				WallClockTimeMetricsType.Create(currentTimeAccessor, WallClockTimeMetricsSystemName),
+				ThreadAllocatedBytesMetricsType.Create(currentTimeAccessor, ThreadAllocatedBytesSystemName)
 			});
 		}
 
@@ -45,8 +54,11 @@ namespace Mindbox.DiagnosticContext.MetricsTypes
 				ThreadAllocatedBytesMetricsType.Create(currentTimeAccessor, ThreadAllocatedBytesSystemName)
 			};
 			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+			{
 				// CPU metrics type uses WinAPI in CpuTimeMeasurer
 				metricsTypes.Add(CpuTimeMetricsType.Create(currentTimeAccessor, CpuTimeMetricsSystemName, handler));
+			}
+
 			return new MetricsTypeCollection(metricsTypes);
 		}
 	}
