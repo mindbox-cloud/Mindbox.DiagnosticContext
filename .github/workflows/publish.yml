@@ -24,4 +24,4 @@ jobs:
       - name: Pack
         run: dotnet pack src/DiagnosticContext.sln -c Release -p:BuildNumber=${{ github.run_number }}
       - name: Publish
-        run: dotnet nuget push **/*.nupkg -k ${{secrets.MINDBOX_PRIVATE_NUGET_AUTH_TOKEN}} -s https://www.myget.org/F/mindbox-private/api/v2
+        run: dotnet nuget push **/*.nupkg -k ${{secrets.MINDBOX_PRIVATE_NUGET_AUTH_TOKEN}} -s https://mindbox.myget.org/F/mindbox-private/api/v3/index.json
