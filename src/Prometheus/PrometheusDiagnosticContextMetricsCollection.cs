@@ -7,8 +7,7 @@ namespace Mindbox.DiagnosticContext.Prometheus
 {
 	internal class PrometheusDiagnosticContextMetricsCollection : IDiagnosticContextMetricsCollection
 	{	
-		private readonly Dictionary<string, DiagnosticContextMetricsStorage> storagesByMetricPrefix =
-			new Dictionary<string, DiagnosticContextMetricsStorage>();
+		private readonly Dictionary<string, DiagnosticContextMetricsStorage> storagesByMetricPrefix = new();
 		
 		private readonly IDictionary<string, string> tags = new Dictionary<string, string>();
 
@@ -19,7 +18,7 @@ namespace Mindbox.DiagnosticContext.Prometheus
 		private readonly object syncRoot = new object();
 
 		public PrometheusDiagnosticContextMetricsCollection(
-			MetricFactory metricFactory,
+			IMetricFactory metricFactory,
 			PrometheusMetricNameBuilder metricNameBuilder)
 		{
 			dynamicStepsAdapter = new DynamicStepsPrometheusAdapter(metricFactory, metricNameBuilder);

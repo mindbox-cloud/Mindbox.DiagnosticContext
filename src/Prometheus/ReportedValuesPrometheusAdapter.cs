@@ -7,7 +7,7 @@ namespace Mindbox.DiagnosticContext.Prometheus
 {
 	internal class ReportedValuesPrometheusAdapter
 	{
-		private readonly MetricFactory metricFactory;
+		private readonly IMetricFactory metricFactory;
 
 		private readonly PrometheusMetricNameBuilder metricNameBuilder;
 
@@ -19,9 +19,9 @@ namespace Mindbox.DiagnosticContext.Prometheus
 		}
 
 		private readonly Dictionary<string, ReportedValuesCounters> counters =
-			new Dictionary<string, ReportedValuesCounters>();
+			new();
 
-		public ReportedValuesPrometheusAdapter(MetricFactory metricFactory, PrometheusMetricNameBuilder metricNameBuilder)
+		public ReportedValuesPrometheusAdapter(IMetricFactory metricFactory, PrometheusMetricNameBuilder metricNameBuilder)
 		{
 			this.metricFactory = metricFactory;
 			this.metricNameBuilder = metricNameBuilder;
@@ -75,18 +75,18 @@ namespace Mindbox.DiagnosticContext.Prometheus
 
 			var labelNames = new List<string> {"name"};
 			labelNames.AddRange(tags.Keys);
-			var labelNamesArray = labelNames.ToArray();
+			var counterConfiguration = new CounterConfiguration{LabelNames = labelNames.ToArray()};
 			
 			counters[counterName] = new ReportedValuesCounters
 			{
 				Total = metricFactory.CreateCounter(
 					totalMetricName,
 					totalMetricDescription,
-					labelNamesArray),
+					counterConfiguration),
 				Count =  metricFactory.CreateCounter(
 					reportedValuesMetricName,
 					reportedValuesMetricDescription,
-					labelNamesArray)
+					counterConfiguration)
 			};
 
 			return counters[counterName];

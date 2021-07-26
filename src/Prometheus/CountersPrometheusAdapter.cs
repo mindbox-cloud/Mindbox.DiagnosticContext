@@ -7,14 +7,13 @@ namespace Mindbox.DiagnosticContext.Prometheus
 {
 	internal class CountersPrometheusAdapter
 	{
-		private readonly MetricFactory metricFactory;
+		private readonly IMetricFactory metricFactory;
 
 		private readonly PrometheusMetricNameBuilder metricNameBuilder;
 
-		private readonly Dictionary<string, Counter> prometheusCounters =
-			new Dictionary<string, Counter>();
+		private readonly Dictionary<string, Counter> prometheusCounters = new();
 
-		public CountersPrometheusAdapter(MetricFactory metricFactory, PrometheusMetricNameBuilder metricNameBuilder)
+		public CountersPrometheusAdapter(IMetricFactory metricFactory, PrometheusMetricNameBuilder metricNameBuilder)
 		{
 			this.metricFactory = metricFactory;
 			this.metricNameBuilder = metricNameBuilder;
@@ -57,7 +56,7 @@ namespace Mindbox.DiagnosticContext.Prometheus
 				prometheusCounter = metricFactory.CreateCounter(
 					metricName,
 					metricDescription,
-					labelNames.ToArray());
+					new CounterConfiguration(){LabelNames = labelNames.ToArray()});
 
 				prometheusCounters[counterName] = prometheusCounter;
 			}
