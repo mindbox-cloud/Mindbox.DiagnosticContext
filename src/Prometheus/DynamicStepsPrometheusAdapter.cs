@@ -8,14 +8,14 @@ namespace Mindbox.DiagnosticContext.Prometheus
 {
 	internal class DynamicStepsPrometheusAdapter
 	{
-		private readonly MetricFactory metricFactory;
+		private readonly IMetricFactory metricFactory;
 
 		private readonly PrometheusMetricNameBuilder metricNameBuilder;
 
 		private readonly Dictionary<(string, MetricsType), StepPrometheusCounterSet> dynamicStepsPrometheusCounters = 
-			new Dictionary<(string, MetricsType), StepPrometheusCounterSet>();
+			new();
 
-		public DynamicStepsPrometheusAdapter(MetricFactory metricFactory, PrometheusMetricNameBuilder metricNameBuilder)
+		public DynamicStepsPrometheusAdapter(IMetricFactory metricFactory, PrometheusMetricNameBuilder metricNameBuilder)
 		{
 			this.metricFactory = metricFactory;
 			this.metricNameBuilder = metricNameBuilder;
@@ -76,20 +76,21 @@ namespace Mindbox.DiagnosticContext.Prometheus
 					.Append("step")
 					.Append("unit")
 					.ToArray();
-				
+				var counterConfiguration = new CounterConfiguration {LabelNames = totalLabelNames.ToArray()};
+
 				counterSet = new StepPrometheusCounterSet(
 					metricFactory.CreateCounter(
 						metricNameBuilder.BuildFullMetricName($"{metricNameBase}_Count"),
 						$"{metricDescriptionBase} - total count",
-						totalLabelNames),
+						counterConfiguration),
 					metricFactory.CreateCounter(
 						metricNameBuilder.BuildFullMetricName($"{metricNameBase}_Total"),
 						$"{metricDescriptionBase} - total value",
-						totalLabelNames),
+						counterConfiguration),
 					metricFactory.CreateCounter(
 						metricNameBuilder.BuildFullMetricName(metricNameBase),
 						metricDescriptionBase,
-						stepLabelNames)
+						new CounterConfiguration{LabelNames = stepLabelNames})
 					);
 
 				dynamicStepsPrometheusCounters[counterSetKey] = counterSet;

@@ -8,10 +8,14 @@ namespace Mindbox.DiagnosticContext.Prometheus
 	{
 		private readonly DefaultMetricTypesConfiguration defaultMetricTypesConfiguration;
 		private readonly IDiagnosticContextLogger diagnosticContextLogger;
-		private readonly MetricFactory metricFactory;
+		private readonly IMetricFactory metricFactory;
 		private readonly PrometheusMetricNameBuilder metricNameBuilder;
 
-		public PrometheusDiagnosticContextFactory(DefaultMetricTypesConfiguration defaultMetricTypesConfiguration, IDiagnosticContextLogger diagnosticContextLogger, MetricFactory? metricFactory = null, string? metricPostfix = null)
+		public PrometheusDiagnosticContextFactory(
+			DefaultMetricTypesConfiguration defaultMetricTypesConfiguration, 
+			IDiagnosticContextLogger diagnosticContextLogger, 
+			IMetricFactory? metricFactory = null, 
+			string? metricPostfix = null)
 		{
 			this.defaultMetricTypesConfiguration = defaultMetricTypesConfiguration;
 			this.diagnosticContextLogger = diagnosticContextLogger;
