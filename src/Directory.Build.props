@@ -5,6 +5,10 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>    
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Copyright>2021 Mindbox Ltd</Copyright>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/mindbox-moscow/Mindbox.DiagnosticContext</RepositoryUrl>
+    <PackageTags>diagnostics</PackageTags>    
   </PropertyGroup>
   <PropertyGroup>
     <VersionMajor>2</VersionMajor>
