@@ -4,9 +4,6 @@
         <TargetFramework>netstandard2.0</TargetFramework>
         <RootNamespace>Mindbox.DiagnosticContext.Prometheus</RootNamespace>
         <AssemblyName>Mindbox.DiagnosticContext.Prometheus</AssemblyName>
-        <Copyright>Mindbox</Copyright>
-        <RepositoryUrl>https://github.com/mindbox-moscow/Mindbox.DiagnosticContext</RepositoryUrl>
-        <PackageTags>diagnostics</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>
