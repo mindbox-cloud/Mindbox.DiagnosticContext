@@ -21,19 +21,19 @@ namespace Mindbox.DiagnosticContext.Tracing
 {
 	internal class TracingDiagnosticContext : IDiagnosticContext
 	{
-		private readonly IDiagnosticContext diagnosticContext;
+		private readonly IDiagnosticContext innerDiagnosticContext;
 		private readonly ITracer tracer;
 
 		private readonly SafeExceptionHandler exceptionHandler;
 		
-		public string PrefixName => diagnosticContext.PrefixName;
+		public string PrefixName => innerDiagnosticContext.PrefixName;
 
 		public TracingDiagnosticContext(
-			IDiagnosticContext diagnosticContext, 
+			IDiagnosticContext innerDiagnosticContext, 
 			ITracer tracer, 
 			IDiagnosticContextLogger logger)
 		{
-			this.diagnosticContext = diagnosticContext;
+			this.innerDiagnosticContext = innerDiagnosticContext;
 			this.tracer = tracer;
 			exceptionHandler = new SafeExceptionHandler(e => logger.Log(e.Message, e));
 		}
@@ -50,33 +50,33 @@ namespace Mindbox.DiagnosticContext.Tracing
 
 		public void SetTag(string tag, string value)
 		{
-			diagnosticContext.SetTag(tag, value);
+			innerDiagnosticContext.SetTag(tag, value);
 			exceptionHandler.Execute(() => tracer.ActiveSpan.SetTag(tag, value));
 		}
 
 		public void Increment(string counterPath)
 		{
-			diagnosticContext.Increment(counterPath);
+			innerDiagnosticContext.Increment(counterPath);
 		}
 
 		public IDisposable ExtendCodeSourceLabel(string extensionCodeSourceLabel)
 		{
-			return diagnosticContext.ExtendCodeSourceLabel(extensionCodeSourceLabel);
+			return innerDiagnosticContext.ExtendCodeSourceLabel(extensionCodeSourceLabel);
 		}
 
 		public void ReportValue(string counterPath, long value)
 		{
-			diagnosticContext.ReportValue(counterPath, value);
+			innerDiagnosticContext.ReportValue(counterPath, value);
 		}
 
 		public void Dispose()
 		{
-			diagnosticContext.Dispose();
+			innerDiagnosticContext.Dispose();
 		}
 
 		private IEnumerable<IDisposable> CreateMeasure(string stepName)
 		{
-			yield return diagnosticContext.Measure(stepName);
+			yield return innerDiagnosticContext.Measure(stepName);
 			yield return exceptionHandler.Execute<IDisposable>(
 				action: () => tracer.BuildSpan(stepName).StartActive(),
 				fallback: () => new EmptyMeasureScope());
