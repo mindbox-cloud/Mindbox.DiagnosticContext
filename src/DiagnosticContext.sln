@@ -18,6 +18,8 @@ ProjectSection(SolutionItems) = preProject
 	Directory.Build.props = Directory.Build.props
 EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tracing", "Tracing\Tracing.csproj", "{4E3053DD-EA78-449C-8B14-C60795EB74ED}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -91,5 +93,17 @@ Global
 		{7BA63184-A38F-41BF-9371-63272135B529}.Release|x64.Build.0 = Release|Any CPU
 		{7BA63184-A38F-41BF-9371-63272135B529}.Release|x86.ActiveCfg = Release|Any CPU
 		{7BA63184-A38F-41BF-9371-63272135B529}.Release|x86.Build.0 = Release|Any CPU
+		{4E3053DD-EA78-449C-8B14-C60795EB74ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E3053DD-EA78-449C-8B14-C60795EB74ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E3053DD-EA78-449C-8B14-C60795EB74ED}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4E3053DD-EA78-449C-8B14-C60795EB74ED}.Debug|x64.Build.0 = Debug|Any CPU
+		{4E3053DD-EA78-449C-8B14-C60795EB74ED}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4E3053DD-EA78-449C-8B14-C60795EB74ED}.Debug|x86.Build.0 = Debug|Any CPU
+		{4E3053DD-EA78-449C-8B14-C60795EB74ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E3053DD-EA78-449C-8B14-C60795EB74ED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4E3053DD-EA78-449C-8B14-C60795EB74ED}.Release|x64.ActiveCfg = Release|Any CPU
+		{4E3053DD-EA78-449C-8B14-C60795EB74ED}.Release|x64.Build.0 = Release|Any CPU
+		{4E3053DD-EA78-449C-8B14-C60795EB74ED}.Release|x86.ActiveCfg = Release|Any CPU
+		{4E3053DD-EA78-449C-8B14-C60795EB74ED}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
