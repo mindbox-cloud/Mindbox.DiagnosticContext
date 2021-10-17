@@ -40,7 +40,7 @@ namespace Mindbox.DiagnosticContext.Tracing
 
 		public IDisposable Measure(string stepName)
 		{
-			return new MeasureScope(CreateMeasure(stepName).ToArray());
+			return new MeasureScope(CreateMeasures(stepName).ToArray());
 		}
 
 		public IDisposable MeasureForAdditionalMetric(IDiagnosticContext diagnosticContext)
@@ -74,7 +74,7 @@ namespace Mindbox.DiagnosticContext.Tracing
 			innerDiagnosticContext.Dispose();
 		}
 
-		private IEnumerable<IDisposable> CreateMeasure(string stepName)
+		private IEnumerable<IDisposable> CreateMeasures(string stepName)
 		{
 			yield return innerDiagnosticContext.Measure(stepName);
 			yield return exceptionHandler.Execute<IDisposable>(
