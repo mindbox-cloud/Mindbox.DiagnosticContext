@@ -16,13 +16,13 @@ using OpenTracing;
 
 namespace Mindbox.DiagnosticContext.Tracing
 {
-	internal class TracingDiagnosticContextFactoryDecorator : IDiagnosticContextFactory
+	internal class TracingDiagnosticContextFactory : IDiagnosticContextFactory
 	{
 		private readonly IDiagnosticContextFactory innerDiagnosticContextFactory;
 		private readonly ITracer tracer;
 		private readonly IDiagnosticContextLogger logger;
 
-		public TracingDiagnosticContextFactoryDecorator(
+		public TracingDiagnosticContextFactory(
 			IDiagnosticContextFactory innerDiagnosticContextFactory,
 			ITracer tracer,
 			IDiagnosticContextLogger logger)
@@ -40,7 +40,7 @@ namespace Mindbox.DiagnosticContext.Tracing
 			var innerDiagnosticContext = innerDiagnosticContextFactory
 				.CreateDiagnosticContext(metricPath, isFeatureBoundaryCodePoint, metricsTypesOverride);
 
-			return new TracingDiagnosticContextDecorator(innerDiagnosticContext, tracer, logger);
+			return new TracingDiagnosticContext(innerDiagnosticContext, tracer, logger);
 		}
 	}
 }

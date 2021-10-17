@@ -19,7 +19,7 @@ using OpenTracing;
 
 namespace Mindbox.DiagnosticContext.Tracing
 {
-	internal class TracingDiagnosticContextDecorator : IDiagnosticContext
+	internal class TracingDiagnosticContext : IDiagnosticContext
 	{
 		private readonly IDiagnosticContext diagnosticContext;
 		private readonly ITracer tracer;
@@ -28,7 +28,7 @@ namespace Mindbox.DiagnosticContext.Tracing
 		
 		public string PrefixName => diagnosticContext.PrefixName;
 
-		public TracingDiagnosticContextDecorator(
+		public TracingDiagnosticContext(
 			IDiagnosticContext diagnosticContext, 
 			ITracer tracer, 
 			IDiagnosticContextLogger logger)

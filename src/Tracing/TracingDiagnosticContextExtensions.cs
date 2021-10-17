@@ -20,7 +20,7 @@ namespace Mindbox.DiagnosticContext.Tracing
 	{
 		public static IServiceCollection ConnectTracingToDiagnosticContext(this IServiceCollection collection)
 		{
-			return collection.Decorate<IDiagnosticContextFactory, TracingDiagnosticContextFactoryDecorator>();
+			return collection.Decorate<IDiagnosticContextFactory, TracingDiagnosticContextFactory>();
 		}
 	}
 }
