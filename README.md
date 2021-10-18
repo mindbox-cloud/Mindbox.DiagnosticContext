@@ -1,6 +1,6 @@
 # Mindbox.DiagnosticContext
 
-![](https://github.com/mindbox-moscow/Mindbox.DiagnosticContext/workflows/master/badge.svg)
+![](https://github.com/mindbox-moscow/Mindbox.DiagnosticContext/workflows/publish/badge.svg)
 
 ## Adding diagnostic context to a Asp.Net Core app
 
