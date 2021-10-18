@@ -12,7 +12,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v1
       - name: Check License Lines
-        uses: kt3k/license_checker@v1.0.6                    
+        uses: kt3k/license_checker@v1.0.6      
+      - name: Build And Run Tests
+        run: dotnet test src/DiagnosticContext.sln --configuration Release        
       - name: Build
         run: dotnet build src/DiagnosticContext.sln --configuration Release
       - name: Pack
