@@ -45,7 +45,7 @@ namespace Mindbox.DiagnosticContext.Tracing
 
 		public IDisposable MeasureForAdditionalMetric(IDiagnosticContext diagnosticContext)
 		{
-			return diagnosticContext.MeasureForAdditionalMetric(diagnosticContext);
+			return innerDiagnosticContext.MeasureForAdditionalMetric(diagnosticContext);
 		}
 
 		public void SetTag(string tag, string value)
