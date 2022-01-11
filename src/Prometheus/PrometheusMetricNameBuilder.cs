@@ -23,7 +23,7 @@ namespace Mindbox.DiagnosticContext.Prometheus
 		private readonly string? postfix;
 
 		private static readonly Regex InvalidCharactersRegex =
-			new("[^a-zA-Z0-9_:]*", RegexOptions.Compiled);
+			new("[^a-zA-Z0-9_:]+", RegexOptions.Compiled);
 
 		public PrometheusMetricNameBuilder(string prefix = "diagnosticcontext", string? postfix = null)
 		{
