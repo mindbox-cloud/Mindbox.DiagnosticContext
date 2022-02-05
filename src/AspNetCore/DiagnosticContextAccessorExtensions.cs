@@ -22,7 +22,12 @@ namespace Mindbox.DiagnosticContext.AspNetCore
 
 		public static IDiagnosticContext GetDiagnosticContext(this HttpContext httpContext)
 		{
-			return httpContext.Items[DiagnosticContextItemKey] as IDiagnosticContext ?? new NullDiagnosticContext();
+			if (httpContext.Items.TryGetValue(DiagnosticContextItemKey, out var item))
+			{
+				if (item is IDiagnosticContext context) return context;
+			}
+
+			return new NullDiagnosticContext();
 		}
 
 		internal static void StoreDiagnosticContext(this HttpContext httpContext, IDiagnosticContext diagnosticContext)
