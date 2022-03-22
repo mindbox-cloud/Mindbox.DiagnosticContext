@@ -1,6 +1,8 @@
 name: Pull request
-
 on: pull_request
+
+env:
+  NETCORE_VERSION: '6.0'
 
 jobs:
   build:
@@ -8,7 +10,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v1
+        
+      - name: Setup .NET Core SDK ${{ env.NETCORE_VERSION }}
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: ${{ env.NETCORE_VERSION }}        
+          
       - name: Check License Lines
         uses: kt3k/license_checker@v1.0.6     
+        
       - name: Build And Run Tests
         run: dotnet test src/DiagnosticContext.sln --configuration Release

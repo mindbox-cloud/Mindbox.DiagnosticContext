@@ -5,19 +5,32 @@ on:
     branches:
       - main
 
+env:
+  NETCORE_VERSION: '6.0'
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v1
+        
       - name: Check License Lines
-        uses: kt3k/license_checker@v1.0.6      
+        uses: kt3k/license_checker@v1.0.6
+        
+      - name: Setup .NET Core SDK ${{ env.NETCORE_VERSION }}
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: ${{ env.NETCORE_VERSION }}
+          
       - name: Build And Run Tests
-        run: dotnet test src/DiagnosticContext.sln --configuration Release        
+        run: dotnet test src/DiagnosticContext.sln --configuration Release     
+        
       - name: Build
         run: dotnet build src/DiagnosticContext.sln --configuration Release
+        
       - name: Pack
         run: dotnet pack src/DiagnosticContext.sln -c Release -p:BuildNumber=${{ github.run_number }}
+        
       - name: Publish
         run: dotnet nuget push **/*.nupkg -k ${{secrets.MINDBOX_NUGET_AUTH_TOKEN}} -s https://www.nuget.org/api/v2/package

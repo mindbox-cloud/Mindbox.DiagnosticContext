@@ -33,7 +33,7 @@ namespace Mindbox.DiagnosticContext.AspNetCore
 		public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
 		{
 			var diagnosticContextFactory = (IDiagnosticContextFactory)context.HttpContext.RequestServices
-				.GetService(typeof(IDiagnosticContextFactory));
+				.GetService(typeof(IDiagnosticContextFactory))!;
 			
 			using var diagnosticContext = diagnosticContextFactory.CreateDiagnosticContext(metricName);
 			
