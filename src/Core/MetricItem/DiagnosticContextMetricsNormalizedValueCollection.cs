@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,24 +18,23 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Mindbox.DiagnosticContext.MetricItem
+namespace Mindbox.DiagnosticContext.MetricItem;
+
+public class DiagnosticContextMetricsNormalizedValueCollection
 {
-	public class DiagnosticContextMetricsNormalizedValueCollection
+	private readonly Dictionary<string, DiagnosticContextMetricsNormalizedValue> _diagnosticContextMetricsNormalizedValues;
+
+	public DiagnosticContextMetricsNormalizedValueCollection(
+		IEnumerable<DiagnosticContextMetricsNormalizedValue> normalizedValues)
 	{
-		private readonly Dictionary<string, DiagnosticContextMetricsNormalizedValue> diagnosticContextMetricsNormalizedValues;
+		_diagnosticContextMetricsNormalizedValues = normalizedValues.ToDictionary(v => v.MetricTypeSystemName);
+	}
 
-		public DiagnosticContextMetricsNormalizedValueCollection(
-			IEnumerable<DiagnosticContextMetricsNormalizedValue> normalizedValues)
-		{
-			diagnosticContextMetricsNormalizedValues = normalizedValues.ToDictionary(v => v.MetricTypeSystemName);
-		}
+	public DiagnosticContextMetricsNormalizedValue GetValueByMetricsTypeSystemName(string metricsTypeSystemName)
+	{
+		if (!_diagnosticContextMetricsNormalizedValues.ContainsKey(metricsTypeSystemName))
+			throw new InvalidOperationException($"{metricsTypeSystemName} metrics not found");
 
-		public DiagnosticContextMetricsNormalizedValue GetValueByMetricsTypeSystemName(string metricsTypeSystemName)
-		{
-			if (!diagnosticContextMetricsNormalizedValues.ContainsKey(metricsTypeSystemName))
-				throw new InvalidOperationException($"{metricsTypeSystemName} metrics not found");
-
-			return diagnosticContextMetricsNormalizedValues[metricsTypeSystemName];
-		}
+		return _diagnosticContextMetricsNormalizedValues[metricsTypeSystemName];
 	}
 }

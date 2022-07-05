@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,113 +15,112 @@
 using System;
 using Mindbox.DiagnosticContext.MetricItem;
 
-namespace Mindbox.DiagnosticContext
+namespace Mindbox.DiagnosticContext;
+
+public static class DiagnosticContextFactory
 {
-	public static class DiagnosticContextFactory
+	private const string DiagnosticContextCreationLogicalCallContextKey = "DiagnosticContextCreationLogicalCallContextKey";
+
+	private static IDiagnosticContext BuildCore(
+		Func<IDiagnosticContext> diagnosticContextProvider,
+		IDiagnosticContextLogger diagnosticContextLogger)
 	{
-		private const string DiagnosticContextCreationLogicalCallContextKey = "DiagnosticContextCreationLogicalCallContextKey";
-
-		private static IDiagnosticContext BuildCore(
-			Func<IDiagnosticContext> diagnosticContextProvider, 
-			IDiagnosticContextLogger diagnosticContextLogger)
+		try
 		{
-			try
-			{
-				if (IsInDiagnosticContextCreation)
-					return new NullDiagnosticContext();
-
-				IsInDiagnosticContextCreation = true;
-
-				return diagnosticContextProvider();
-			}
-			catch (ObjectDisposedException)
-			{
-				// При получении MetricsTypesWithCpuTime у ModelApplicationHostController.Instance уже может быть вызван Dispose()
-				// В этом случае так же возвращаем NullDiagnosticContext
+			if (IsInDiagnosticContextCreation)
 				return new NullDiagnosticContext();
-			}
-			catch (Exception ex)
-			{
-				try
-				{
-					diagnosticContextLogger.Log("", ex);
-				}
-				catch (Exception)
-				{
-					// если что, вернем NullDiagnosticContext
-				}
 
-				return new NullDiagnosticContext();
-			}
-			finally
-			{
-				IsInDiagnosticContextCreation = false;
-			}
+			IsInDiagnosticContextCreation = true;
+
+			return diagnosticContextProvider();
 		}
-
-
-
-		public static IDiagnosticContext BuildForMetric(
-			string metricPath, 
-			bool isFeatureBoundaryCodePoint = false,
-			MetricsType[]? metricsTypesOverride = null)
+		catch (ObjectDisposedException)
 		{
-			return BuildForMetric(
-				metricPath,
-				true,
-				isFeatureBoundaryCodePoint,
-				metricsTypesOverride);
-		}
-
-		public static IDiagnosticContext TryBuildForMetric(
-			string metricPath, 
-			bool isFeatureBoundaryCodePoint = false,
-			MetricsType[]? metricsTypesOverride = null)
-		{
-			return BuildForMetric(
-				metricPath,
-				false,
-				isFeatureBoundaryCodePoint,
-				metricsTypesOverride);
-		}
-
-		private static IDiagnosticContext BuildForMetric(
-			string metricPath,
-			bool isPluginRequired,
-			bool isFeatureBoundaryCodePoint,
-			MetricsType[]? metricsTypesOverride)
-		{
+			// При получении MetricsTypesWithCpuTime у ModelApplicationHostController.Instance уже может быть вызван Dispose()
+			// В этом случае так же возвращаем NullDiagnosticContext
 			return new NullDiagnosticContext();
 		}
-
-		public static IDiagnosticContext BuildCustom(
-			Func<IDiagnosticContext> diagnosticContextProvider, 
-			IDiagnosticContextLogger diagnosticContextLogger)
-		{
-			return BuildCore(diagnosticContextProvider, diagnosticContextLogger);
-		}
-
-		private static bool IsInDiagnosticContextCreation
-		{
-			get => (bool?)CallContext.LogicalGetData(DiagnosticContextCreationLogicalCallContextKey) ?? false;
-			set => CallContext.LogicalSetData(DiagnosticContextCreationLogicalCallContextKey, value ? true : null);
-		}
-
-		/// <summary>
-		/// Сделан для мест в которых еще недоступен ApplicationHostController и нет возможности получить плагин
-		/// </summary>
-		/// <param name="metricsItem">Пустая метрика транзакции</param>
-		/// <returns>DiagnosticContext либо NullDiagnosticContext если произошла ошибка.</returns>
-		internal static IDiagnosticContext BuildForMetricsItem(DiagnosticContextMetricsItem metricsItem)
+		catch (Exception ex)
 		{
 			try
 			{
-				return new DiagnosticContext(metricsItem);
+				diagnosticContextLogger.Log("", ex);
 			}
 			catch (Exception)
 			{
-				return new NullDiagnosticContext();
+				// если что, вернем NullDiagnosticContext
 			}
+
+			return new NullDiagnosticContext();
+		}
+		finally
+		{
+			IsInDiagnosticContextCreation = false;
+		}
+	}
+
+	public static IDiagnosticContext BuildForMetric(
+		string metricPath,
+		bool isFeatureBoundaryCodePoint = false,
+		MetricsType[]? metricsTypesOverride = null)
+	{
+		return BuildForMetric(
+			metricPath,
+			true,
+			isFeatureBoundaryCodePoint,
+			metricsTypesOverride);
+	}
+
+	public static IDiagnosticContext TryBuildForMetric(
+		string metricPath,
+		bool isFeatureBoundaryCodePoint = false,
+		MetricsType[]? metricsTypesOverride = null)
+	{
+		return BuildForMetric(
+			metricPath,
+			false,
+			isFeatureBoundaryCodePoint,
+			metricsTypesOverride);
+	}
+
+	private static IDiagnosticContext BuildForMetric(
+#pragma warning disable IDE0060 // Remove unused parameter
+		string metricPath,
+		bool isPluginRequired,
+		bool isFeatureBoundaryCodePoint,
+		MetricsType[]? metricsTypesOverride)
+#pragma warning restore IDE0060 // Remove unused parameter
+	{
+		return new NullDiagnosticContext();
+	}
+
+	public static IDiagnosticContext BuildCustom(
+		Func<IDiagnosticContext> diagnosticContextProvider,
+		IDiagnosticContextLogger diagnosticContextLogger)
+	{
+		return BuildCore(diagnosticContextProvider, diagnosticContextLogger);
+	}
+
+	private static bool IsInDiagnosticContextCreation
+	{
+		get => (bool?)CallContext.LogicalGetData(DiagnosticContextCreationLogicalCallContextKey) ?? false;
+		set => CallContext.LogicalSetData(DiagnosticContextCreationLogicalCallContextKey, value ? true : null);
+	}
+
+	/// <summary>
+	/// Сделан для мест в которых еще недоступен ApplicationHostController и нет возможности получить плагин
+	/// </summary>
+	/// <param name="metricsItem">Пустая метрика транзакции</param>
+	/// <returns>DiagnosticContext либо NullDiagnosticContext если произошла ошибка.</returns>
+	internal static IDiagnosticContext BuildForMetricsItem(DiagnosticContextMetricsItem metricsItem)
+	{
+		try
+		{
+			return new DiagnosticContext(metricsItem);
+		}
+		catch (Exception)
+		{
+			return new NullDiagnosticContext();
 		}
 	}
 }

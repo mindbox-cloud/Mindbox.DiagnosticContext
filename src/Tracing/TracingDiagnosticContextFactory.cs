@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,33 +14,32 @@
 
 using OpenTracing;
 
-namespace Mindbox.DiagnosticContext.Tracing
+namespace Mindbox.DiagnosticContext.Tracing;
+
+internal class TracingDiagnosticContextFactory : IDiagnosticContextFactory
 {
-	internal class TracingDiagnosticContextFactory : IDiagnosticContextFactory
+	private readonly IDiagnosticContextFactory _innerDiagnosticContextFactory;
+	private readonly ITracer _tracer;
+	private readonly IDiagnosticContextLogger _logger;
+
+	public TracingDiagnosticContextFactory(
+		IDiagnosticContextFactory innerDiagnosticContextFactory,
+		ITracer tracer,
+		IDiagnosticContextLogger logger)
 	{
-		private readonly IDiagnosticContextFactory innerDiagnosticContextFactory;
-		private readonly ITracer tracer;
-		private readonly IDiagnosticContextLogger logger;
+		_innerDiagnosticContextFactory = innerDiagnosticContextFactory;
+		_tracer = tracer;
+		_logger = logger;
+	}
 
-		public TracingDiagnosticContextFactory(
-			IDiagnosticContextFactory innerDiagnosticContextFactory,
-			ITracer tracer,
-			IDiagnosticContextLogger logger)
-		{
-			this.innerDiagnosticContextFactory = innerDiagnosticContextFactory;
-			this.tracer = tracer;
-			this.logger = logger;
-		}
-		
-		public IDiagnosticContext CreateDiagnosticContext(
-			string metricPath, 
-			bool isFeatureBoundaryCodePoint = false,
-			MetricsType[]? metricsTypesOverride = null)
-		{
-			var innerDiagnosticContext = innerDiagnosticContextFactory
-				.CreateDiagnosticContext(metricPath, isFeatureBoundaryCodePoint, metricsTypesOverride);
+	public IDiagnosticContext CreateDiagnosticContext(
+		string metricPath,
+		bool isFeatureBoundaryCodePoint = false,
+		MetricsType[]? metricsTypesOverride = null)
+	{
+		var innerDiagnosticContext = _innerDiagnosticContextFactory
+			.CreateDiagnosticContext(metricPath, isFeatureBoundaryCodePoint, metricsTypesOverride);
 
-			return new TracingDiagnosticContext(innerDiagnosticContext, tracer, logger);
-		}
+		return new TracingDiagnosticContext(innerDiagnosticContext, _tracer, _logger);
 	}
 }

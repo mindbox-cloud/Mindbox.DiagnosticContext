@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,20 +16,19 @@
 
 using System.Threading;
 
-namespace Mindbox.DiagnosticContext.CpuTimeByFeatureMetrics
+namespace Mindbox.DiagnosticContext.CpuTimeByFeatureMetrics;
+
+internal sealed class DefaultActiveMetricsMeasurerStorage : IActiveMetricsMeasurerStorage
 {
-	internal sealed class DefaultActiveMetricsMeasurerStorage : IActiveMetricsMeasurerStorage
+	private static readonly ThreadLocal<MetricsMeasurer> _measurer = new();
+
+	public MetricsMeasurer GetActiveMeasurer()
 	{
-		private static readonly ThreadLocal<MetricsMeasurer> measurer = new ThreadLocal<MetricsMeasurer>();
+		return _measurer.Value;
+	}
 
-		public MetricsMeasurer GetActiveMeasurer()
-		{
-			return measurer.Value;
-		}
-
-		public void SetActiveMeasurer(MetricsMeasurer newMeasurer)
-		{
-			measurer.Value = newMeasurer;
-		}
+	public void SetActiveMeasurer(MetricsMeasurer newMeasurer)
+	{
+		_measurer.Value = newMeasurer;
 	}
 }

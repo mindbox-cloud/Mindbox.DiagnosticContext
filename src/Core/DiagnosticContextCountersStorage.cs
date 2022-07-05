@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,22 +16,21 @@
 
 using System.Collections.Generic;
 
-namespace Mindbox.DiagnosticContext
+namespace Mindbox.DiagnosticContext;
+
+public class DiagnosticContextCountersStorage
 {
-	public class DiagnosticContextCountersStorage
+	private readonly Dictionary<string, int> _counters = new();
+
+	public IReadOnlyDictionary<string, int> Counters => _counters;
+
+	public void CollectItemData(Dictionary<string, int> itemCounters)
 	{
-		private readonly Dictionary<string, int> counters = new Dictionary<string, int>();
-
-		public IReadOnlyDictionary<string, int> Counters => counters;
-
-		public void CollectItemData(Dictionary<string, int> itemCounters)
+		foreach (var itemCounter in itemCounters)
 		{
-			foreach (var itemCounter in itemCounters)
-			{
-				if (!counters.ContainsKey(itemCounter.Key))
-					counters[itemCounter.Key] = 0;
-				counters[itemCounter.Key] += itemCounter.Value;
-			}
+			if (!_counters.ContainsKey(itemCounter.Key))
+				_counters[itemCounter.Key] = 0;
+			_counters[itemCounter.Key] += itemCounter.Value;
 		}
 	}
 }

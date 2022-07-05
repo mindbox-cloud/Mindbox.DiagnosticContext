@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,152 +18,144 @@ using System;
 using Mindbox.DiagnosticContext.MetricItem;
 using Mindbox.DiagnosticContext.MetricsTypes;
 
-namespace Mindbox.DiagnosticContext
+namespace Mindbox.DiagnosticContext;
+
+public class DiagnosticContext : IDiagnosticContext
 {
-	public class DiagnosticContext : IDiagnosticContext
+	private readonly DiagnosticContextCollection _diagnosticContextCollection = new();
+	private IDiagnosticContextMetricsCollection _metricsCollection;
+	private DiagnosticContextMetricsItem _metricsItem;
+	private IDisposable _totalTimer;
+
+	private bool _disposed;
+	private readonly SafeExceptionHandler _safeExceptionHandler;
+
+	public string PrefixName => _metricsItem?.MetricPrefix;
+
+	private IDisposable _sourceCodeLabelScope = null;
+
+	public DiagnosticContext(
+		IDiagnosticContextLogger diagnosticContextLogger,
+		string metricPath,
+		IDiagnosticContextMetricsCollection metricsCollection,
+		MetricsTypeCollection metricTypes,
+		bool isFeatureBoundaryCodePoint = false)
 	{
-		private readonly DiagnosticContextCollection diagnosticContextCollection = new DiagnosticContextCollection();
-		private IDiagnosticContextMetricsCollection metricsCollection;
-		private DiagnosticContextMetricsItem metricsItem;
-		private IDisposable totalTimer;
-
-		private bool disposed;
-		private readonly SafeExceptionHandler safeExceptionHandler;
-
-		public string PrefixName => metricsItem?.MetricPrefix;
-
-		private IDisposable sourceCodeLabelScope = null;
-
-		public DiagnosticContext(
-			IDiagnosticContextLogger diagnosticContextLogger,
-			string metricPath, 
-			IDiagnosticContextMetricsCollection metricsCollection,
-			MetricsTypeCollection metricTypes,
-			bool isFeatureBoundaryCodePoint = false)
+		_safeExceptionHandler = new SafeExceptionHandler(diagnosticContextLogger);
+		_safeExceptionHandler.HandleExceptions(() =>
 		{
-			safeExceptionHandler = new SafeExceptionHandler(diagnosticContextLogger);
-			safeExceptionHandler.HandleExceptions(() =>
+			if (string.IsNullOrEmpty(metricPath))
+				throw new ArgumentNullException(nameof(metricPath));
+			_metricsCollection = metricsCollection ?? throw new ArgumentNullException(nameof(metricsCollection));
+			_metricsItem = new DiagnosticContextMetricsItem(metricTypes, metricPath);
+			_totalTimer = _metricsItem.DynamicSteps.StartTotal();
+
+			_sourceCodeLabelScope = isFeatureBoundaryCodePoint
+				? CodeFlowMonitoringService.SetCodeSourceLabel(PrefixName)
+				: CodeFlowMonitoringService.TrySetCodeSourceLabel(PrefixName);
+		});
+	}
+
+	internal DiagnosticContext(DiagnosticContextMetricsItem metricsItem)
+	{
+		_safeExceptionHandler = new SafeExceptionHandler();
+		_safeExceptionHandler.HandleExceptions(() =>
+		{
+			_metricsItem = metricsItem ?? throw new ArgumentNullException(nameof(metricsItem));
+			_totalTimer = metricsItem.DynamicSteps.StartTotal();
+		});
+	}
+
+	public IDisposable MeasureForAdditionalMetric(IDiagnosticContext diagnosticContext)
+	{
+		return _safeExceptionHandler.HandleExceptions(
+			() =>
 			{
-				if (string.IsNullOrEmpty(metricPath))
-					throw new ArgumentNullException(nameof(metricPath));
-
-				if (metricsCollection == null)
-					throw new ArgumentNullException(nameof(metricsCollection));
-				
-				this.metricsCollection = metricsCollection;
-				metricsItem = new DiagnosticContextMetricsItem(metricTypes, metricPath);
-				totalTimer = metricsItem.DynamicSteps.StartTotal();
-
-				sourceCodeLabelScope = isFeatureBoundaryCodePoint 
-					? CodeFlowMonitoringService.SetCodeSourceLabel(PrefixName)
-					: CodeFlowMonitoringService.TrySetCodeSourceLabel(PrefixName);
-			});
-		}
-
-		internal DiagnosticContext(DiagnosticContextMetricsItem metricsItem)
-		{
-			safeExceptionHandler = new SafeExceptionHandler();
-			safeExceptionHandler.HandleExceptions(() =>
-			{
-				if (metricsItem == null)
-					throw new ArgumentNullException(nameof(metricsItem));
-
-				this.metricsItem = metricsItem;
-				totalTimer = metricsItem.DynamicSteps.StartTotal();
-			});
-		}
-		
-		public IDisposable MeasureForAdditionalMetric(IDiagnosticContext diagnosticContext)
-		{
-			return safeExceptionHandler.HandleExceptions(
-				() =>
-				{
-					diagnosticContextCollection.LinkDiagnosticContext(diagnosticContext);
-					return diagnosticContext;
-				},
-				() => NullDisposable.Instance);
-		}
-
-		public IDisposable Measure(string stepName)
-		{
-			return safeExceptionHandler.HandleExceptions(() =>
-			{
-				if (safeExceptionHandler.IsInInvalidState)
-					return new FakeTimer();
-
-				if (string.IsNullOrEmpty(stepName))
-					throw new ArgumentNullException(stepName);
-
-				return new DisposableContainer(
-						diagnosticContextCollection.Measure(stepName),
-						metricsItem.DynamicSteps.StartStep(stepName))
-					as IDisposable;
+				_diagnosticContextCollection.LinkDiagnosticContext(diagnosticContext);
+				return diagnosticContext;
 			},
-			() => new FakeTimer());
-		}
+			() => NullDisposable.Instance);
+	}
 
-		public void SetTag(string tag, string value)
+	public IDisposable Measure(string stepName)
+	{
+		return _safeExceptionHandler.HandleExceptions(() =>
 		{
-			safeExceptionHandler.HandleExceptions(
-				() =>
-				{
-					metricsCollection.SetTag(tag, value);
-				});
-		}
+			if (_safeExceptionHandler.IsInInvalidState)
+				return new FakeTimer();
 
-		public void Increment(string counterPath)
-		{
-			safeExceptionHandler.HandleExceptions(() =>
+			if (string.IsNullOrEmpty(stepName))
+				throw new ArgumentNullException(stepName);
+
+			return new DisposableContainer(
+					_diagnosticContextCollection.Measure(stepName),
+					_metricsItem.DynamicSteps.StartStep(stepName))
+				as IDisposable;
+		},
+		() => new FakeTimer());
+	}
+
+	public void SetTag(string tag, string value)
+	{
+		_safeExceptionHandler.HandleExceptions(
+			() =>
 			{
-				diagnosticContextCollection.Increment(counterPath);
-
-				if (!metricsItem.Counters.ContainsKey(counterPath))
-					metricsItem.Counters[counterPath] = 0;
-				metricsItem.Counters[counterPath]++;
+				_metricsCollection.SetTag(tag, value);
 			});
-		}
+	}
 
-		public IDisposable ExtendCodeSourceLabel(string extensionCodeSourceLabel)
+	public void Increment(string counterPath)
+	{
+		_safeExceptionHandler.HandleExceptions(() =>
 		{
-			return new DisposableExtendCodeSourceLabel(extensionCodeSourceLabel);
-		}
+			_diagnosticContextCollection.Increment(counterPath);
 
-		public void ReportValue(string counterPath, long value)
+			if (!_metricsItem.Counters.ContainsKey(counterPath))
+				_metricsItem.Counters[counterPath] = 0;
+			_metricsItem.Counters[counterPath]++;
+		});
+	}
+
+	public IDisposable ExtendCodeSourceLabel(string extensionCodeSourceLabel)
+	{
+		return new DisposableExtendCodeSourceLabel(extensionCodeSourceLabel);
+	}
+
+	public void ReportValue(string counterPath, long value)
+	{
+		_safeExceptionHandler.HandleExceptions(() =>
 		{
-			safeExceptionHandler.HandleExceptions(() =>
+			if (_metricsItem.ReportedValues.ContainsKey(counterPath))
+				throw new InvalidOperationException($"Значение метрики {counterPath} было указано более одного раза.");
+
+			_metricsItem.ReportedValues[counterPath] = value;
+		});
+	}
+
+	public void Dispose()
+	{
+		if (!_disposed)
+		{
+			_safeExceptionHandler.HandleExceptions(() =>
 			{
-				if (metricsItem.ReportedValues.ContainsKey(counterPath))
-					throw new InvalidOperationException($"Значение метрики {counterPath} было указано более одного раза.");
+				_diagnosticContextCollection.Dispose();
 
-				metricsItem.ReportedValues[counterPath] = value;
+				_totalTimer.Dispose();
+
+				if (_safeExceptionHandler.IsInInvalidState)
+					return;
+
+				if (_metricsItem.DynamicSteps.IsInInvalidState)
+					return;
+
+				_metricsItem.PrepareForCollection();
+
+				_metricsCollection?.CollectItemData(_metricsItem);
 			});
+
+			_safeExceptionHandler.HandleExceptions(() => _sourceCodeLabelScope?.Dispose());
 		}
 
-		public void Dispose()
-		{
-			if (!disposed)
-			{
-				safeExceptionHandler.HandleExceptions(() =>
-				{
-					diagnosticContextCollection.Dispose();
-
-					totalTimer.Dispose();
-
-					if (safeExceptionHandler.IsInInvalidState)
-						return;
-
-					if (metricsItem.DynamicSteps.IsInInvalidState)
-						return;
-
-					metricsItem.PrepareForCollection();
-
-					metricsCollection?.CollectItemData(metricsItem);
-				});
-
-				safeExceptionHandler.HandleExceptions(() => sourceCodeLabelScope?.Dispose());
-			}
-
-			disposed = true;
-		}
+		_disposed = true;
 	}
 }

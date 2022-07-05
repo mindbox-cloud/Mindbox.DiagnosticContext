@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,79 +14,78 @@
 
 using System;
 
-namespace Mindbox.DiagnosticContext
+namespace Mindbox.DiagnosticContext;
+
+public class NullDiagnosticContext : IDiagnosticContext
 {
-	public class NullDiagnosticContext : IDiagnosticContext
+	private readonly DiagnosticContextCollection _diagnosticContextCollection = new();
+	private readonly SafeExceptionHandler _safeExceptionHandler = new();
+
+	private bool _disposed;
+
+	public string PrefixName => MetricName;
+
+	public NullDiagnosticContext() : this("NullDiagnosticContext")
 	{
-		private readonly DiagnosticContextCollection diagnosticContextCollection = new();
-		private readonly SafeExceptionHandler safeExceptionHandler = new();
+	}
 
-		private bool disposed;
+	/// <summary>
+	/// Для рефакторинга,чтобы можно было не терять имя метрики
+	/// </summary>
+	/// <param name="metricName"></param>
+	public NullDiagnosticContext(string metricName)
+	{
+		MetricName = metricName;
+	}
 
-		public string PrefixName => MetricName;
+	public string MetricName { get; }
 
-		public NullDiagnosticContext() : this("NullDiagnosticContext")
-		{
-		}
-
-		/// <summary>
-		/// Для рефакторинга,чтобы можно было не терять имя метрики
-		/// </summary>
-		/// <param name="metricName"></param>
-		public NullDiagnosticContext(string metricName)
-		{
-			MetricName = metricName;
-		}
-
-		public string MetricName { get; }
-		
-		public IDisposable MeasureForAdditionalMetric(IDiagnosticContext diagnosticContext)
-		{
-			return safeExceptionHandler.HandleExceptions(
-				() =>
-				{
-					diagnosticContextCollection.LinkDiagnosticContext(diagnosticContext);
-					return diagnosticContext;
-				},
-				() => NullDisposable.Instance);
-		}
-
-		public IDisposable Measure(string stepName)
-		{
-			return safeExceptionHandler.HandleExceptions(
-				() => diagnosticContextCollection.Measure(stepName),
-				() => NullDisposable.Instance);
-		}
-
-		public void SetTag(string tag, string value)
-		{
-			// do nothing
-		}
-
-		public void Increment(string counterPath)
-		{
-			safeExceptionHandler.HandleExceptions(
-				() => diagnosticContextCollection.Increment(counterPath));
-		}
-
-		public void Dispose()
-		{
-			if (!disposed)
+	public IDisposable MeasureForAdditionalMetric(IDiagnosticContext diagnosticContext)
+	{
+		return _safeExceptionHandler.HandleExceptions(
+			() =>
 			{
-				safeExceptionHandler.HandleExceptions(
-					() => diagnosticContextCollection.Dispose());
-				disposed = true;
-			}
-		}
+				_diagnosticContextCollection.LinkDiagnosticContext(diagnosticContext);
+				return diagnosticContext;
+			},
+			() => NullDisposable.Instance);
+	}
 
-		public IDisposable ExtendCodeSourceLabel(string extensionCodeSourceLabel)
-		{
-			return new DisposableExtendCodeSourceLabel(extensionCodeSourceLabel);
-		}
+	public IDisposable Measure(string stepName)
+	{
+		return _safeExceptionHandler.HandleExceptions(
+			() => _diagnosticContextCollection.Measure(stepName),
+			() => NullDisposable.Instance);
+	}
 
-		public void ReportValue(string counterPath, long value)
+	public void SetTag(string tag, string value)
+	{
+		// do nothing
+	}
+
+	public void Increment(string counterPath)
+	{
+		_safeExceptionHandler.HandleExceptions(
+			() => _diagnosticContextCollection.Increment(counterPath));
+	}
+
+	public void Dispose()
+	{
+		if (!_disposed)
 		{
-			// do nothing
+			_safeExceptionHandler.HandleExceptions(
+				() => _diagnosticContextCollection.Dispose());
+			_disposed = true;
 		}
+	}
+
+	public IDisposable ExtendCodeSourceLabel(string extensionCodeSourceLabel)
+	{
+		return new DisposableExtendCodeSourceLabel(extensionCodeSourceLabel);
+	}
+
+	public void ReportValue(string counterPath, long value)
+	{
+		// do nothing
 	}
 }

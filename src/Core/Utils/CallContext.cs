@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,21 +15,20 @@
 using System.Collections.Concurrent;
 using System.Threading;
 
-namespace Mindbox.DiagnosticContext
+namespace Mindbox.DiagnosticContext;
+
+public static class CallContext
 {
-	public static class CallContext
+	private static readonly ConcurrentDictionary<string, AsyncLocal<object?>> _state = new();
+
+	public static void LogicalSetData(string name, object? data) =>
+		_state.GetOrAdd(name, _ => new AsyncLocal<object?>()).Value = data;
+
+	public static object? LogicalGetData(string name) =>
+		_state.TryGetValue(name, out AsyncLocal<object?> data) ? data.Value : null;
+
+	public static void FreeNamedDataSlot(string name)
 	{
-		private static readonly ConcurrentDictionary<string, AsyncLocal<object?>> state = new();
-
-		public static void LogicalSetData(string name, object? data) =>
-			state.GetOrAdd(name, _ => new AsyncLocal<object?>()).Value = data;
-
-		public static object? LogicalGetData(string name) =>
-			state.TryGetValue(name, out AsyncLocal<object?> data) ? data.Value : null;
-
-		public static void FreeNamedDataSlot(string name)
-		{
-			state.GetOrAdd(name, _ => new AsyncLocal<object?>()).Value = null;
-		}
+		_state.GetOrAdd(name, _ => new AsyncLocal<object?>()).Value = null;
 	}
 }

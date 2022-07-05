@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,49 +14,48 @@
 
 using System;
 
-namespace Mindbox.DiagnosticContext
+namespace Mindbox.DiagnosticContext;
+
+public class Int64ValueAggregator
 {
-	public class Int64ValueAggregator
+	private long? _min;
+
+	public long Count { get; private set; }
+	public long Total { get; private set; }
+	public long Max { get; private set; }
+
+	public long Min => _min ?? 0;
+
+	public void Add(long value)
 	{
-		private long? min;
+		if (value < 0)
+			throw new ArgumentOutOfRangeException(nameof(value), "value < 0");
 
-		public long Count { get; private set; }
-		public long Total { get; private set; }
-		public long Max { get; private set; }
+		Total += value;
+		if ((_min == null) || (value < _min))
+			_min = value;
+		if (value > Max)
+			Max = value;
 
-		public long Min => min ?? 0;
-
-		public void Add(long value)
-		{
-			if (value < 0)
-				throw new ArgumentOutOfRangeException(nameof(value), "value < 0");
-
-			Total += value;
-			if ((min == null) || (value < min))
-				min = value;
-			if (value > Max)
-				Max = value;
-
-			Count++;
-		}
-
-		public Int64MetricData ToMetricData(long? countOverride = null)
-		{
-			return new()
-			{
-				Total = Total,
-				Count = countOverride ?? Count,
-				Max = Max,
-				Min = Min
-			};
-		}
+		Count++;
 	}
 
-	public class Int64MetricData
+	public Int64MetricData ToMetricData(long? countOverride = null)
 	{
-		public long Total { get; set; }
-		public long? Count { get; set; }
-		public long? Max { get; set; }
-		public long? Min { get; set; }
+		return new()
+		{
+			Total = Total,
+			Count = countOverride ?? Count,
+			Max = Max,
+			Min = Min
+		};
 	}
+}
+
+public class Int64MetricData
+{
+	public long Total { get; set; }
+	public long? Count { get; set; }
+	public long? Max { get; set; }
+	public long? Min { get; set; }
 }

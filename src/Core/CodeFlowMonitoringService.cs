@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,58 +14,57 @@
 
 using System;
 
-namespace Mindbox.DiagnosticContext
+namespace Mindbox.DiagnosticContext;
+
+public static class CodeFlowMonitoringService
 {
-	public static class CodeFlowMonitoringService
+	private const string CodeSourceLabelKey = "CodeSourceLabelKey";
+
+	public static string? TryGetCodeSourceLabel()
 	{
-		private const string CodeSourceLabelKey = "CodeSourceLabelKey";
+		return (string?)CallContext.LogicalGetData(CodeSourceLabelKey);
+	}
 
-		public static string? TryGetCodeSourceLabel()
+	public static IDisposable SetCodeSourceLabel(string codeSourceLabel)
+	{
+		CallContext.LogicalSetData(CodeSourceLabelKey, codeSourceLabel);
+
+		return new Cleaner(CodeSourceLabelKey);
+	}
+
+	public static void Clear()
+	{
+		CallContext.FreeNamedDataSlot(CodeSourceLabelKey);
+	}
+
+	public static IDisposable TrySetCodeSourceLabel(string codeSourceLabel)
+	{
+		var currentCodeSourceLabel = TryGetCodeSourceLabel();
+		if (currentCodeSourceLabel != null)
+			return NullDisposable.Instance;
+
+		return SetCodeSourceLabel(codeSourceLabel);
+	}
+
+	private class Cleaner : IDisposable
+	{
+		private readonly string _name;
+		private bool _isDisposed;
+
+		public Cleaner(string name)
 		{
-			return (string?)CallContext.LogicalGetData(CodeSourceLabelKey);
+			_name = name;
 		}
 
-		public static IDisposable SetCodeSourceLabel(string codeSourceLabel)
+		public void Dispose()
 		{
-			CallContext.LogicalSetData(CodeSourceLabelKey, codeSourceLabel);
-
-			return new Cleaner(CodeSourceLabelKey);
-		}
-
-		public static void Clear()
-		{
-			CallContext.FreeNamedDataSlot(CodeSourceLabelKey);
-		}
-
-		public static IDisposable TrySetCodeSourceLabel(string codeSourceLabel)
-		{
-			var currentCodeSourceLabel = TryGetCodeSourceLabel();
-			if (currentCodeSourceLabel != null)
-				return NullDisposable.Instance;
-
-			return SetCodeSourceLabel(codeSourceLabel);
-		}
-
-		private class Cleaner : IDisposable
-		{
-			private readonly string name;
-			private bool isDisposed;
-
-			public Cleaner(string name)
+			if (_isDisposed)
 			{
-				this.name = name;
+				return;
 			}
 
-			public void Dispose()
-			{
-				if (isDisposed)
-				{
-					return;
-				}
-
-				CallContext.FreeNamedDataSlot(name);
-				isDisposed = true;
-			}
+			CallContext.FreeNamedDataSlot(_name);
+			_isDisposed = true;
 		}
 	}
 }

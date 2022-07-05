@@ -14,10 +14,9 @@
 
 using System;
 
-namespace Mindbox.DiagnosticContext
+namespace Mindbox.DiagnosticContext;
+
+public interface ICurrentTimeAccessor
 {
-	public interface ICurrentTimeAccessor
-	{
-		DateTime CurrentDateTimeUtc { get; }
-	}
+	DateTime CurrentDateTimeUtc { get; }
 }

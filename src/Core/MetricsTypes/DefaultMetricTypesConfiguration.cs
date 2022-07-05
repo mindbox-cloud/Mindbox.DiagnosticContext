@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,64 +16,63 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace Mindbox.DiagnosticContext.MetricsTypes
+namespace Mindbox.DiagnosticContext.MetricsTypes;
+
+public sealed class DefaultMetricTypesConfiguration
 {
-	public sealed class DefaultMetricTypesConfiguration
+	private readonly ICurrentTimeAccessor _currentTimeAccessor;
+	private const string CpuTimeMetricsSystemName = "ProcessingCpuTime";
+	private const string WallClockTimeMetricsSystemName = "ProcessingTime";
+	private const string ThreadAllocatedBytesSystemName = "ThreadAllocatedBytes";
+
+	public DefaultMetricTypesConfiguration(ICurrentTimeAccessor? currentTimeAccessor = null)
 	{
-		private readonly ICurrentTimeAccessor currentTimeAccessor;
-		private const string CpuTimeMetricsSystemName = "ProcessingCpuTime";
-		private const string WallClockTimeMetricsSystemName = "ProcessingTime";
-		private const string ThreadAllocatedBytesSystemName = "ThreadAllocatedBytes";
+		_currentTimeAccessor = currentTimeAccessor ?? new DefaultCurrentTimeAccessor();
+	}
 
-		public DefaultMetricTypesConfiguration(ICurrentTimeAccessor? currentTimeAccessor = null)
+	public MetricsTypeCollection GetStandardMetricsTypes()
+	{
+		return GetStandardMetricsTypes(NullMetricsMeasurerCreationHandler.Instance);
+	}
+
+	public MetricsTypeCollection GetAsyncMetricsTypes()
+	{
+		return new(new MetricsType[]
 		{
-			this.currentTimeAccessor = currentTimeAccessor ?? new DefaultCurrentTimeAccessor();
+			WallClockTimeMetricsType.Create(_currentTimeAccessor, WallClockTimeMetricsSystemName)
+		});
+	}
+
+	public MetricsTypeCollection GetMetricTypesWithThreadAllocatedBytes()
+	{
+		return new(new MetricsType[]
+		{
+			WallClockTimeMetricsType.Create(_currentTimeAccessor, WallClockTimeMetricsSystemName),
+			ThreadAllocatedBytesMetricsType.Create(_currentTimeAccessor, ThreadAllocatedBytesSystemName)
+		});
+	}
+
+	public MetricsTypeCollection GetMetricsTypesWithCpuTimeTracking(string featureSystemName)
+	{
+		return GetStandardMetricsTypes(NullMetricsMeasurerCreationHandler.Instance);
+	}
+
+	private MetricsTypeCollection GetStandardMetricsTypes(IMetricsMeasurerCreationHandler handler)
+	{
+		if (handler == null)
+			throw new ArgumentNullException(nameof(handler));
+
+		var metricsTypes = new List<MetricsType>
+		{
+			WallClockTimeMetricsType.Create(_currentTimeAccessor, WallClockTimeMetricsSystemName),
+			ThreadAllocatedBytesMetricsType.Create(_currentTimeAccessor, ThreadAllocatedBytesSystemName)
+		};
+		if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+		{
+			// CPU metrics type uses WinAPI in CpuTimeMeasurer
+			metricsTypes.Add(CpuTimeMetricsType.Create(_currentTimeAccessor, CpuTimeMetricsSystemName, handler));
 		}
 
-		public MetricsTypeCollection GetStandardMetricsTypes()
-		{
-			return GetStandardMetricsTypes(NullMetricsMeasurerCreationHandler.Instance);
-		}
-
-		public MetricsTypeCollection GetAsyncMetricsTypes()
-		{
-			return new(new MetricsType[]
-			{
-				WallClockTimeMetricsType.Create(currentTimeAccessor, WallClockTimeMetricsSystemName)
-			});
-		}
-
-		public MetricsTypeCollection GetMetricTypesWithThreadAllocatedBytes()
-		{
-			return new(new MetricsType[]
-			{
-				WallClockTimeMetricsType.Create(currentTimeAccessor, WallClockTimeMetricsSystemName),
-				ThreadAllocatedBytesMetricsType.Create(currentTimeAccessor, ThreadAllocatedBytesSystemName)
-			});
-		}
-
-		public MetricsTypeCollection GetMetricsTypesWithCpuTimeTracking(string featureSystemName)
-		{
-			return GetStandardMetricsTypes(NullMetricsMeasurerCreationHandler.Instance);
-		}
-
-		private MetricsTypeCollection GetStandardMetricsTypes(IMetricsMeasurerCreationHandler handler)
-		{
-			if (handler == null)
-				throw new ArgumentNullException(nameof(handler));
-
-			var metricsTypes = new List<MetricsType>
-			{
-				WallClockTimeMetricsType.Create(currentTimeAccessor, WallClockTimeMetricsSystemName),
-				ThreadAllocatedBytesMetricsType.Create(currentTimeAccessor, ThreadAllocatedBytesSystemName)
-			};
-			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-			{
-				// CPU metrics type uses WinAPI in CpuTimeMeasurer
-				metricsTypes.Add(CpuTimeMetricsType.Create(currentTimeAccessor, CpuTimeMetricsSystemName, handler));
-			}
-
-			return new MetricsTypeCollection(metricsTypes);
-		}
+		return new MetricsTypeCollection(metricsTypes);
 	}
 }

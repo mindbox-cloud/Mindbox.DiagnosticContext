@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,68 +21,67 @@ using Mindbox.DiagnosticContext.DynamicStepsAggregatedStorage;
 using Mindbox.DiagnosticContext.MetricItem;
 using Mindbox.DiagnosticContext.MetricsTypes;
 
-namespace Mindbox.DiagnosticContext
+namespace Mindbox.DiagnosticContext;
+
+public class DiagnosticContextMetricsStorage
 {
-	public class DiagnosticContextMetricsStorage
+	private readonly Dictionary<string, DiagnosticContextDynamicStepsAggregatedStorage> _dynamicStepsPerMetricPrefix = new();
+
+	private readonly Dictionary<string, DiagnosticContextCountersStorage> _countersPerMetricsPrefix = new();
+
+	private readonly Dictionary<string, DiagnosticContextReportedValuesStorage> _reportedValuesPerMetricsPrefix = new();
+
+	public IReadOnlyDictionary<string, DiagnosticContextCountersStorage> CountersPerMetricsPrefix => _countersPerMetricsPrefix;
+
+	public IReadOnlyDictionary<string, DiagnosticContextReportedValuesStorage> ReportedValuesPerMetricsPrefix
+		=> _reportedValuesPerMetricsPrefix;
+
+	public IReadOnlyDictionary<string, DiagnosticContextDynamicStepsAggregatedStorage> DynamicStepsPerMetricPrefix
+		=> _dynamicStepsPerMetricPrefix;
+
+	public bool HasData => DynamicStepsPerMetricPrefix.Any()
+		|| CountersPerMetricsPrefix.Any()
+		|| ReportedValuesPerMetricsPrefix.Any();
+
+	public void CollectItemData(DiagnosticContextMetricsItem item)
 	{
-		private readonly Dictionary<string, DiagnosticContextDynamicStepsAggregatedStorage> dynamicStepsPerMetricPrefix = new();
+		if (item == null)
+			throw new ArgumentNullException(nameof(item));
 
-		private readonly Dictionary<string, DiagnosticContextCountersStorage> countersPerMetricsPrefix = new();
+		GetStorageForMetricPrefix(item.MetricsTypes, item.MetricPrefix).CollectItemData(item);
 
-		private readonly Dictionary<string, DiagnosticContextReportedValuesStorage> reportedValuesPerMetricsPrefix = new();
+		GetCounterStorageForMetricPrefix(item.MetricPrefix).CollectItemData(item.Counters);
 
-		public IReadOnlyDictionary<string, DiagnosticContextCountersStorage> CountersPerMetricsPrefix => countersPerMetricsPrefix;
+		GetReportedValuesStorageForMetricPrefix(item.MetricPrefix).CollectItemData(item.ReportedValues);
+	}
 
-		public IReadOnlyDictionary<string, DiagnosticContextReportedValuesStorage> ReportedValuesPerMetricsPrefix
-			=> reportedValuesPerMetricsPrefix;
-
-		public IReadOnlyDictionary<string, DiagnosticContextDynamicStepsAggregatedStorage> DynamicStepsPerMetricPrefix 
-			=> dynamicStepsPerMetricPrefix;
-
-		public bool HasData => DynamicStepsPerMetricPrefix.Any() 
-			|| CountersPerMetricsPrefix.Any() 
-			|| ReportedValuesPerMetricsPrefix.Any();
-
-		public void CollectItemData(DiagnosticContextMetricsItem item)
+	private DiagnosticContextCountersStorage GetCounterStorageForMetricPrefix(string prefix)
+	{
+		if (!_countersPerMetricsPrefix.ContainsKey(prefix))
 		{
-			if (item == null)
-				throw new ArgumentNullException(nameof(item));
-
-			GetStorageForMetricPrefix(item.MetricsTypes, item.MetricPrefix).CollectItemData(item);
-
-			GetCounterStorageForMetricPrefix(item.MetricPrefix).CollectItemData(item.Counters);
-
-			GetReportedValuesStorageForMetricPrefix(item.MetricPrefix).CollectItemData(item.ReportedValues);
+			_countersPerMetricsPrefix.Add(prefix, new DiagnosticContextCountersStorage());
 		}
-		
-		private DiagnosticContextCountersStorage GetCounterStorageForMetricPrefix(string prefix)
+		return _countersPerMetricsPrefix[prefix];
+	}
+
+	private DiagnosticContextDynamicStepsAggregatedStorage GetStorageForMetricPrefix(
+		MetricsTypeCollection metricsTypes, string prefix)
+	{
+		if (!_dynamicStepsPerMetricPrefix.ContainsKey(prefix))
 		{
-			if (!countersPerMetricsPrefix.ContainsKey(prefix))
-			{
-				countersPerMetricsPrefix.Add(prefix, new DiagnosticContextCountersStorage());
-			}
-			return countersPerMetricsPrefix[prefix];
+			_dynamicStepsPerMetricPrefix.Add(prefix, new DiagnosticContextDynamicStepsAggregatedStorage(metricsTypes));
 		}
 
-		private DiagnosticContextDynamicStepsAggregatedStorage GetStorageForMetricPrefix(
-			MetricsTypeCollection metricsTypes, string prefix)
-		{
-			if(!dynamicStepsPerMetricPrefix.ContainsKey(prefix))
-			{
-				dynamicStepsPerMetricPrefix.Add(prefix, new DiagnosticContextDynamicStepsAggregatedStorage(metricsTypes));
-			}
+		return _dynamicStepsPerMetricPrefix[prefix];
+	}
 
-			return dynamicStepsPerMetricPrefix[prefix];
+	private DiagnosticContextReportedValuesStorage GetReportedValuesStorageForMetricPrefix(string prefix)
+	{
+		if (!_reportedValuesPerMetricsPrefix.ContainsKey(prefix))
+		{
+			_reportedValuesPerMetricsPrefix.Add(prefix, new DiagnosticContextReportedValuesStorage());
 		}
 
-		private DiagnosticContextReportedValuesStorage GetReportedValuesStorageForMetricPrefix(string prefix)
-		{
-			if (!reportedValuesPerMetricsPrefix.ContainsKey(prefix))
-			{
-				reportedValuesPerMetricsPrefix.Add(prefix, new DiagnosticContextReportedValuesStorage());
-			}
-
-			return reportedValuesPerMetricsPrefix[prefix];
-		}
+		return _reportedValuesPerMetricsPrefix[prefix];
 	}
 }

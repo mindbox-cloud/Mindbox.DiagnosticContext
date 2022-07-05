@@ -1,16 +1,14 @@
-<Project Sdk="Microsoft.NET.Sdk">
-
-    <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
-        <RootNamespace>Mindbox.DiagnosticContext.AspNetCore</RootNamespace>        
-        <AssemblyName>Mindbox.DiagnosticContext.AspNetCore</AssemblyName>                
-        <Copyright>Mindbox</Copyright>
-        <RepositoryUrl>https://github.com/mindbox-moscow/Mindbox.DiagnosticContext</RepositoryUrl>
-        <PackageTags>diagnostics</PackageTags>
-    </PropertyGroup>
-
-    <ItemGroup>
-       <FrameworkReference Include="Microsoft.AspNetCore.App" />
-      <ProjectReference Include="..\Core\Core.csproj" />
-    </ItemGroup>
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>Mindbox.DiagnosticContext.AspNetCore</RootNamespace>
+    <AssemblyName>Mindbox.DiagnosticContext.AspNetCore</AssemblyName>
+    <Copyright>Mindbox</Copyright>
+    <RepositoryUrl>https://github.com/mindbox-moscow/Mindbox.DiagnosticContext</RepositoryUrl>
+    <PackageTags>diagnostics</PackageTags>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\Core\Core.csproj" />
+  </ItemGroup>
 </Project>

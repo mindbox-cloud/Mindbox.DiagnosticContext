@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,33 +16,32 @@
 
 using System;
 
-namespace Mindbox.DiagnosticContext
+namespace Mindbox.DiagnosticContext;
+
+public class DisposableExtendCodeSourceLabel : IDisposable
 {
-	public class DisposableExtendCodeSourceLabel : IDisposable
+	private readonly string _originalCodeSourceLabel;
+
+	private bool _disposed;
+
+	public DisposableExtendCodeSourceLabel(string extensionCodeSourceLabel)
 	{
-		private readonly string originalCodeSourceLabel;
+		_originalCodeSourceLabel = CodeFlowMonitoringService.TryGetCodeSourceLabel();
 
-		private bool disposed;
+		var newCodeSourceLabel = string.IsNullOrWhiteSpace(_originalCodeSourceLabel)
+			? extensionCodeSourceLabel
+			: $"{_originalCodeSourceLabel}/{extensionCodeSourceLabel}";
 
-		public DisposableExtendCodeSourceLabel(string extensionCodeSourceLabel)
+		CodeFlowMonitoringService.SetCodeSourceLabel(newCodeSourceLabel);
+	}
+
+	public void Dispose()
+	{
+		if (!_disposed)
 		{
-			originalCodeSourceLabel = CodeFlowMonitoringService.TryGetCodeSourceLabel();
+			CodeFlowMonitoringService.SetCodeSourceLabel(_originalCodeSourceLabel);
 
-			var newCodeSourceLabel = string.IsNullOrWhiteSpace(originalCodeSourceLabel)
-				? extensionCodeSourceLabel
-				: $"{originalCodeSourceLabel}/{extensionCodeSourceLabel}";
-
-			CodeFlowMonitoringService.SetCodeSourceLabel(newCodeSourceLabel);
-		}
-
-		public void Dispose()
-		{
-			if (!disposed)
-			{
-				CodeFlowMonitoringService.SetCodeSourceLabel(originalCodeSourceLabel);
-
-				disposed = true;
-			}
+			_disposed = true;
 		}
 	}
 }

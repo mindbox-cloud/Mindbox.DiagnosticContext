@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,13 +14,12 @@
 
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Mindbox.DiagnosticContext.Tracing
+namespace Mindbox.DiagnosticContext.Tracing;
+
+public static class TracingDiagnosticContextExtensions
 {
-	public static class TracingDiagnosticContextExtensions
+	public static IServiceCollection ConnectTracingToDiagnosticContext(this IServiceCollection collection)
 	{
-		public static IServiceCollection ConnectTracingToDiagnosticContext(this IServiceCollection collection)
-		{
-			return collection.Decorate<IDiagnosticContextFactory, TracingDiagnosticContextFactory>();
-		}
+		return collection.Decorate<IDiagnosticContextFactory, TracingDiagnosticContextFactory>();
 	}
 }

@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,22 +15,21 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Mindbox.DiagnosticContext.MetricsTypes
+namespace Mindbox.DiagnosticContext.MetricsTypes;
+
+public class MetricsTypeCollection
 {
-	public class MetricsTypeCollection
+	public ICollection<MetricsType> MetricsTypes { get; }
+
+	public MetricsTypeCollection(ICollection<MetricsType> metricsTypes)
 	{
-		public ICollection<MetricsType> MetricsTypes { get; }
+		MetricsTypes = metricsTypes;
+	}
 
-		public MetricsTypeCollection(ICollection<MetricsType> metricsTypes)
-		{
-			this.MetricsTypes = metricsTypes;
-		}
+	internal MetricsMeasurerCollection CreateMeasurers()
+	{
+		var measurers = MetricsTypes.Select(mt => mt.CreateMeasurer()).ToList();
 
-		internal MetricsMeasurerCollection CreateMeasurers()
-		{
-			var measurers = MetricsTypes.Select(mt => mt.CreateMeasurer()).ToList();
-
-			return new MetricsMeasurerCollection(measurers);
-		}
+		return new MetricsMeasurerCollection(measurers);
 	}
 }

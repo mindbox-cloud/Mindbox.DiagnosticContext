@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,105 +20,104 @@ using System.Linq;
 using Mindbox.DiagnosticContext.MetricItem;
 using Mindbox.DiagnosticContext.MetricsTypes;
 
-namespace Mindbox.DiagnosticContext.DynamicSteps
+namespace Mindbox.DiagnosticContext.DynamicSteps;
+
+public class DiagnosticContextDynamicSteps
 {
-	public class DiagnosticContextDynamicSteps
+	private readonly Stack<string> _stepsStack = new();
+	private readonly SafeExceptionHandler _safeExceptionHandler = new();
+	private readonly DiagnosticContextMetricsHierarchicalValueCollection _metricsValues;
+	private readonly MetricsTypeCollection _metricsTypes;
+
+	internal DiagnosticContextDynamicSteps(MetricsTypeCollection metricsTypes)
 	{
-		private readonly Stack<string> stepsStack = new Stack<string>();
-		private readonly SafeExceptionHandler safeExceptionHandler = new SafeExceptionHandler();
-		private readonly DiagnosticContextMetricsHierarchicalValueCollection metricsValues;
-		private readonly MetricsTypeCollection metricsTypes;
+		_metricsTypes = metricsTypes;
+		_metricsValues = DiagnosticContextMetricsHierarchicalValueCollection.FromMetricsTypeCollection(metricsTypes);
+	}
 
-		internal DiagnosticContextDynamicSteps(MetricsTypeCollection metricsTypes)
-		{
-			this.metricsTypes = metricsTypes;
-			metricsValues = DiagnosticContextMetricsHierarchicalValueCollection.FromMetricsTypeCollection(metricsTypes);
-		}
+	internal bool IsInInvalidState => _safeExceptionHandler.IsInInvalidState;
 
-		internal bool IsInInvalidState => safeExceptionHandler.IsInInvalidState;
+	internal IDisposable StartStep(string stepName)
+	{
+		return _safeExceptionHandler.HandleExceptions<IDisposable>(
+			() =>
+			{
+				if (string.IsNullOrWhiteSpace(stepName))
+					throw new ArgumentException($"string.IsNullOrWhiteSpace({nameof(stepName)})");
 
-		internal IDisposable StartStep(string stepName)
-		{
-			return safeExceptionHandler.HandleExceptions<IDisposable>(
-				() =>
-				{
-					if (string.IsNullOrWhiteSpace(stepName))
-						throw new ArgumentException($"string.IsNullOrWhiteSpace({nameof(stepName)})");
+				if (stepName.Contains('/'))
+					throw new ArgumentException($"{nameof(stepName)}.Contains('/')");
 
-					if (stepName.Contains('/'))
-						throw new ArgumentException($"{nameof(stepName)}.Contains('/')");
+				_stepsStack.Push(stepName);
 
-					stepsStack.Push(stepName);
-
-					return new DisposableAdapter<MetricsMeasurerCollection>(
-						metricsTypes.CreateMeasurers(),
-						mc => mc.Start(),
-						mc => ProcessMeasurements(stepName, mc));
-				},
-				() => new FakeTimer());
-		}
-
-		internal IDisposable StartTotal()
-		{
-			return safeExceptionHandler.HandleExceptions<IDisposable>(
-				() => new DisposableAdapter<MetricsMeasurerCollection>(
-					metricsTypes.CreateMeasurers(),
+				return new DisposableAdapter<MetricsMeasurerCollection>(
+					_metricsTypes.CreateMeasurers(),
 					mc => mc.Start(),
-					ProcessTotal), 
-				() => new FakeTimer());
-		}
+					mc => ProcessMeasurements(stepName, mc));
+			},
+			() => new FakeTimer());
+	}
 
-		private void ProcessMeasurements(
-			string stepName,
-			MetricsMeasurerCollection mc)
+	internal IDisposable StartTotal()
+	{
+		return _safeExceptionHandler.HandleExceptions<IDisposable>(
+			() => new DisposableAdapter<MetricsMeasurerCollection>(
+				_metricsTypes.CreateMeasurers(),
+				mc => mc.Start(),
+				ProcessTotal),
+			() => new FakeTimer());
+	}
+
+	private void ProcessMeasurements(
+		string stepName,
+		MetricsMeasurerCollection mc)
+	{
+		_safeExceptionHandler.HandleExceptions(() =>
 		{
-			safeExceptionHandler.HandleExceptions(() =>
-			{
-				mc.Stop();
-			});
+			mc.Stop();
+		});
 
-			if (IsInInvalidState)
-				return;
+		if (IsInInvalidState)
+			return;
 
-			safeExceptionHandler.HandleExceptions(() =>
-			{
-				if (stepsStack.Peek() != stepName)
-					throw new InvalidOperationException($"Шаг {stepName} закончился раньше чем должен был. " +
-						$"Текущий стек шагов: {string.Join("/", stepsStack.Reverse())}. " +
-						"Возможно ошибка связана с отсутствием вызова Dispose у одного из вложенных шагов.");
-
-				var stepPath = string.Join("/", stepsStack.Reverse());
-
-				metricsValues.SetStepMetricsValues(stepPath, mc);
-
-				stepsStack.Pop();
-			});
-		}
-
-		private void ProcessTotal(MetricsMeasurerCollection mc)
+		_safeExceptionHandler.HandleExceptions(() =>
 		{
-			safeExceptionHandler.HandleExceptions(() =>
-			{
-				mc.Stop();
-			});
+			if (_stepsStack.Peek() != stepName)
+				throw new InvalidOperationException($"Шаг {stepName} закончился раньше чем должен был. " +
+					$"Текущий стек шагов: {string.Join("/", _stepsStack.Reverse())}. " +
+					"Возможно ошибка связана с отсутствием вызова Dispose у одного из вложенных шагов.");
 
-			if (IsInInvalidState)
-				return;
+			var stepPath = string.Join("/", _stepsStack.Reverse());
 
-			safeExceptionHandler.HandleExceptions(() =>
-			{
-				if (stepsStack.Any())
-					throw new InvalidOperationException("Профилирование закончилось раньше чем один из шагов. " +
-						$"Текущий стек шагов: {string.Join("/", stepsStack.Reverse())}. " +
-						"Возможно ошибка связана с отсутствием вызова Dispose у одного из вложенных шагов.");
+			_metricsValues.SetStepMetricsValues(stepPath, mc);
 
-				metricsValues.SetTotal(mc);
-			});
-		}
+			_stepsStack.Pop();
+		});
+	}
 
-		public DiagnosticContextMetricsNormalizedValueCollection GetNormalizedMetricsValues()
+	private void ProcessTotal(MetricsMeasurerCollection mc)
+	{
+		_safeExceptionHandler.HandleExceptions(() =>
 		{
-			return metricsValues.ToNormalizedValueCollection();
-		}
+			mc.Stop();
+		});
+
+		if (IsInInvalidState)
+			return;
+
+		_safeExceptionHandler.HandleExceptions(() =>
+		{
+			if (_stepsStack.Any())
+				throw new InvalidOperationException("Профилирование закончилось раньше чем один из шагов. " +
+					$"Текущий стек шагов: {string.Join("/", _stepsStack.Reverse())}. " +
+					"Возможно ошибка связана с отсутствием вызова Dispose у одного из вложенных шагов.");
+
+			_metricsValues.SetTotal(mc);
+		});
+	}
+
+	public DiagnosticContextMetricsNormalizedValueCollection GetNormalizedMetricsValues()
+	{
+		return _metricsValues.ToNormalizedValueCollection();
 	}
 }

@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-namespace Mindbox.DiagnosticContext
+namespace Mindbox.DiagnosticContext;
+
+public interface IElapsedMillisecondsMeasurements
 {
-	public interface IElapsedMillisecondsMeasurements
-	{
-		long ElapsedMilliseconds { get; }
-		long ElapsedCpuMilliseconds { get; }
-	}
+	long ElapsedMilliseconds { get; }
+	long ElapsedCpuMilliseconds { get; }
 }

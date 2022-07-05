@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,13 +14,12 @@
 
 using System;
 
-namespace Mindbox.DiagnosticContext.Tracing
+namespace Mindbox.DiagnosticContext.Tracing;
+
+internal class EmptyMeasureScope : IDisposable
 {
-	internal class EmptyMeasureScope : IDisposable
+	public void Dispose()
 	{
-		public void Dispose()
-		{
-			// do nothing
-		}
+		// do nothing
 	}
 }

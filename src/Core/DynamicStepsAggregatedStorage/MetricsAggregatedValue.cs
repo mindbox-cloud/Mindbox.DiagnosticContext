@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,32 +18,31 @@ using System.Collections.Generic;
 using System.Linq;
 using Mindbox.DiagnosticContext.MetricItem;
 
-namespace Mindbox.DiagnosticContext.DynamicStepsAggregatedStorage
+namespace Mindbox.DiagnosticContext.DynamicStepsAggregatedStorage;
+
+public class MetricsAggregatedValue
 {
-	public class MetricsAggregatedValue
+	public MetricsAggregatedValue(MetricsType metricsType)
 	{
-		public MetricsAggregatedValue(MetricsType metricsType)
+		MetricsType = metricsType;
+	}
+
+	public MetricsType MetricsType { get; }
+
+	public Dictionary<string, Int64ValueAggregator> StepValues { get; } = new Dictionary<string, Int64ValueAggregator>();
+	public Int64ValueAggregator TotalValue { get; } = new Int64ValueAggregator();
+
+	public void Add(DiagnosticContextMetricsNormalizedValue metricsNormalizedValue)
+	{
+		foreach (var step in metricsNormalizedValue.NormalizedValues)
 		{
-			MetricsType = metricsType;
-		}
-
-		public MetricsType MetricsType { get; }
-
-		public Dictionary<string, Int64ValueAggregator> StepValues { get; } = new Dictionary<string, Int64ValueAggregator>();
-		public Int64ValueAggregator TotalValue { get; } = new Int64ValueAggregator();
-
-		public void Add(DiagnosticContextMetricsNormalizedValue metricsNormalizedValue)
-		{
-			foreach (var step in metricsNormalizedValue.NormalizedValues)
+			if (!StepValues.TryGetValue(step.Key, out var aggregator))
 			{
-				if (!StepValues.TryGetValue(step.Key, out var aggregator))
-				{
-					aggregator = new Int64ValueAggregator();
-					StepValues.Add(step.Key, aggregator);
-				}
-				aggregator.Add(step.Value);
+				aggregator = new Int64ValueAggregator();
+				StepValues.Add(step.Key, aggregator);
 			}
-			TotalValue.Add(metricsNormalizedValue.NormalizedValues.Sum(step => step.Value));
+			aggregator.Add(step.Value);
 		}
+		TotalValue.Add(metricsNormalizedValue.NormalizedValues.Sum(step => step.Value));
 	}
 }

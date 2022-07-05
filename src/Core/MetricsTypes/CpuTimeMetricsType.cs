@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,27 +16,31 @@
 
 using System;
 
-namespace Mindbox.DiagnosticContext.MetricsTypes
+namespace Mindbox.DiagnosticContext.MetricsTypes;
+
+internal class CpuTimeMetricsType : MetricsType<CpuTimeMeasurer>
 {
-	internal class CpuTimeMetricsType : MetricsType<CpuTimeMeasurer>
+	public static CpuTimeMetricsType Create(
+		ICurrentTimeAccessor currentTimeAccessor,
+		string systemName,
+		IMetricsMeasurerCreationHandler handler)
 	{
-		public static CpuTimeMetricsType Create(ICurrentTimeAccessor currentTimeAccessor, string systemName, IMetricsMeasurerCreationHandler handler)
-		{
-			return new CpuTimeMetricsType(currentTimeAccessor, systemName, handler);
-		}
+		return new CpuTimeMetricsType(currentTimeAccessor, systemName, handler);
+	}
 
-		public override string Units => "[ms]";
+	public override string Units => "[ms]";
 
-		public override long ConvertMetricValue(long rawMetricValue) =>
-			(long)TimeSpan.FromTicks(rawMetricValue).TotalMilliseconds;
+	public override long ConvertMetricValue(long rawMetricValue) =>
+		(long)TimeSpan.FromTicks(rawMetricValue).TotalMilliseconds;
 
-		private CpuTimeMetricsType(ICurrentTimeAccessor currentTimeAccessor, string systemName, IMetricsMeasurerCreationHandler handler) : base(currentTimeAccessor, systemName, handler)
-		{
-		}
+	private CpuTimeMetricsType(ICurrentTimeAccessor currentTimeAccessor,
+		string systemName,
+		IMetricsMeasurerCreationHandler handler) : base(currentTimeAccessor, systemName, handler)
+	{
+	}
 
-		protected override CpuTimeMeasurer CreateMeasurerCore()
-		{
-			return new CpuTimeMeasurer(CurrentTimeAccessor, SystemName);
-		}
+	protected override CpuTimeMeasurer CreateMeasurerCore()
+	{
+		return new CpuTimeMeasurer(CurrentTimeAccessor, SystemName);
 	}
 }
