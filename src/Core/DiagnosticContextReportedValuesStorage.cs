@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,23 +16,22 @@
 
 using System.Collections.Generic;
 
-namespace Mindbox.DiagnosticContext
-{
-	public class DiagnosticContextReportedValuesStorage
-	{
-		private readonly Dictionary<string, Int64ValueAggregator> reportedValues = new Dictionary<string, Int64ValueAggregator>();
+namespace Mindbox.DiagnosticContext;
 
-		public IReadOnlyDictionary<string, Int64ValueAggregator> ReportedValues => reportedValues;
-		
-		public void CollectItemData(Dictionary<string, long> itemReportedValues)
+public class DiagnosticContextReportedValuesStorage
+{
+	private readonly Dictionary<string, Int64ValueAggregator> _reportedValues = new();
+
+	public IReadOnlyDictionary<string, Int64ValueAggregator> ReportedValues => _reportedValues;
+
+	public void CollectItemData(Dictionary<string, long> itemReportedValues)
+	{
+		foreach (var itemCounter in itemReportedValues)
 		{
-			foreach (var itemCounter in itemReportedValues)
-			{
-				if (!reportedValues.ContainsKey(itemCounter.Key))
-					reportedValues.Add(itemCounter.Key, new Int64ValueAggregator());
-				
-				reportedValues[itemCounter.Key].Add(itemCounter.Value);
-			}
+			if (!_reportedValues.ContainsKey(itemCounter.Key))
+				_reportedValues.Add(itemCounter.Key, new Int64ValueAggregator());
+
+			_reportedValues[itemCounter.Key].Add(itemCounter.Value);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,30 +16,27 @@
 
 using System;
 
-namespace Mindbox.DiagnosticContext
+namespace Mindbox.DiagnosticContext;
+
+internal class DisposableContainer : IDisposable
 {
-	internal class DisposableContainer : IDisposable
+	private readonly IDisposable[] _items;
+
+	private bool _disposed;
+
+	public DisposableContainer(params IDisposable[] items)
 	{
-		private readonly IDisposable[] items;
+		_items = items ?? throw new ArgumentNullException(nameof(items));
+	}
 
-		private bool disposed;
-
-		public DisposableContainer(params IDisposable[] items)
+	public void Dispose()
+	{
+		if (!_disposed)
 		{
-			if (items == null)
-				throw new ArgumentNullException(nameof(items));
-			this.items = items;
-		}
+			foreach (var item in _items)
+				item?.Dispose();
 
-		public void Dispose()
-		{
-			if (!disposed)
-			{
-				foreach (var item in items)
-					item?.Dispose();
-
-				disposed = true;
-			}
+			_disposed = true;
 		}
 	}
 }

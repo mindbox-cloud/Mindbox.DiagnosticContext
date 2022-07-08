@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,69 +17,68 @@ using System.Collections.Generic;
 using System.Linq;
 using OpenTracing;
 
-namespace Mindbox.DiagnosticContext.Tracing
+namespace Mindbox.DiagnosticContext.Tracing;
+
+internal class TracingDiagnosticContext : IDiagnosticContext
 {
-	internal class TracingDiagnosticContext : IDiagnosticContext
+	private readonly IDiagnosticContext _innerDiagnosticContext;
+	private readonly ITracer _tracer;
+
+	private readonly SafeExceptionHandler _exceptionHandler;
+
+	public string PrefixName => _innerDiagnosticContext.PrefixName;
+
+	public TracingDiagnosticContext(
+		IDiagnosticContext innerDiagnosticContext,
+		ITracer tracer,
+		IDiagnosticContextLogger logger)
 	{
-		private readonly IDiagnosticContext innerDiagnosticContext;
-		private readonly ITracer tracer;
+		_innerDiagnosticContext = innerDiagnosticContext;
+		_tracer = tracer;
+		_exceptionHandler = new SafeExceptionHandler(e => logger.Log(e.Message, e));
+	}
 
-		private readonly SafeExceptionHandler exceptionHandler;
-		
-		public string PrefixName => innerDiagnosticContext.PrefixName;
+	public IDisposable Measure(string stepName)
+	{
+		return new MeasureScope(CreateMeasures(stepName).ToArray());
+	}
 
-		public TracingDiagnosticContext(
-			IDiagnosticContext innerDiagnosticContext, 
-			ITracer tracer, 
-			IDiagnosticContextLogger logger)
-		{
-			this.innerDiagnosticContext = innerDiagnosticContext;
-			this.tracer = tracer;
-			exceptionHandler = new SafeExceptionHandler(e => logger.Log(e.Message, e));
-		}
+	public IDisposable MeasureForAdditionalMetric(IDiagnosticContext diagnosticContext)
+	{
+		return _innerDiagnosticContext.MeasureForAdditionalMetric(diagnosticContext);
+	}
 
-		public IDisposable Measure(string stepName)
-		{
-			return new MeasureScope(CreateMeasures(stepName).ToArray());
-		}
+	public void SetTag(string tag, string value)
+	{
+		_innerDiagnosticContext.SetTag(tag, value);
+		_exceptionHandler.Execute(() => _tracer.ActiveSpan.SetTag(tag, value));
+	}
 
-		public IDisposable MeasureForAdditionalMetric(IDiagnosticContext diagnosticContext)
-		{
-			return innerDiagnosticContext.MeasureForAdditionalMetric(diagnosticContext);
-		}
+	public void Increment(string counterPath)
+	{
+		_innerDiagnosticContext.Increment(counterPath);
+	}
 
-		public void SetTag(string tag, string value)
-		{
-			innerDiagnosticContext.SetTag(tag, value);
-			exceptionHandler.Execute(() => tracer.ActiveSpan.SetTag(tag, value));
-		}
+	public IDisposable ExtendCodeSourceLabel(string extensionCodeSourceLabel)
+	{
+		return _innerDiagnosticContext.ExtendCodeSourceLabel(extensionCodeSourceLabel);
+	}
 
-		public void Increment(string counterPath)
-		{
-			innerDiagnosticContext.Increment(counterPath);
-		}
+	public void ReportValue(string counterPath, long value)
+	{
+		_innerDiagnosticContext.ReportValue(counterPath, value);
+	}
 
-		public IDisposable ExtendCodeSourceLabel(string extensionCodeSourceLabel)
-		{
-			return innerDiagnosticContext.ExtendCodeSourceLabel(extensionCodeSourceLabel);
-		}
+	public void Dispose()
+	{
+		_innerDiagnosticContext.Dispose();
+	}
 
-		public void ReportValue(string counterPath, long value)
-		{
-			innerDiagnosticContext.ReportValue(counterPath, value);
-		}
-
-		public void Dispose()
-		{
-			innerDiagnosticContext.Dispose();
-		}
-
-		private IEnumerable<IDisposable> CreateMeasures(string stepName)
-		{
-			yield return innerDiagnosticContext.Measure(stepName);
-			yield return exceptionHandler.Execute<IDisposable>(
-				action: () => tracer.BuildSpan(stepName).StartActive(),
-				fallback: () => new EmptyMeasureScope());
-		}
+	private IEnumerable<IDisposable> CreateMeasures(string stepName)
+	{
+		yield return _innerDiagnosticContext.Measure(stepName);
+		yield return _exceptionHandler.Execute<IDisposable>(
+			action: () => _tracer.BuildSpan(stepName).StartActive(),
+			fallback: () => new EmptyMeasureScope());
 	}
 }

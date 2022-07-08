@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,24 +14,24 @@
 
 #nullable disable
 
-namespace Mindbox.DiagnosticContext.MetricsTypes
+namespace Mindbox.DiagnosticContext.MetricsTypes;
+
+internal class ThreadAllocatedBytesMetricsType : MetricsType<ThreadAllocatedBytesMeasurer>
 {
-	internal class ThreadAllocatedBytesMetricsType : MetricsType<ThreadAllocatedBytesMeasurer>
+	public static ThreadAllocatedBytesMetricsType Create(ICurrentTimeAccessor currentTimeAccessor, string systemName)
 	{
-		public static ThreadAllocatedBytesMetricsType Create(ICurrentTimeAccessor currentTimeAccessor, string systemName)
-		{
-			return new ThreadAllocatedBytesMetricsType(currentTimeAccessor, systemName);
-		}
+		return new ThreadAllocatedBytesMetricsType(currentTimeAccessor, systemName);
+	}
 
-		public override string Units => "[bytes]";
+	public override string Units => "[bytes]";
 
-		private ThreadAllocatedBytesMetricsType(ICurrentTimeAccessor currentTimeAccessor, string systemName) : base(currentTimeAccessor, systemName, NullMetricsMeasurerCreationHandler.Instance)
-		{
-		}
+	private ThreadAllocatedBytesMetricsType(ICurrentTimeAccessor currentTimeAccessor, string systemName)
+		: base(currentTimeAccessor, systemName, NullMetricsMeasurerCreationHandler.Instance)
+	{
+	}
 
-		protected override ThreadAllocatedBytesMeasurer CreateMeasurerCore()
-		{
-			return new ThreadAllocatedBytesMeasurer(CurrentTimeAccessor, SystemName);
-		}
+	protected override ThreadAllocatedBytesMeasurer CreateMeasurerCore()
+	{
+		return new ThreadAllocatedBytesMeasurer(CurrentTimeAccessor, SystemName);
 	}
 }

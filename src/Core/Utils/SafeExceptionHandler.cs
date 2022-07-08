@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,114 +15,112 @@
 using System;
 using System.Threading.Tasks;
 
-namespace Mindbox.DiagnosticContext
+namespace Mindbox.DiagnosticContext;
+
+public interface IDiagnosticContextLogger
 {
-	public interface IDiagnosticContextLogger
+	void Log(string message, Exception exception);
+}
+
+internal class NullDiagnosticContextLogger : IDiagnosticContextLogger
+{
+	public void Log(string message, Exception exception)
 	{
-		void Log(string message, Exception exception);
+	}
+}
+
+internal class SafeExceptionHandler
+{
+	private readonly IDiagnosticContextLogger _diagnosticContextLogger;
+
+	public SafeExceptionHandler(IDiagnosticContextLogger diagnosticContextLogger)
+	{
+		_diagnosticContextLogger = diagnosticContextLogger;
 	}
 
-	internal class NullDiagnosticContextLogger :IDiagnosticContextLogger
+	public SafeExceptionHandler() : this(new NullDiagnosticContextLogger())
 	{
-		public void Log(string message, Exception exception)
+	}
+
+	public static SafeExceptionHandler Default { get; } = new();
+
+	public bool IsInInvalidState { get; private set; }
+
+	public bool HandleExceptions(Action action, string? errorMessage = null)
+	{
+		return HandleExceptions(
+			() =>
+			{
+				action();
+				return true;
+			},
+			() => false,
+			() => errorMessage
+		);
+	}
+
+	public Task<bool> HandleExceptionsAsync(Func<Task> action, string? errorMessage = null)
+	{
+		return HandleExceptionsAsync(
+			async () =>
+			{
+				await action().ConfigureAwait(false);
+				return true;
+			},
+			() => false,
+			() => errorMessage
+		);
+	}
+
+	public async Task<TResult> HandleExceptionsAsync<TResult>(
+		Func<Task<TResult>> action,
+		Func<TResult> invalidResultBuilderAction,
+		Func<string?>? errorMessageBuilder = null)
+	{
+		try
 		{
-			
+			return await action().ConfigureAwait(false);
+		}
+		catch (Exception innerException)
+		{
+			return ProcessException(invalidResultBuilderAction, errorMessageBuilder, innerException);
 		}
 	}
-	
-	internal class SafeExceptionHandler
+
+	public TResult HandleExceptions<TResult>(
+		Func<TResult> action,
+		Func<TResult> invalidResultBuilderAction,
+		Func<string?>? errorMessageBuilder = null)
 	{
-		private readonly IDiagnosticContextLogger diagnosticContextLogger;
-
-		public SafeExceptionHandler(IDiagnosticContextLogger diagnosticContextLogger)
+		try
 		{
-			this.diagnosticContextLogger = diagnosticContextLogger;
+			return action();
+		}
+		catch (Exception innerException)
+		{
+			return ProcessException(invalidResultBuilderAction, errorMessageBuilder, innerException);
+		}
+	}
+
+	private TResult ProcessException<TResult>(
+		Func<TResult> invalidResultBuilderAction,
+		Func<string?>? errorMessageBuilder,
+		Exception innerException)
+	{
+		IsInInvalidState = true;
+
+		try
+		{
+			var errorMessage = errorMessageBuilder?.Invoke() ?? innerException.Message;
+
+			_diagnosticContextLogger
+				.Log(errorMessage, innerException);
+		}
+		catch (Exception)
+		{
+			// Весь смысл SafeExceptionHandler - не допустить бросание исключений из action
 		}
 
-		public SafeExceptionHandler() : this(new NullDiagnosticContextLogger())
-		{
-		}
-
-		public static SafeExceptionHandler Default { get; } = new();
-		
-		public bool IsInInvalidState { get; private set; }
-
-		public bool HandleExceptions(Action action, string? errorMessage = null)
-		{
-			return HandleExceptions(
-				() =>
-				{
-					action();
-					return true;
-				},
-				() => false,
-				() => errorMessage
-			);
-		}
-		
-		public Task<bool> HandleExceptionsAsync(Func<Task> action, string? errorMessage = null)
-		{
-			return HandleExceptionsAsync(
-				async () =>
-				{
-					await action().ConfigureAwait(false);
-					return true;
-				},
-				() => false,
-				() => errorMessage
-			);
-		}
-		
-		public async Task<TResult> HandleExceptionsAsync<TResult>(
-			Func<Task<TResult>> action,
-			Func<TResult> invalidResultBuilderAction,
-			Func<string?>? errorMessageBuilder = null)
-		{
-			try
-			{
-				return await action().ConfigureAwait(false);
-			}
-			catch (Exception innerException)
-			{
-				return ProcessException(invalidResultBuilderAction, errorMessageBuilder, innerException);
-			}
-		}
-
-		public TResult HandleExceptions<TResult>(
-			Func<TResult> action, 
-			Func<TResult> invalidResultBuilderAction,
-			Func<string?>? errorMessageBuilder = null)
-		{
-			try
-			{
-				return action();
-			}
-			catch (Exception innerException)
-			{
-				return ProcessException(invalidResultBuilderAction, errorMessageBuilder, innerException);
-			}
-		}
-
-		private TResult ProcessException<TResult>(
-			Func<TResult> invalidResultBuilderAction,
-			Func<string?>? errorMessageBuilder,
-			Exception innerException)
-		{
-			IsInInvalidState = true;
-
-			try
-			{
-				var errorMessage = errorMessageBuilder?.Invoke() ?? innerException.Message;
-
-				diagnosticContextLogger
-					.Log(errorMessage, innerException);
-			}
-			catch (Exception)
-			{
-				// Весь смысл SafeExceptionHandler - не допустить бросание исключений из action
-			}
-
-			return invalidResultBuilderAction();
-		}
+		return invalidResultBuilderAction();
 	}
 }

@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,27 +16,27 @@
 
 using System;
 
-namespace Mindbox.DiagnosticContext.MetricsTypes
+namespace Mindbox.DiagnosticContext.MetricsTypes;
+
+internal class WallClockTimeMetricsType : MetricsType<WallClockTimeMeasurer>
 {
-	internal class WallClockTimeMetricsType : MetricsType<WallClockTimeMeasurer>
+	public static WallClockTimeMetricsType Create(ICurrentTimeAccessor currentTimeAccessor, string systemName)
 	{
-		public static WallClockTimeMetricsType Create(ICurrentTimeAccessor currentTimeAccessor, string systemName)
-		{
-			return new WallClockTimeMetricsType(currentTimeAccessor, systemName);
-		}
+		return new WallClockTimeMetricsType(currentTimeAccessor, systemName);
+	}
 
-		public override string Units => "[ms]";
+	public override string Units => "[ms]";
 
-		public override long ConvertMetricValue(long rawMetricValue) =>
-			(long)TimeSpan.FromTicks(rawMetricValue).TotalMilliseconds;
+	public override long ConvertMetricValue(long rawMetricValue) =>
+		(long)TimeSpan.FromTicks(rawMetricValue).TotalMilliseconds;
 
-		private WallClockTimeMetricsType(ICurrentTimeAccessor currentTimeAccessor, string systemName) : base(currentTimeAccessor, systemName, NullMetricsMeasurerCreationHandler.Instance)
-		{
-		}
+	private WallClockTimeMetricsType(ICurrentTimeAccessor currentTimeAccessor, string systemName)
+		: base(currentTimeAccessor, systemName, NullMetricsMeasurerCreationHandler.Instance)
+	{
+	}
 
-		protected override WallClockTimeMeasurer CreateMeasurerCore()
-		{
-			return new WallClockTimeMeasurer(CurrentTimeAccessor, SystemName);
-		}
+	protected override WallClockTimeMeasurer CreateMeasurerCore()
+	{
+		return new WallClockTimeMeasurer(CurrentTimeAccessor, SystemName);
 	}
 }

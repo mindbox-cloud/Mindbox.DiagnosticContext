@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,46 +17,46 @@
 using System;
 using System.Linq.Expressions;
 
-namespace Mindbox.DiagnosticContext.MetricsTypes
+namespace Mindbox.DiagnosticContext.MetricsTypes;
+
+internal sealed class ThreadAllocatedBytesMeasurer : MetricsMeasurer
 {
-	internal sealed class ThreadAllocatedBytesMeasurer : MetricsMeasurer
+	private static readonly Func<long> _getAllocatedBytesForCurrentThread;
+
+	private long _bytesAllocatedByThreadAtStart;
+
+	static ThreadAllocatedBytesMeasurer()
 	{
-		private static readonly Func<long> getAllocatedBytesForCurrentThread;
-
-		private long bytesAllocatedByThreadAtStart;
-
-		static ThreadAllocatedBytesMeasurer()
+		var getAllocatedBytesForCurrentThreadMethod = typeof(GC).GetMethod("GetAllocatedBytesForCurrentThread");
+		if (getAllocatedBytesForCurrentThreadMethod == null)
 		{
-			var getAllocatedBytesForCurrentThreadMethod = typeof(GC).GetMethod("GetAllocatedBytesForCurrentThread");
-			if (getAllocatedBytesForCurrentThreadMethod == null)
-			{
-				getAllocatedBytesForCurrentThread = () => 0;
-			}
-			else
-			{
-				getAllocatedBytesForCurrentThread =
-					Expression.Lambda<Func<long>>(Expression.Call(getAllocatedBytesForCurrentThreadMethod))
-						.Compile();
-			}
+			_getAllocatedBytesForCurrentThread = () => 0;
 		}
-
-		public ThreadAllocatedBytesMeasurer(ICurrentTimeAccessor currentTimeAccessor, string metricsTypeSystemName) : base(currentTimeAccessor, metricsTypeSystemName)
+		else
 		{
+			_getAllocatedBytesForCurrentThread =
+				Expression.Lambda<Func<long>>(Expression.Call(getAllocatedBytesForCurrentThreadMethod))
+					.Compile();
 		}
+	}
 
-		protected override long? GetValueCore()
-		{
-			return bytesAllocatedByThreadAtStart;
-		}
+	public ThreadAllocatedBytesMeasurer(ICurrentTimeAccessor currentTimeAccessor, string metricsTypeSystemName)
+		: base(currentTimeAccessor, metricsTypeSystemName)
+	{
+	}
 
-		protected override void StartCore()
-		{
-			bytesAllocatedByThreadAtStart += getAllocatedBytesForCurrentThread();
-		}
+	protected override long? GetValueCore()
+	{
+		return _bytesAllocatedByThreadAtStart;
+	}
 
-		protected override void StopCore()
-		{
-			bytesAllocatedByThreadAtStart = getAllocatedBytesForCurrentThread() - bytesAllocatedByThreadAtStart;
-		}
+	protected override void StartCore()
+	{
+		_bytesAllocatedByThreadAtStart += _getAllocatedBytesForCurrentThread();
+	}
+
+	protected override void StopCore()
+	{
+		_bytesAllocatedByThreadAtStart = _getAllocatedBytesForCurrentThread() - _bytesAllocatedByThreadAtStart;
 	}
 }

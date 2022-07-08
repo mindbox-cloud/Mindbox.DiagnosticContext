@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,20 +14,19 @@
 
 using Microsoft.AspNetCore.Http;
 
-namespace Mindbox.DiagnosticContext.AspNetCore
+namespace Mindbox.DiagnosticContext.AspNetCore;
+
+public static class DiagnosticContextHttpContextExtensions
 {
-	public static class DiagnosticContextHttpContextExtensions
+	private const string DiagnosticContextItemKey = "DiagnosticContext";
+
+	public static IDiagnosticContext GetDiagnosticContext(this HttpContext httpContext)
 	{
-		private const string DiagnosticContextItemKey = "DiagnosticContext";
+		return httpContext.Items[DiagnosticContextItemKey] as IDiagnosticContext ?? new NullDiagnosticContext();
+	}
 
-		public static IDiagnosticContext GetDiagnosticContext(this HttpContext httpContext)
-		{
-			return httpContext.Items[DiagnosticContextItemKey] as IDiagnosticContext ?? new NullDiagnosticContext();
-		}
-
-		internal static void StoreDiagnosticContext(this HttpContext httpContext, IDiagnosticContext diagnosticContext)
-		{
-			httpContext.Items.Add(DiagnosticContextItemKey, diagnosticContext);
-		}
+	internal static void StoreDiagnosticContext(this HttpContext httpContext, IDiagnosticContext diagnosticContext)
+	{
+		httpContext.Items.Add(DiagnosticContextItemKey, diagnosticContext);
 	}
 }

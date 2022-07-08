@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,12 +16,11 @@
 
 using Mindbox.DiagnosticContext.MetricItem;
 
-namespace Mindbox.DiagnosticContext
-{
-	public interface IDiagnosticContextMetricsCollection
-	{
-		void CollectItemData(DiagnosticContextMetricsItem metricsItem);
+namespace Mindbox.DiagnosticContext;
 
-		void SetTag(string tag, string value);
-	}
+public interface IDiagnosticContextMetricsCollection
+{
+	void CollectItemData(DiagnosticContextMetricsItem metricsItem);
+
+	void SetTag(string tag, string value);
 }

@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,34 +20,33 @@ using System.Linq;
 using Mindbox.DiagnosticContext.MetricItem;
 using Mindbox.DiagnosticContext.MetricsTypes;
 
-namespace Mindbox.DiagnosticContext.DynamicStepsAggregatedStorage
+namespace Mindbox.DiagnosticContext.DynamicStepsAggregatedStorage;
+
+public sealed class MetricsAggregatedValueCollection
 {
-	public sealed class MetricsAggregatedValueCollection
+	private readonly ICollection<MetricsAggregatedValue> _aggregatedValues;
+
+	public MetricsAggregatedValueCollection(MetricsTypeCollection metricsTypes)
 	{
-		private readonly ICollection<MetricsAggregatedValue> aggregatedValues;
+		if (metricsTypes == null)
+			throw new ArgumentNullException(nameof(metricsTypes));
 
-		public MetricsAggregatedValueCollection(MetricsTypeCollection metricsTypes)
+		_aggregatedValues = metricsTypes.MetricsTypes.Select(mt => new MetricsAggregatedValue(mt)).ToList();
+	}
+
+	public void Add(DiagnosticContextMetricsNormalizedValueCollection normalizedMetricsValues)
+	{
+		foreach (var metricsAggregatedValue in _aggregatedValues)
 		{
-			if (metricsTypes == null)
-				throw new ArgumentNullException(nameof(metricsTypes));
+			var metricsNormalizedValue = normalizedMetricsValues.GetValueByMetricsTypeSystemName(
+				metricsAggregatedValue.MetricsType.SystemName);
 
-			aggregatedValues = metricsTypes.MetricsTypes.Select(mt => new MetricsAggregatedValue(mt)).ToList();
+			metricsAggregatedValue.Add(metricsNormalizedValue);
 		}
+	}
 
-		public void Add(DiagnosticContextMetricsNormalizedValueCollection normalizedMetricsValues)
-		{
-			foreach (var metricsAggregatedValue in aggregatedValues)
-			{
-				var metricsNormalizedValue = normalizedMetricsValues.GetValueByMetricsTypeSystemName(
-					metricsAggregatedValue.MetricsType.SystemName);
-
-				metricsAggregatedValue.Add(metricsNormalizedValue);
-			}
-		}
-
-		public IEnumerable<MetricsAggregatedValue> GetMetricsAggregatedValues()
-		{
-			return aggregatedValues;
-		}
+	public IEnumerable<MetricsAggregatedValue> GetMetricsAggregatedValues()
+	{
+		return _aggregatedValues;
 	}
 }

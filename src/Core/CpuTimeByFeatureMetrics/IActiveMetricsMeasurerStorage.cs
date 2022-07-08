@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,11 +14,10 @@
 
 #nullable disable
 
-namespace Mindbox.DiagnosticContext.CpuTimeByFeatureMetrics
+namespace Mindbox.DiagnosticContext.CpuTimeByFeatureMetrics;
+
+internal interface IActiveMetricsMeasurerStorage
 {
-	internal interface IActiveMetricsMeasurerStorage
-	{
-		MetricsMeasurer GetActiveMeasurer();
-		void SetActiveMeasurer(MetricsMeasurer measurer);
-	}
+	MetricsMeasurer GetActiveMeasurer();
+	void SetActiveMeasurer(MetricsMeasurer measurer);
 }

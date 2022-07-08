@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,32 +17,31 @@ using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace Mindbox.DiagnosticContext.AspNetCore
+namespace Mindbox.DiagnosticContext.AspNetCore;
+
+[AttributeUsage(AttributeTargets.Method)]
+public class UseDiagnosticContextAttribute : ActionFilterAttribute
 {
-	[AttributeUsage(AttributeTargets.Method)]
-	public class UseDiagnosticContextAttribute : ActionFilterAttribute
+	private readonly string _metricName;
+	private const string DiagnosticContextParameterName = "diagnosticContext";
+
+	public UseDiagnosticContextAttribute(string metricName)
 	{
-		private readonly string metricName;
-		private const string DiagnosticContextParameterName = "diagnosticContext";
-		
-		public UseDiagnosticContextAttribute(string metricName)
-		{
-			this.metricName = metricName;
-		}
-		
-		public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
-		{
-			var diagnosticContextFactory = (IDiagnosticContextFactory)context.HttpContext.RequestServices
-				.GetService(typeof(IDiagnosticContextFactory))!;
-			
-			using var diagnosticContext = diagnosticContextFactory.CreateDiagnosticContext(metricName);
-			
-			context.HttpContext.StoreDiagnosticContext(diagnosticContext);
-			
-			if (context.ActionArguments.ContainsKey(DiagnosticContextParameterName))
-				context.ActionArguments[DiagnosticContextParameterName] = diagnosticContext;
-			
-			await next();
-		}
+		_metricName = metricName;
+	}
+
+	public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+	{
+		var diagnosticContextFactory = (IDiagnosticContextFactory)context.HttpContext.RequestServices
+			.GetService(typeof(IDiagnosticContextFactory))!;
+
+		using var diagnosticContext = diagnosticContextFactory.CreateDiagnosticContext(_metricName);
+
+		context.HttpContext.StoreDiagnosticContext(diagnosticContext);
+
+		if (context.ActionArguments.ContainsKey(DiagnosticContextParameterName))
+			context.ActionArguments[DiagnosticContextParameterName] = diagnosticContext;
+
+		await next();
 	}
 }

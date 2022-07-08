@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,20 +14,19 @@
 
 using System;
 
-namespace Mindbox.DiagnosticContext
+namespace Mindbox.DiagnosticContext;
+
+internal sealed class NullDisposable : IDisposable
 {
-	internal sealed class NullDisposable : IDisposable
+	public static IDisposable Instance { get; } = new NullDisposable();
+
+
+	private NullDisposable()
 	{
-		public static IDisposable Instance { get; } = new NullDisposable();
+	}
 
 
-		private NullDisposable()
-		{
-		}
-
-
-		public void Dispose()
-		{
-		}
+	public void Dispose()
+	{
 	}
 }

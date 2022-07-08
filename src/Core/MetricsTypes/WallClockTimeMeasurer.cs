@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,33 +16,33 @@
 
 using System;
 
-namespace Mindbox.DiagnosticContext.MetricsTypes
+namespace Mindbox.DiagnosticContext.MetricsTypes;
+
+internal sealed class WallClockTimeMeasurer : MetricsMeasurer
 {
-	internal sealed class WallClockTimeMeasurer : MetricsMeasurer
+	private ReliableStopwatchWithCpuTime _stopwatch = null;
+
+	public WallClockTimeMeasurer(ICurrentTimeAccessor currentTimeAccessor, string metricsTypeSystemName)
+		: base(currentTimeAccessor, metricsTypeSystemName)
 	{
-		private ReliableStopwatchWithCpuTime stopwatch = null;
+	}
 
-		public WallClockTimeMeasurer(ICurrentTimeAccessor currentTimeAccessor, string metricsTypeSystemName) : base(currentTimeAccessor, metricsTypeSystemName)
-		{
-		}
+	protected override long? GetValueCore()
+	{
+		return _stopwatch.Elapsed.Ticks;
+	}
 
-		protected override long? GetValueCore()
-		{
-			return stopwatch.Elapsed.Ticks;
-		}
+	protected override void StartCore()
+	{
+		_stopwatch = new ReliableStopwatchWithCpuTime(CurrentTimeAccessor, false);
+		_stopwatch.Start();
+	}
 
-		protected override void StartCore()
-		{
-			stopwatch = new ReliableStopwatchWithCpuTime(CurrentTimeAccessor,false);
-			stopwatch.Start();
-		}
+	protected override void StopCore()
+	{
+		if (_stopwatch == null)
+			throw new InvalidOperationException("stopwatch == null");
 
-		protected override void StopCore()
-		{
-			if (stopwatch == null)
-				throw new InvalidOperationException("stopwatch == null");
-			
-			stopwatch.Stop();
-		}
+		_stopwatch.Stop();
 	}
 }

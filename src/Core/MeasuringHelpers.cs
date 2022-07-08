@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,34 +17,33 @@
 using System;
 using System.Collections.Generic;
 
-namespace Mindbox.DiagnosticContext
-{
-	public static class MeasuringHelpers
-	{
-		public static void ExecuteForeachWithMeasurements<TItem>(
-			this IEnumerable<TItem> enumerable,
-			IDiagnosticContext diagnosticContext,
-			string measurementName,
-			Action<TItem> action)
-		{
-			using (diagnosticContext.Measure(measurementName))
-			{
-				IEnumerator<TItem> enumerator;
-				using (diagnosticContext.Measure("GetEnumerator"))
-					enumerator = enumerable.GetEnumerator();
+namespace Mindbox.DiagnosticContext;
 
-				try
+public static class MeasuringHelpers
+{
+	public static void ExecuteForeachWithMeasurements<TItem>(
+		this IEnumerable<TItem> enumerable,
+		IDiagnosticContext diagnosticContext,
+		string measurementName,
+		Action<TItem> action)
+	{
+		using (diagnosticContext.Measure(measurementName))
+		{
+			IEnumerator<TItem> enumerator;
+			using (diagnosticContext.Measure("GetEnumerator"))
+				enumerator = enumerable.GetEnumerator();
+
+			try
+			{
+				while (enumerator.MoveNext())
 				{
-					while (enumerator.MoveNext())
-					{
-						using (diagnosticContext.Measure("Action"))
-							action(enumerator.Current);
-					}
+					using (diagnosticContext.Measure("Action"))
+						action(enumerator.Current);
 				}
-				finally
-				{
-					enumerator.Dispose();
-				}
+			}
+			finally
+			{
+				enumerator.Dispose();
 			}
 		}
 	}

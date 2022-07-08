@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,22 +14,21 @@
 
 using System;
 
-namespace Mindbox.DiagnosticContext
+namespace Mindbox.DiagnosticContext;
+
+public interface IDiagnosticContext : IDisposable
 {
-	public interface IDiagnosticContext : IDisposable
-	{
-		string PrefixName { get; }
+	string PrefixName { get; }
 
-		IDisposable MeasureForAdditionalMetric(IDiagnosticContext diagnosticContext);
+	IDisposable MeasureForAdditionalMetric(IDiagnosticContext diagnosticContext);
 
-		IDisposable Measure(string stepName);
+	IDisposable Measure(string stepName);
 
-		void SetTag(string tag, string value);
+	void SetTag(string tag, string value);
 
-		void Increment(string counterPath);
+	void Increment(string counterPath);
 
-		IDisposable ExtendCodeSourceLabel(string extensionCodeSourceLabel);
+	IDisposable ExtendCodeSourceLabel(string extensionCodeSourceLabel);
 
-		void ReportValue(string counterPath, long value);
-	}
+	void ReportValue(string counterPath, long value);
 }

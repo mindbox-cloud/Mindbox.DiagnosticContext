@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,18 +16,17 @@
 
 using System.Collections.Generic;
 
-namespace Mindbox.DiagnosticContext.MetricItem
-{
-	public class DiagnosticContextMetricsNormalizedValue
-	{
-		public string MetricTypeSystemName { get; }
-		public IReadOnlyDictionary<string, long> NormalizedValues { get; }
+namespace Mindbox.DiagnosticContext.MetricItem;
 
-		public DiagnosticContextMetricsNormalizedValue(
-			string metricTypeSystemName, Dictionary<string, long> normalizedValues)
-		{
-			MetricTypeSystemName = metricTypeSystemName;
-			NormalizedValues = normalizedValues;
-		}
+public class DiagnosticContextMetricsNormalizedValue
+{
+	public string MetricTypeSystemName { get; }
+	public IReadOnlyDictionary<string, long> NormalizedValues { get; }
+
+	public DiagnosticContextMetricsNormalizedValue(
+		string metricTypeSystemName, Dictionary<string, long> normalizedValues)
+	{
+		MetricTypeSystemName = metricTypeSystemName;
+		NormalizedValues = normalizedValues;
 	}
 }

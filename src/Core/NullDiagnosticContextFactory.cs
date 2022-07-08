@@ -12,16 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-namespace Mindbox.DiagnosticContext
+namespace Mindbox.DiagnosticContext;
+
+public class NullDiagnosticContextFactory : IDiagnosticContextFactory
 {
-	public class NullDiagnosticContextFactory : IDiagnosticContextFactory
+	public IDiagnosticContext CreateDiagnosticContext(
+		string metricPath,
+		bool isFeatureBoundaryCodePoint = false,
+		MetricsType[]? metricsTypesOverride = null)
 	{
-		public IDiagnosticContext CreateDiagnosticContext(
-			string metricPath,
-			bool isFeatureBoundaryCodePoint = false,
-			MetricsType[]? metricsTypesOverride = null)
-		{
-			return new NullDiagnosticContext();
-		}
+		return new NullDiagnosticContext();
 	}
 }

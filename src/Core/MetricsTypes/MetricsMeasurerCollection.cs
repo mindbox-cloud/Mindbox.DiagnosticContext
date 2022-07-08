@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,36 +17,32 @@
 using System;
 using System.Collections.Generic;
 
-namespace Mindbox.DiagnosticContext.MetricsTypes
+namespace Mindbox.DiagnosticContext.MetricsTypes;
+
+internal class MetricsMeasurerCollection
 {
-	internal class MetricsMeasurerCollection
+	private static readonly SafeExceptionHandler _handler = new();
+
+	public MetricsMeasurerCollection(ICollection<MetricsMeasurer> measurers)
 	{
-		private static readonly SafeExceptionHandler handler = new SafeExceptionHandler();
-
-		public MetricsMeasurerCollection(ICollection<MetricsMeasurer> measurers)
-		{
-			if (measurers == null)
-				throw new ArgumentNullException(nameof(measurers));
-
-			this.Measurers = measurers;
-		}
-
-		public void Start()
-		{
-			foreach (var metricsMeasurer in Measurers)
-			{
-				handler.HandleExceptions(metricsMeasurer.Start);
-			}
-		}
-
-		public void Stop()
-		{
-			foreach (var metricsMeasurer in Measurers)
-			{
-				handler.HandleExceptions(() => metricsMeasurer.Stop());
-			}
-		}
-
-		public ICollection<MetricsMeasurer> Measurers { get; }
+		Measurers = measurers ?? throw new ArgumentNullException(nameof(measurers));
 	}
+
+	public void Start()
+	{
+		foreach (var metricsMeasurer in Measurers)
+		{
+			_handler.HandleExceptions(metricsMeasurer.Start);
+		}
+	}
+
+	public void Stop()
+	{
+		foreach (var metricsMeasurer in Measurers)
+		{
+			_handler.HandleExceptions(() => metricsMeasurer.Stop());
+		}
+	}
+
+	public ICollection<MetricsMeasurer> Measurers { get; }
 }

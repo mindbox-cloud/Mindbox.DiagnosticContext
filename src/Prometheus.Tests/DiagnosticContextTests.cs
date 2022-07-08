@@ -21,376 +21,372 @@ using Mindbox.DiagnosticContext;
 using Mindbox.DiagnosticContext.MetricsTypes;
 using Mindbox.DiagnosticContext.Prometheus;
 
-namespace Prometheus.Tests
+namespace Prometheus.Tests;
+
+public class TestDateTimeAccessor : ICurrentTimeAccessor
 {
-	public class TestDateTimeAccessor : ICurrentTimeAccessor
+	public DateTime CurrentDateTimeUtc { get; set; }
+}
+
+[TestClass]
+public class DiagnosticContextTests
+{
+	private CollectorRegistry _metricsRegistry = null!;
+	private PrometheusDiagnosticContextFactory _factory = null!;
+	private TestDateTimeAccessor _currentTimeAccessor = null!;
+	private DefaultMetricTypesConfiguration _defaultMetricTypesConfiguration = null!;
+
+
+	[TestInitialize]
+	public void TestInitialize()
 	{
-		public DateTime CurrentDateTimeUtc { get; set; }
+		_metricsRegistry = Metrics.NewCustomRegistry();
+		_currentTimeAccessor = new TestDateTimeAccessor()
+		{
+			CurrentDateTimeUtc = new DateTime(2021, 02, 03, 04, 05, 06, 07, DateTimeKind.Utc)
+		};
+		_defaultMetricTypesConfiguration = new DefaultMetricTypesConfiguration(_currentTimeAccessor);
+		_factory = new PrometheusDiagnosticContextFactory(
+			_defaultMetricTypesConfiguration,
+			new NullDiagnosticContextLogger(),
+			Metrics.WithCustomRegistry(_metricsRegistry));
 	}
 
-	[TestClass]
-	public class DiagnosticContextTests 
+	[TestMethod]
+	public async System.Threading.Tasks.Task MeasureWithInnerSpanAsync()
 	{
-		private CollectorRegistry metricsRegistry = null!;
-		private PrometheusDiagnosticContextFactory factory = null!;
-		private TestDateTimeAccessor currentTimeAccessor = null!;
-		private DefaultMetricTypesConfiguration defaultMetricTypesConfiguration = null!;
-
-
-		[TestInitialize]
-		public void TestInitialize()
+		using (var diagnosticContext = CreateDiagnosticContext("Test"))
 		{
-			metricsRegistry = Metrics.NewCustomRegistry();
-			currentTimeAccessor = new TestDateTimeAccessor() {CurrentDateTimeUtc = new DateTime(2021, 02, 03, 04, 05, 06, 07, DateTimeKind.Utc)};
-			defaultMetricTypesConfiguration = new DefaultMetricTypesConfiguration(currentTimeAccessor);
-			factory = new PrometheusDiagnosticContextFactory(defaultMetricTypesConfiguration, new NullDiagnosticContextLogger(), Metrics.WithCustomRegistry(metricsRegistry));
-		}
-
-		[TestMethod]
-		public void MeasureWithInnerSpan()
-		{
-			using (var diagnosticContext = CreateDiagnosticContext("Test"))
+			using (diagnosticContext.Measure("Span"))
 			{
-				using (diagnosticContext.Measure("Span"))
+				_currentTimeAccessor.CurrentDateTimeUtc = _currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(1);
+				using (diagnosticContext.Measure("InnerSpan"))
 				{
-					currentTimeAccessor.CurrentDateTimeUtc = currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(1);
-					using (diagnosticContext.Measure("InnerSpan"))
-					{
-						currentTimeAccessor.CurrentDateTimeUtc = currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(2);
-					}
+					_currentTimeAccessor.CurrentDateTimeUtc = _currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(2);
 				}
-				currentTimeAccessor.CurrentDateTimeUtc = currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(3);
 			}
-
-
-			AssertMetricsReported(
-				"diagnosticcontext_test_processingtime_count 1",
-				"diagnosticcontext_test_processingtime_total 6",
-				"diagnosticcontext_test_processingtime{step=\"Span\",unit=\"[ms]\"} 1",
-				"diagnosticcontext_test_processingtime{step=\"Span/InnerSpan\",unit=\"[ms]\"} 2",
-				"diagnosticcontext_test_processingtime{step=\"Other\",unit=\"[ms]\"} 3");
+			_currentTimeAccessor.CurrentDateTimeUtc = _currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(3);
 		}
 
-		[TestMethod]
-		public void MeasureWithInnerSpanAndTag()
+		await AssertMetricsReportedAsync(
+			"diagnosticcontext_test_processingtime_count 1",
+			"diagnosticcontext_test_processingtime_total 6",
+			"diagnosticcontext_test_processingtime{step=\"Span\",unit=\"[ms]\"} 1",
+			"diagnosticcontext_test_processingtime{step=\"Span/InnerSpan\",unit=\"[ms]\"} 2",
+			"diagnosticcontext_test_processingtime{step=\"Other\",unit=\"[ms]\"} 3");
+	}
+
+	[TestMethod]
+	public async System.Threading.Tasks.Task MeasureWithInnerSpanAndTagAsync()
+	{
+		using (var diagnosticContext = CreateDiagnosticContext("Test"))
 		{
-			using (var diagnosticContext = CreateDiagnosticContext("Test"))
+			diagnosticContext.SetTag("tag", "tagValue");
+			using (diagnosticContext.Measure("Span"))
 			{
-				diagnosticContext.SetTag("tag", "tagValue");
-				using (diagnosticContext.Measure("Span"))
+				_currentTimeAccessor.CurrentDateTimeUtc = _currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(1);
+				using (diagnosticContext.Measure("InnerSpan"))
 				{
-					currentTimeAccessor.CurrentDateTimeUtc = currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(1);
-					using (diagnosticContext.Measure("InnerSpan"))
-					{
-						currentTimeAccessor.CurrentDateTimeUtc = currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(2);
-					}
-				}
-
-				currentTimeAccessor.CurrentDateTimeUtc = currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(3);
-			}
-
-			
-			AssertMetricsReported(
-				"diagnosticcontext_test_processingtime_count{tag=\"tagValue\"} 1",
-				"diagnosticcontext_test_processingtime_total{tag=\"tagValue\"} 6",
-				"diagnosticcontext_test_processingtime{tag=\"tagValue\",step=\"Span\",unit=\"[ms]\"} 1",
-				"diagnosticcontext_test_processingtime{tag=\"tagValue\",step=\"Span/InnerSpan\",unit=\"[ms]\"} 2",
-				"diagnosticcontext_test_processingtime{tag=\"tagValue\",step=\"Other\",unit=\"[ms]\"} 3");
-		}
-
-		[TestMethod]
-		public void TwoMeasuresMeasureWithSameTag()
-		{
-			void Measure(int milliseconds)
-			{
-				using var diagnosticContext = CreateDiagnosticContext("Test");
-				
-				diagnosticContext.SetTag("tag", "tagValue");
-				using (diagnosticContext.Measure("Span"))
-				{
-					currentTimeAccessor.CurrentDateTimeUtc = currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(milliseconds);
+					_currentTimeAccessor.CurrentDateTimeUtc = _currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(2);
 				}
 			}
 
-
-			Measure(1);
-			Measure(2);
-
-			
-			AssertMetricsReported(
-				"diagnosticcontext_test_processingtime_count{tag=\"tagValue\"} 2",
-				"diagnosticcontext_test_processingtime_total{tag=\"tagValue\"} 3",
-				"diagnosticcontext_test_processingtime{tag=\"tagValue\",step=\"Span\",unit=\"[ms]\"} 3");
+			_currentTimeAccessor.CurrentDateTimeUtc = _currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(3);
 		}
 
-		[TestMethod]
-		public void TwoMeasuresMeasureWithDifferentTags()
+		await AssertMetricsReportedAsync(
+			"diagnosticcontext_test_processingtime_count{tag=\"tagValue\"} 1",
+			"diagnosticcontext_test_processingtime_total{tag=\"tagValue\"} 6",
+			"diagnosticcontext_test_processingtime{tag=\"tagValue\",step=\"Span\",unit=\"[ms]\"} 1",
+			"diagnosticcontext_test_processingtime{tag=\"tagValue\",step=\"Span/InnerSpan\",unit=\"[ms]\"} 2",
+			"diagnosticcontext_test_processingtime{tag=\"tagValue\",step=\"Other\",unit=\"[ms]\"} 3");
+	}
+
+	[TestMethod]
+	public async System.Threading.Tasks.Task TwoMeasuresMeasureWithSameTagAsync()
+	{
+		void Measure(int milliseconds)
 		{
-			void Measure(string tagValue, int milliseconds)
+			using var diagnosticContext = CreateDiagnosticContext("Test");
+
+			diagnosticContext.SetTag("tag", "tagValue");
+			using (diagnosticContext.Measure("Span"))
 			{
-				using var diagnosticContext = CreateDiagnosticContext("Test");
-				
-				diagnosticContext.SetTag("tag", tagValue);
-				using (diagnosticContext.Measure("Span"))
+				_currentTimeAccessor.CurrentDateTimeUtc = _currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(milliseconds);
+			}
+		}
+
+
+		Measure(1);
+		Measure(2);
+		await AssertMetricsReportedAsync(
+			"diagnosticcontext_test_processingtime_count{tag=\"tagValue\"} 2",
+			"diagnosticcontext_test_processingtime_total{tag=\"tagValue\"} 3",
+			"diagnosticcontext_test_processingtime{tag=\"tagValue\",step=\"Span\",unit=\"[ms]\"} 3");
+	}
+
+	[TestMethod]
+	public async System.Threading.Tasks.Task TwoMeasuresMeasureWithDifferentTagsAsync()
+	{
+		void Measure(string tagValue, int milliseconds)
+		{
+			using var diagnosticContext = CreateDiagnosticContext("Test");
+
+			diagnosticContext.SetTag("tag", tagValue);
+			using (diagnosticContext.Measure("Span"))
+			{
+				_currentTimeAccessor.CurrentDateTimeUtc = _currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(milliseconds);
+			}
+		}
+
+
+		Measure("tagValue1", 1);
+		Measure("tagValue2", 2);
+		await AssertMetricsReportedAsync(
+			"diagnosticcontext_test_processingtime_count{tag=\"tagValue1\"} 1",
+			"diagnosticcontext_test_processingtime_total{tag=\"tagValue1\"} 1",
+			"diagnosticcontext_test_processingtime{tag=\"tagValue1\",step=\"Span\",unit=\"[ms]\"} 1",
+			"diagnosticcontext_test_processingtime_count{tag=\"tagValue2\"} 1",
+			"diagnosticcontext_test_processingtime_total{tag=\"tagValue2\"} 2",
+			"diagnosticcontext_test_processingtime{tag=\"tagValue2\",step=\"Span\",unit=\"[ms]\"} 2");
+	}
+
+	[TestMethod]
+	public async System.Threading.Tasks.Task ZeroSpansAreNotReportedAsync()
+	{
+		using (var diagnosticContext = CreateDiagnosticContext("Test"))
+		{
+			using (diagnosticContext.Measure("Span"))
+			{
+				_currentTimeAccessor.CurrentDateTimeUtc = _currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(1);
+				using (diagnosticContext.Measure("InnerSpan"))
 				{
-					currentTimeAccessor.CurrentDateTimeUtc = currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(milliseconds);
 				}
 			}
-
-
-			Measure("tagValue1", 1);
-			Measure("tagValue2", 2);
-
-			
-			AssertMetricsReported(
-				"diagnosticcontext_test_processingtime_count{tag=\"tagValue1\"} 1",
-				"diagnosticcontext_test_processingtime_total{tag=\"tagValue1\"} 1",
-				"diagnosticcontext_test_processingtime{tag=\"tagValue1\",step=\"Span\",unit=\"[ms]\"} 1",
-				"diagnosticcontext_test_processingtime_count{tag=\"tagValue2\"} 1",
-				"diagnosticcontext_test_processingtime_total{tag=\"tagValue2\"} 2",
-				"diagnosticcontext_test_processingtime{tag=\"tagValue2\",step=\"Span\",unit=\"[ms]\"} 2");
 		}
-		
-		[TestMethod]
-		public void ZeroSpansAreNotReported()
+
+		await AssertMetricsReportedAsync(
+			"diagnosticcontext_test_processingtime_count 1",
+			"diagnosticcontext_test_processingtime_total 1",
+			"diagnosticcontext_test_processingtime{step=\"Span\",unit=\"[ms]\"} 1");
+		await AssertMetricsNotReportedAsync(
+			"diagnosticcontext_test_processingtime{step=\"Span/InnerSpan\",unit=\"[ms]\"}",
+			"diagnosticcontext_test_processingtime{step=\"Other\",unit=\"[ms]\"}");
+	}
+
+	[TestMethod]
+	public async System.Threading.Tasks.Task Increment_Once_WithoutTagsAsync()
+	{
+		using (var diagnosticContext = CreateDiagnosticContext("Test"))
 		{
-			using (var diagnosticContext = CreateDiagnosticContext("Test"))
-			{
-				using (diagnosticContext.Measure("Span"))
-				{
-					currentTimeAccessor.CurrentDateTimeUtc = currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(1);
-					using (diagnosticContext.Measure("InnerSpan"))
-					{
-					}
-				}
-			}
-
-
-			AssertMetricsReported(
-				"diagnosticcontext_test_processingtime_count 1",
-				"diagnosticcontext_test_processingtime_total 1",
-				"diagnosticcontext_test_processingtime{step=\"Span\",unit=\"[ms]\"} 1");
-
-
-			AssertMetricsNotReported(
-				"diagnosticcontext_test_processingtime{step=\"Span/InnerSpan\",unit=\"[ms]\"}",
-				"diagnosticcontext_test_processingtime{step=\"Other\",unit=\"[ms]\"}");
+			diagnosticContext.Increment("TestCounter");
 		}
-		
-		[TestMethod]
-		public void Increment_Once_WithoutTags()
+
+		await AssertMetricsReportedAsync(
+			"diagnosticcontext_test_counters{name=\"TestCounter\"} 1");
+	}
+
+	[TestMethod]
+	public async System.Threading.Tasks.Task Increment_Once_WithTagAsync()
+	{
+		using (var diagnosticContext = CreateDiagnosticContext("Test"))
 		{
-			using (var diagnosticContext = CreateDiagnosticContext("Test"))
-			{
-				diagnosticContext.Increment("TestCounter");
-			}
-
-			AssertMetricsReported(
-				"diagnosticcontext_test_counters{name=\"TestCounter\"} 1");
+			diagnosticContext.SetTag("tag", "tagValue");
+			diagnosticContext.Increment("TestCounter");
 		}
-		
-		[TestMethod]
-		public void Increment_Once_WithTag()
+
+		await AssertMetricsReportedAsync(
+			"diagnosticcontext_test_counters{name=\"TestCounter\",tag=\"tagValue\"} 1");
+	}
+
+	[TestMethod]
+	public async System.Threading.Tasks.Task Increment_Twice_WithoutTagsAsync()
+	{
+		using (var diagnosticContext = CreateDiagnosticContext("Test"))
 		{
-			using (var diagnosticContext = CreateDiagnosticContext("Test"))
-			{
-				diagnosticContext.SetTag("tag", "tagValue");
-				diagnosticContext.Increment("TestCounter");
-			}
-
-			AssertMetricsReported(
-				"diagnosticcontext_test_counters{name=\"TestCounter\",tag=\"tagValue\"} 1");
+			diagnosticContext.Increment("TestCounter");
 		}
-		
-		[TestMethod]
-		public void Increment_Twice_WithoutTags()
+
+		using (var diagnosticContext = CreateDiagnosticContext("Test"))
 		{
-			using (var diagnosticContext = CreateDiagnosticContext("Test"))
-			{
-				diagnosticContext.Increment("TestCounter");
-			}
-			
-			using (var diagnosticContext = CreateDiagnosticContext("Test"))
-			{
-				diagnosticContext.Increment("TestCounter");
-			}
-
-			AssertMetricsReported(
-				"diagnosticcontext_test_counters{name=\"TestCounter\"} 2");
+			diagnosticContext.Increment("TestCounter");
 		}
-		
-		[TestMethod]
-		public void Increment_Twice_WithSameTag()
+
+		await AssertMetricsReportedAsync(
+			"diagnosticcontext_test_counters{name=\"TestCounter\"} 2");
+	}
+
+	[TestMethod]
+	public async System.Threading.Tasks.Task Increment_Twice_WithSameTagAsync()
+	{
+		using (var diagnosticContext = CreateDiagnosticContext("Test"))
 		{
-			using (var diagnosticContext = CreateDiagnosticContext("Test"))
-			{
-				diagnosticContext.SetTag("tag", "tagValue");
-				diagnosticContext.Increment("TestCounter");
-			}
-			
-			using (var diagnosticContext = CreateDiagnosticContext("Test"))
-			{
-				diagnosticContext.SetTag("tag", "tagValue");
-				diagnosticContext.Increment("TestCounter");
-			}
-
-			AssertMetricsReported(
-				"diagnosticcontext_test_counters{name=\"TestCounter\",tag=\"tagValue\"} 2");
+			diagnosticContext.SetTag("tag", "tagValue");
+			diagnosticContext.Increment("TestCounter");
 		}
-		
-		[TestMethod]
-		public void Increment_Twice_WithDifferentTags()
+
+		using (var diagnosticContext = CreateDiagnosticContext("Test"))
 		{
-			using (var diagnosticContext = CreateDiagnosticContext("Test"))
-			{
-				diagnosticContext.SetTag("tag", "tagValue1");
-				diagnosticContext.Increment("TestCounter");
-			}
-			
-			using (var diagnosticContext = CreateDiagnosticContext("Test"))
-			{
-				diagnosticContext.SetTag("tag", "tagValue2");
-				diagnosticContext.Increment("TestCounter");
-			}
-
-			AssertMetricsReported(
-				"diagnosticcontext_test_counters{name=\"TestCounter\",tag=\"tagValue1\"} 1",
-				"diagnosticcontext_test_counters{name=\"TestCounter\",tag=\"tagValue2\"} 1");
+			diagnosticContext.SetTag("tag", "tagValue");
+			diagnosticContext.Increment("TestCounter");
 		}
 
-		[TestMethod]
-		public void ReportValue_Once_WithoutTags()
+		await AssertMetricsReportedAsync(
+			"diagnosticcontext_test_counters{name=\"TestCounter\",tag=\"tagValue\"} 2");
+	}
+
+	[TestMethod]
+	public async System.Threading.Tasks.Task Increment_Twice_WithDifferentTagsAsync()
+	{
+		using (var diagnosticContext = CreateDiagnosticContext("Test"))
 		{
-			using (var diagnosticContext = CreateDiagnosticContext("Test"))
-			{
-				diagnosticContext.ReportValue("TestValue", 1);
-			}
-
-			AssertMetricsReported(
-				"diagnosticcontext_test_reportedvalues_total{name=\"TestValue\"} 1",
-				"diagnosticcontext_test_reportedvalues_count{name=\"TestValue\"} 1");
+			diagnosticContext.SetTag("tag", "tagValue1");
+			diagnosticContext.Increment("TestCounter");
 		}
-		
-		[TestMethod]
-		public void ReportValue_Once_WithTag()
+
+		using (var diagnosticContext = CreateDiagnosticContext("Test"))
 		{
-			using (var diagnosticContext = CreateDiagnosticContext("Test"))
-			{
-				diagnosticContext.SetTag("tag", "tagValue");
-				diagnosticContext.ReportValue("TestValue", 1);
-			}
-
-			AssertMetricsReported(
-				"diagnosticcontext_test_reportedvalues_total{name=\"TestValue\",tag=\"tagValue\"} 1",
-				"diagnosticcontext_test_reportedvalues_count{name=\"TestValue\",tag=\"tagValue\"} 1");
+			diagnosticContext.SetTag("tag", "tagValue2");
+			diagnosticContext.Increment("TestCounter");
 		}
-		
-		[TestMethod]
-		public void ReportValue_Twice_WithoutTags()
+
+		await AssertMetricsReportedAsync(
+			"diagnosticcontext_test_counters{name=\"TestCounter\",tag=\"tagValue1\"} 1",
+			"diagnosticcontext_test_counters{name=\"TestCounter\",tag=\"tagValue2\"} 1");
+	}
+
+	[TestMethod]
+	public async System.Threading.Tasks.Task ReportValue_Once_WithoutTagsAsync()
+	{
+		using (var diagnosticContext = CreateDiagnosticContext("Test"))
 		{
-			using (var diagnosticContext = CreateDiagnosticContext("Test"))
-			{
-				diagnosticContext.ReportValue("TestValue", 2);
-			}
-			
-			using (var diagnosticContext = CreateDiagnosticContext("Test"))
-			{
-				diagnosticContext.ReportValue("TestValue", 1);
-			}
-			
-			AssertMetricsReported(
-				"diagnosticcontext_test_reportedvalues_total{name=\"TestValue\"} 3",
-				"diagnosticcontext_test_reportedvalues_count{name=\"TestValue\"} 2");
+			diagnosticContext.ReportValue("TestValue", 1);
 		}
-		
-		[TestMethod]
-		public void ReportValue_Twice_WithSameTag()
+
+		await AssertMetricsReportedAsync(
+			"diagnosticcontext_test_reportedvalues_total{name=\"TestValue\"} 1",
+			"diagnosticcontext_test_reportedvalues_count{name=\"TestValue\"} 1");
+	}
+
+	[TestMethod]
+	public async System.Threading.Tasks.Task ReportValue_Once_WithTagAsync()
+	{
+		using (var diagnosticContext = CreateDiagnosticContext("Test"))
 		{
-			using (var diagnosticContext = CreateDiagnosticContext("Test"))
-			{
-				diagnosticContext.SetTag("tag", "tagValue");
-				diagnosticContext.ReportValue("TestValue", 2);
-			}
-			
-			using (var diagnosticContext = CreateDiagnosticContext("Test"))
-			{
-				diagnosticContext.SetTag("tag", "tagValue");
-				diagnosticContext.ReportValue("TestValue", 1);
-			}
-
-			AssertMetricsReported(
-				"diagnosticcontext_test_reportedvalues_total{name=\"TestValue\",tag=\"tagValue\"} 3",
-				"diagnosticcontext_test_reportedvalues_count{name=\"TestValue\",tag=\"tagValue\"} 2");
+			diagnosticContext.SetTag("tag", "tagValue");
+			diagnosticContext.ReportValue("TestValue", 1);
 		}
-		
-		[TestMethod]
-		public void ReportValue_Twice_WithDifferentTags()
+
+		await AssertMetricsReportedAsync(
+			"diagnosticcontext_test_reportedvalues_total{name=\"TestValue\",tag=\"tagValue\"} 1",
+			"diagnosticcontext_test_reportedvalues_count{name=\"TestValue\",tag=\"tagValue\"} 1");
+	}
+
+	[TestMethod]
+	public async System.Threading.Tasks.Task ReportValue_Twice_WithoutTagsAsync()
+	{
+		using (var diagnosticContext = CreateDiagnosticContext("Test"))
 		{
-			using (var diagnosticContext = CreateDiagnosticContext("Test"))
-			{
-				diagnosticContext.SetTag("tag", "tagValue1");
-				diagnosticContext.ReportValue("TestValue", 1);
-			}
-			
-			using (var diagnosticContext = CreateDiagnosticContext("Test"))
-			{
-				diagnosticContext.SetTag("tag", "tagValue2");
-				diagnosticContext.ReportValue("TestValue", 1);
-			}
-
-			AssertMetricsReported(
-				"diagnosticcontext_test_reportedvalues_total{name=\"TestValue\",tag=\"tagValue1\"} 1",
-				"diagnosticcontext_test_reportedvalues_count{name=\"TestValue\",tag=\"tagValue1\"} 1",
-				"diagnosticcontext_test_reportedvalues_total{name=\"TestValue\",tag=\"tagValue2\"} 1",
-				"diagnosticcontext_test_reportedvalues_count{name=\"TestValue\",tag=\"tagValue2\"} 1");
+			diagnosticContext.ReportValue("TestValue", 2);
 		}
-		
-		private void AssertMetricsReported(params string[] expectedMetrics)
+
+		using (var diagnosticContext = CreateDiagnosticContext("Test"))
 		{
-			var metrics = GetMetricsAsText();
-
-			var notFoundMetrics = expectedMetrics
-				.Where(metric => !metrics.Contains(metric))
-				.ToArray();
-
-			if (notFoundMetrics.Any())
-			{
-				Assert.Fail(
-					$"Following metrics where not reported:\r\n{String.Join("\r\n", notFoundMetrics)}\r\n\r\n" +
-					$"Full metrics:\r\n{metrics}");
-			}
+			diagnosticContext.ReportValue("TestValue", 1);
 		}
 
-		private void AssertMetricsNotReported(params string[] expectedMetrics)
+		await AssertMetricsReportedAsync(
+			"diagnosticcontext_test_reportedvalues_total{name=\"TestValue\"} 3",
+			"diagnosticcontext_test_reportedvalues_count{name=\"TestValue\"} 2");
+	}
+
+	[TestMethod]
+	public async System.Threading.Tasks.Task ReportValue_Twice_WithSameTagAsync()
+	{
+		using (var diagnosticContext = CreateDiagnosticContext("Test"))
 		{
-			var metrics = GetMetricsAsText();
-
-			var foundMetrics = expectedMetrics
-				.Where(metric => metrics.Contains(metric))
-				.ToArray();
-
-			if (foundMetrics.Any())
-			{
-				Assert.Fail(
-					$"Following metrics where reported:\r\n{String.Join("\r\n", foundMetrics)}\r\n\r\n" +
-					$"Full metrics:\r\n{metrics}");
-			}
+			diagnosticContext.SetTag("tag", "tagValue");
+			diagnosticContext.ReportValue("TestValue", 2);
 		}
 
-		private IDiagnosticContext CreateDiagnosticContext(string metricPath)
+		using (var diagnosticContext = CreateDiagnosticContext("Test"))
 		{
-			var onlyWallClockMetricTypes = defaultMetricTypesConfiguration
-				.GetAsyncMetricsTypes()
-				.MetricsTypes
-				.ToArray();
-			return factory.CreateDiagnosticContext(metricPath, metricsTypesOverride: onlyWallClockMetricTypes);
+			diagnosticContext.SetTag("tag", "tagValue");
+			diagnosticContext.ReportValue("TestValue", 1);
 		}
 
-		private string GetMetricsAsText()
+		await AssertMetricsReportedAsync(
+			"diagnosticcontext_test_reportedvalues_total{name=\"TestValue\",tag=\"tagValue\"} 3",
+			"diagnosticcontext_test_reportedvalues_count{name=\"TestValue\",tag=\"tagValue\"} 2");
+	}
+
+	[TestMethod]
+	public async System.Threading.Tasks.Task ReportValue_Twice_WithDifferentTagsAsync()
+	{
+		using (var diagnosticContext = CreateDiagnosticContext("Test"))
 		{
-			using var memoryStream = new MemoryStream();
-			metricsRegistry.CollectAndExportAsTextAsync(memoryStream).GetAwaiter().GetResult();
-			return Encoding.UTF8.GetString(memoryStream.ToArray());
+			diagnosticContext.SetTag("tag", "tagValue1");
+			diagnosticContext.ReportValue("TestValue", 1);
 		}
+
+		using (var diagnosticContext = CreateDiagnosticContext("Test"))
+		{
+			diagnosticContext.SetTag("tag", "tagValue2");
+			diagnosticContext.ReportValue("TestValue", 1);
+		}
+
+		await AssertMetricsReportedAsync(
+			"diagnosticcontext_test_reportedvalues_total{name=\"TestValue\",tag=\"tagValue1\"} 1",
+			"diagnosticcontext_test_reportedvalues_count{name=\"TestValue\",tag=\"tagValue1\"} 1",
+			"diagnosticcontext_test_reportedvalues_total{name=\"TestValue\",tag=\"tagValue2\"} 1",
+			"diagnosticcontext_test_reportedvalues_count{name=\"TestValue\",tag=\"tagValue2\"} 1");
+	}
+
+	private async System.Threading.Tasks.Task AssertMetricsReportedAsync(params string[] expectedMetrics)
+	{
+		var metrics = await GetMetricsAsTextAsync();
+
+		var notFoundMetrics = expectedMetrics
+			.Where(metric => !metrics.Contains(metric))
+			.ToArray();
+
+		if (notFoundMetrics.Any())
+		{
+			Assert.Fail(
+				$"Following metrics where not reported:\r\n{string.Join("\r\n", notFoundMetrics)}\r\n\r\n" +
+				$"Full metrics:\r\n{metrics}");
+		}
+	}
+
+	private async System.Threading.Tasks.Task AssertMetricsNotReportedAsync(params string[] expectedMetrics)
+	{
+		var metrics = await GetMetricsAsTextAsync();
+
+		var foundMetrics = expectedMetrics
+			.Where(metric => metrics.Contains(metric))
+			.ToArray();
+
+		if (foundMetrics.Any())
+		{
+			Assert.Fail(
+				$"Following metrics where reported:\r\n{string.Join("\r\n", foundMetrics)}\r\n\r\n" +
+				$"Full metrics:\r\n{metrics}");
+		}
+	}
+
+	private IDiagnosticContext CreateDiagnosticContext(string metricPath)
+	{
+		var onlyWallClockMetricTypes = _defaultMetricTypesConfiguration
+			.GetAsyncMetricsTypes()
+			.MetricsTypes
+			.ToArray();
+		return _factory.CreateDiagnosticContext(metricPath, metricsTypesOverride: onlyWallClockMetricTypes);
+	}
+
+	private async System.Threading.Tasks.Task<string> GetMetricsAsTextAsync()
+	{
+		using var memoryStream = new MemoryStream();
+		await _metricsRegistry.CollectAndExportAsTextAsync(memoryStream);
+		return Encoding.UTF8.GetString(memoryStream.ToArray());
 	}
 }

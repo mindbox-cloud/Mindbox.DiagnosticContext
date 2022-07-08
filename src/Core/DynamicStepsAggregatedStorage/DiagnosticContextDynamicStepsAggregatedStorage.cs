@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,27 +18,26 @@ using System;
 using Mindbox.DiagnosticContext.MetricItem;
 using Mindbox.DiagnosticContext.MetricsTypes;
 
-namespace Mindbox.DiagnosticContext.DynamicStepsAggregatedStorage
+namespace Mindbox.DiagnosticContext.DynamicStepsAggregatedStorage;
+
+public class DiagnosticContextDynamicStepsAggregatedStorage
 {
-	public class DiagnosticContextDynamicStepsAggregatedStorage
+	public MetricsAggregatedValueCollection MetricsAggregatedValues { get; }
+	public long ItemsCount { get; private set; }
+
+	public DiagnosticContextDynamicStepsAggregatedStorage(MetricsTypeCollection metricsTypes)
 	{
-		public MetricsAggregatedValueCollection MetricsAggregatedValues { get; }
-		public long ItemsCount { get; private set; }
+		MetricsAggregatedValues = new MetricsAggregatedValueCollection(metricsTypes);
+	}
 
-		public DiagnosticContextDynamicStepsAggregatedStorage(MetricsTypeCollection metricsTypes)
-		{
-			MetricsAggregatedValues = new MetricsAggregatedValueCollection(metricsTypes);
-		}
+	public void CollectItemData(DiagnosticContextMetricsItem item)
+	{
+		if (item == null)
+			throw new ArgumentNullException(nameof(item));
 
-		public void CollectItemData(DiagnosticContextMetricsItem item)
-		{
-			if (item == null)
-				throw new ArgumentNullException(nameof(item));
+		ItemsCount++;
 
-			ItemsCount++;
-
-			var normalizedMetricsValues = item.GetNormalizedMetricsValues();
-			MetricsAggregatedValues.Add(normalizedMetricsValues);
-		}
+		var normalizedMetricsValues = item.GetNormalizedMetricsValues();
+		MetricsAggregatedValues.Add(normalizedMetricsValues);
 	}
 }

@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,35 +18,34 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Mindbox.DiagnosticContext
+namespace Mindbox.DiagnosticContext;
+
+internal class DiagnosticContextCollection : IDisposable
 {
-	internal class DiagnosticContextCollection : IDisposable
+	private readonly List<IDiagnosticContext> _linkedContexts = new();
+
+	internal void LinkDiagnosticContext(IDiagnosticContext context)
 	{
-		private readonly List<IDiagnosticContext> linkedContexts = new List<IDiagnosticContext>();
+		_linkedContexts.Add(context);
+	}
 
-		internal void LinkDiagnosticContext(IDiagnosticContext context)
-		{
-			linkedContexts.Add(context);
-		}
+	public IDisposable Measure(string stepName)
+	{
+		return new DisposableContainer(
+			_linkedContexts
+				.Select(context => context.Measure(stepName))
+				.ToArray());
+	}
 
-		public IDisposable Measure(string stepName)
-		{
-			return new DisposableContainer(
-				linkedContexts
-					.Select(context => context.Measure(stepName))
-					.ToArray());
-		}
+	public void Increment(string counterPath)
+	{
+		foreach (var context in _linkedContexts)
+			context.Increment(counterPath);
+	}
 
-		public void Increment(string counterPath)
-		{
-			foreach (var context in linkedContexts)
-				context.Increment(counterPath);
-		}
-
-		public void Dispose()
-		{
-			foreach (var linkedContext in linkedContexts)
-				linkedContext.Dispose();
-		}
+	public void Dispose()
+	{
+		foreach (var linkedContext in _linkedContexts)
+			linkedContext.Dispose();
 	}
 }

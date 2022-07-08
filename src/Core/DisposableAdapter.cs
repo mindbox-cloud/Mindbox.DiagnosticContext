@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,28 +16,24 @@
 
 using System;
 
-namespace Mindbox.DiagnosticContext
+namespace Mindbox.DiagnosticContext;
+
+internal class DisposableAdapter<TAdaptee> : IDisposable
 {
-	internal class DisposableAdapter<TAdaptee> : IDisposable
+	private readonly TAdaptee _adaptee;
+	private readonly Action<TAdaptee> _onDispose;
+
+	public DisposableAdapter(TAdaptee adaptee, Action<TAdaptee> onCreation, Action<TAdaptee> onDispose)
 	{
-		private readonly TAdaptee adaptee;
-		private readonly Action<TAdaptee> onDispose;
+		if (onCreation == null)
+			throw new ArgumentNullException(nameof(onCreation));
+		_adaptee = adaptee;
+		_onDispose = onDispose ?? throw new ArgumentNullException(nameof(onDispose));
+		onCreation(adaptee);
+	}
 
-		public DisposableAdapter(TAdaptee adaptee, Action<TAdaptee> onCreation, Action<TAdaptee> onDispose)
-		{
-			if (onCreation == null)
-				throw new ArgumentNullException(nameof(onCreation));
-			if (onDispose == null)
-				throw new ArgumentNullException(nameof(onDispose));
-
-			this.adaptee = adaptee;
-			this.onDispose = onDispose;
-			onCreation(adaptee);
-		}
-
-		public void Dispose()
-		{
-			onDispose(adaptee);
-		}
+	public void Dispose()
+	{
+		_onDispose(_adaptee);
 	}
 }

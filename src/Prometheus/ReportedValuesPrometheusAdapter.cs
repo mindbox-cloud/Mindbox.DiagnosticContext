@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,93 +17,92 @@ using System.Linq;
 using Mindbox.DiagnosticContext.MetricItem;
 using Prometheus;
 
-namespace Mindbox.DiagnosticContext.Prometheus
+namespace Mindbox.DiagnosticContext.Prometheus;
+
+internal class ReportedValuesPrometheusAdapter
 {
-	internal class ReportedValuesPrometheusAdapter
+	private readonly IMetricFactory _metricFactory;
+
+	private readonly PrometheusMetricNameBuilder _metricNameBuilder;
+
+	private struct ReportedValuesCounters
 	{
-		private readonly IMetricFactory metricFactory;
+		public Counter Count { get; set; }
 
-		private readonly PrometheusMetricNameBuilder metricNameBuilder;
+		public Counter Total { get; set; }
+	}
 
-		private struct ReportedValuesCounters
+	private readonly Dictionary<string, ReportedValuesCounters> _counters =
+		new();
+
+	public ReportedValuesPrometheusAdapter(IMetricFactory metricFactory, PrometheusMetricNameBuilder metricNameBuilder)
+	{
+		_metricFactory = metricFactory;
+		_metricNameBuilder = metricNameBuilder;
+	}
+
+	public void Update(
+		DiagnosticContextMetricsItem metricsItem,
+		DiagnosticContextMetricsStorage storage,
+		IDictionary<string, string> tags)
+	{
+		foreach (var reportedValueCounters in storage.ReportedValuesPerMetricsPrefix)
 		{
-			public Counter Count { get; set; }
-
-			public Counter Total { get; set; }
-		}
-
-		private readonly Dictionary<string, ReportedValuesCounters> counters =
-			new();
-
-		public ReportedValuesPrometheusAdapter(IMetricFactory metricFactory, PrometheusMetricNameBuilder metricNameBuilder)
-		{
-			this.metricFactory = metricFactory;
-			this.metricNameBuilder = metricNameBuilder;
-		}
-
-		public void Update(
-			DiagnosticContextMetricsItem metricsItem, 
-			DiagnosticContextMetricsStorage storage,
-			IDictionary<string, string> tags)
-		{
-			foreach (var reportedValueCounters in storage.ReportedValuesPerMetricsPrefix)
+			if (reportedValueCounters.Value.ReportedValues.Any())
 			{
-				if (reportedValueCounters.Value.ReportedValues.Any())
+				var prometheusCounter = GetOrCreateReportedValuesCounters(
+					metricsItem, reportedValueCounters.Key, tags);
+
+				foreach (var diagnosticContextCounter in reportedValueCounters.Value.ReportedValues)
 				{
-					var prometheusCounter = GetOrCreateReportedValuesCounters(
-						metricsItem, reportedValueCounters.Key, tags);
+					var labelValues = new List<string> { diagnosticContextCounter.Key };
+					labelValues.AddRange(tags.Values);
 
-					foreach (var diagnosticContextCounter in reportedValueCounters.Value.ReportedValues)
-					{
-						var labelValues = new List<string> {diagnosticContextCounter.Key};
-						labelValues.AddRange(tags.Values);
+					var labelValuesArray = labelValues.ToArray();
 
-						var labelValuesArray = labelValues.ToArray();
-						
-						prometheusCounter
-							.Total
-							.WithLabels(labelValuesArray)
-							.Inc(diagnosticContextCounter.Value.Total);
+					prometheusCounter
+						.Total
+						.WithLabels(labelValuesArray)
+						.Inc(diagnosticContextCounter.Value.Total);
 
-						prometheusCounter
-							.Count
-							.WithLabels(labelValuesArray)
-							.Inc(diagnosticContextCounter.Value.Count);
-					}
+					prometheusCounter
+						.Count
+						.WithLabels(labelValuesArray)
+						.Inc(diagnosticContextCounter.Value.Count);
 				}
 			}
 		}
+	}
 
-		private ReportedValuesCounters GetOrCreateReportedValuesCounters(DiagnosticContextMetricsItem metricsItem,
-			string counterName, IDictionary<string, string> tags)
+	private ReportedValuesCounters GetOrCreateReportedValuesCounters(DiagnosticContextMetricsItem metricsItem,
+		string counterName, IDictionary<string, string> tags)
+	{
+		if (_counters.TryGetValue(counterName, out var prometheusCounter)) return prometheusCounter;
+
+		var totalMetricName = _metricNameBuilder.BuildFullMetricName($"{metricsItem.MetricPrefix}_reportedvalues_total");
+		var totalMetricDescription = $"Diagnostic context reported values total for {metricsItem.MetricPrefix}";
+
+		var reportedValuesMetricName = _metricNameBuilder
+			.BuildFullMetricName($"{metricsItem.MetricPrefix}_reportedvalues_count");
+		var reportedValuesMetricDescription = _metricNameBuilder
+			.BuildFullMetricName($"Diagnostic context reported values count for {metricsItem.MetricPrefix}");
+
+		var labelNames = new List<string> { "name" };
+		labelNames.AddRange(tags.Keys);
+		var counterConfiguration = new CounterConfiguration { LabelNames = labelNames.ToArray() };
+
+		_counters[counterName] = new ReportedValuesCounters
 		{
-			if (counters.TryGetValue(counterName, out var prometheusCounter)) return prometheusCounter;
+			Total = _metricFactory.CreateCounter(
+				totalMetricName,
+				totalMetricDescription,
+				counterConfiguration),
+			Count = _metricFactory.CreateCounter(
+				reportedValuesMetricName,
+				reportedValuesMetricDescription,
+				counterConfiguration)
+		};
 
-			var totalMetricName = metricNameBuilder.BuildFullMetricName($"{metricsItem.MetricPrefix}_reportedvalues_total");
-			var totalMetricDescription = $"Diagnostic context reported values total for {metricsItem.MetricPrefix}";
-
-			var reportedValuesMetricName = metricNameBuilder
-				.BuildFullMetricName($"{metricsItem.MetricPrefix}_reportedvalues_count");
-			var reportedValuesMetricDescription = metricNameBuilder
-				.BuildFullMetricName($"Diagnostic context reported values count for {metricsItem.MetricPrefix}");
-
-			var labelNames = new List<string> {"name"};
-			labelNames.AddRange(tags.Keys);
-			var counterConfiguration = new CounterConfiguration{LabelNames = labelNames.ToArray()};
-			
-			counters[counterName] = new ReportedValuesCounters
-			{
-				Total = metricFactory.CreateCounter(
-					totalMetricName,
-					totalMetricDescription,
-					counterConfiguration),
-				Count =  metricFactory.CreateCounter(
-					reportedValuesMetricName,
-					reportedValuesMetricDescription,
-					counterConfiguration)
-			};
-
-			return counters[counterName];
-		}
+		return _counters[counterName];
 	}
 }

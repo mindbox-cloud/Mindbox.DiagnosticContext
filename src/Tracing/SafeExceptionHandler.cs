@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,49 +14,48 @@
 
 using System;
 
-namespace Mindbox.DiagnosticContext.Tracing
-{
-	internal class SafeExceptionHandler
-	{
-		private readonly Action<Exception> exceptionHandler;
+namespace Mindbox.DiagnosticContext.Tracing;
 
-		public SafeExceptionHandler(Action<Exception> exceptionHandler)
+internal class SafeExceptionHandler
+{
+	private readonly Action<Exception> _exceptionHandler;
+
+	public SafeExceptionHandler(Action<Exception> exceptionHandler)
+	{
+		_exceptionHandler = exceptionHandler;
+	}
+
+	public void Execute(Action action)
+	{
+		try
 		{
-			this.exceptionHandler = exceptionHandler;
+			action();
 		}
-		
-		public void Execute(Action action)
+		catch (Exception exception)
 		{
-			try
-			{
-				action();
-			}
-			catch (Exception exception)
-			{
-				HandleException(exception);
-			}
+			HandleException(exception);
 		}
-		
-		public TValue Execute<TValue>(Func<TValue> action, Func<TValue> fallback)
+	}
+
+	public TValue Execute<TValue>(Func<TValue> action, Func<TValue> fallback)
+	{
+		try
 		{
-			try
-			{
-				return action();
-			}
-			catch (Exception exception)
-			{
-				HandleException(exception);
-				return fallback();
-			}
+			return action();
 		}
-		
-		private void HandleException(Exception exception)
+		catch (Exception exception)
 		{
-			try
-			{
-				exceptionHandler(exception);
-			}
-			catch { /* do nothing */ }
+			HandleException(exception);
+			return fallback();
 		}
+	}
+
+	private void HandleException(Exception exception)
+	{
+		try
+		{
+			_exceptionHandler(exception);
+		}
+		catch { /* do nothing */ }
 	}
 }

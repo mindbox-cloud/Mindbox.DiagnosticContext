@@ -1,4 +1,4 @@
-﻿// Copyright 2021 Mindbox Ltd
+// Copyright 2021 Mindbox Ltd
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,23 +15,22 @@
 using System;
 using System.Collections.Generic;
 
-namespace Mindbox.DiagnosticContext.Tracing
-{
-	internal class MeasureScope : IDisposable
-	{
-		private readonly IReadOnlyCollection<IDisposable> innerScopes;
+namespace Mindbox.DiagnosticContext.Tracing;
 
-		public MeasureScope(IReadOnlyCollection<IDisposable> innerScopes)
+internal class MeasureScope : IDisposable
+{
+	private readonly IReadOnlyCollection<IDisposable> _innerScopes;
+
+	public MeasureScope(IReadOnlyCollection<IDisposable> innerScopes)
+	{
+		_innerScopes = innerScopes;
+	}
+
+	public void Dispose()
+	{
+		foreach (var scope in _innerScopes)
 		{
-			this.innerScopes = innerScopes;
-		}
-		
-		public void Dispose()
-		{
-			foreach (var scope in innerScopes)
-			{
-				scope.Dispose();
-			}
+			scope.Dispose();
 		}
 	}
 }
