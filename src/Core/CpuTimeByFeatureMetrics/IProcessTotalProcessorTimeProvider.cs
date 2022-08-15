@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#nullable disable
-
 using System;
 
 namespace Mindbox.DiagnosticContext.CpuTimeByFeatureMetrics;
