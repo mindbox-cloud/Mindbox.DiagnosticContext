@@ -1,11 +1,11 @@
 // Copyright 2021 Mindbox Ltd
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,9 +23,11 @@ namespace Mindbox.DiagnosticContext.DynamicSteps;
 
 internal class DiagnosticContextMetricsHierarchicalValue
 {
-	public static DiagnosticContextMetricsHierarchicalValue FromMetricsType(MetricsType metricsType)
+	public static DiagnosticContextMetricsHierarchicalValue FromMetricsType(
+		MetricsType metricsType,
+		IDiagnosticContextLogger diagnosticContextLogger)
 	{
-		return new DiagnosticContextMetricsHierarchicalValue(metricsType);
+		return new DiagnosticContextMetricsHierarchicalValue(metricsType, diagnosticContextLogger);
 	}
 
 	private const string OtherStepName = "Other";
@@ -35,11 +37,15 @@ internal class DiagnosticContextMetricsHierarchicalValue
 
 	public string MetricsTypeSystemName => _metricsType.SystemName;
 
+	private bool _isDisposing;
 	private readonly MetricsType _metricsType;
+	private readonly IDiagnosticContextLogger _diagnosticContextLogger;
 
-	private DiagnosticContextMetricsHierarchicalValue(MetricsType metricsType)
+	private DiagnosticContextMetricsHierarchicalValue(MetricsType metricsType, IDiagnosticContextLogger diagnosticContextLogger)
 	{
 		_metricsType = metricsType;
+		_diagnosticContextLogger = diagnosticContextLogger;
+		_isDisposing = false;
 	}
 
 	public void SetTotal(long total)
@@ -52,6 +58,9 @@ internal class DiagnosticContextMetricsHierarchicalValue
 
 	public void IncrementMetricsValue(string path, long increment)
 	{
+		if (_isDisposing)
+			_diagnosticContextLogger.Log($"A new metric ({path} - {increment}) added while disposing.");
+
 		IncrementNamedValue(StepValues, path, _metricsType.ConvertMetricValue(increment));
 	}
 
@@ -89,6 +98,8 @@ internal class DiagnosticContextMetricsHierarchicalValue
 	{
 		if (!TotalValue.HasValue)
 			throw new InvalidOperationException("!TotalValue.HasValue");
+
+		_isDisposing = true;
 
 		var result = new Dictionary<string, long>();
 
