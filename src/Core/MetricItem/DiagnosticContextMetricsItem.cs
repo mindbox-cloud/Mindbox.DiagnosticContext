@@ -27,17 +27,18 @@ public class DiagnosticContextMetricsItem
 
 	public DiagnosticContextMetricsItem(
 		MetricsTypeCollection metricsTypes,
-		string metricPrefix)
+		string metricPrefix,
+		IDiagnosticContextLogger diagnosticContextLogger)
 	{
 		MetricsTypes = metricsTypes;
 		MetricPrefix = metricPrefix;
 
-		DynamicSteps = new DiagnosticContextDynamicSteps(metricsTypes);
+		DynamicSteps = new DiagnosticContextDynamicSteps(metricsTypes, diagnosticContextLogger);
 	}
 
-	internal void PrepareForCollection(IDiagnosticContextLogger diagnosticContextLogger)
+	internal void PrepareForCollection(bool isDisposing)
 	{
-		_normalizedMetricsValues = DynamicSteps.GetNormalizedMetricsValues(diagnosticContextLogger);
+		_normalizedMetricsValues = DynamicSteps.GetNormalizedMetricsValues(isDisposing);
 	}
 
 	public DiagnosticContextMetricsNormalizedValueCollection GetNormalizedMetricsValues()

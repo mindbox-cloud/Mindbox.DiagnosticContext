@@ -29,10 +29,11 @@ public class DiagnosticContextDynamicSteps
 	private readonly DiagnosticContextMetricsHierarchicalValueCollection _metricsValues;
 	private readonly MetricsTypeCollection _metricsTypes;
 
-	internal DiagnosticContextDynamicSteps(MetricsTypeCollection metricsTypes)
+	internal DiagnosticContextDynamicSteps(MetricsTypeCollection metricsTypes, IDiagnosticContextLogger diagnosticContextLogger)
 	{
 		_metricsTypes = metricsTypes;
-		_metricsValues = DiagnosticContextMetricsHierarchicalValueCollection.FromMetricsTypeCollection(metricsTypes);
+		_metricsValues = DiagnosticContextMetricsHierarchicalValueCollection
+			.FromMetricsTypeCollection(metricsTypes, diagnosticContextLogger);
 	}
 
 	internal bool IsInInvalidState => _safeExceptionHandler.IsInInvalidState;
@@ -116,9 +117,8 @@ public class DiagnosticContextDynamicSteps
 		});
 	}
 
-	public DiagnosticContextMetricsNormalizedValueCollection GetNormalizedMetricsValues(
-		IDiagnosticContextLogger diagnosticContextLogger)
+	public DiagnosticContextMetricsNormalizedValueCollection GetNormalizedMetricsValues(bool isDisposing)
 	{
-		return _metricsValues.ToNormalizedValueCollection(diagnosticContextLogger);
+		return _metricsValues.ToNormalizedValueCollection(isDisposing);
 	}
 }

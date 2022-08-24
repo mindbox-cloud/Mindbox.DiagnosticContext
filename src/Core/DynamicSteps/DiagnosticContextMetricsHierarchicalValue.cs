@@ -23,9 +23,11 @@ namespace Mindbox.DiagnosticContext.DynamicSteps;
 
 internal class DiagnosticContextMetricsHierarchicalValue
 {
-	public static DiagnosticContextMetricsHierarchicalValue FromMetricsType(MetricsType metricsType)
+	public static DiagnosticContextMetricsHierarchicalValue FromMetricsType(
+		MetricsType metricsType,
+		IDiagnosticContextLogger diagnosticContextLogger)
 	{
-		return new DiagnosticContextMetricsHierarchicalValue(metricsType);
+		return new DiagnosticContextMetricsHierarchicalValue(metricsType, diagnosticContextLogger);
 	}
 
 	private const string OtherStepName = "Other";
@@ -35,13 +37,15 @@ internal class DiagnosticContextMetricsHierarchicalValue
 
 	public string MetricsTypeSystemName => _metricsType.SystemName;
 
+	private bool _isDisposing;
 	private readonly MetricsType _metricsType;
+	private readonly IDiagnosticContextLogger _diagnosticContextLogger;
 
-	private static KeyValuePair<string, long> _lastIncrementedNamedValue;
-
-	private DiagnosticContextMetricsHierarchicalValue(MetricsType metricsType)
+	private DiagnosticContextMetricsHierarchicalValue(MetricsType metricsType, IDiagnosticContextLogger diagnosticContextLogger)
 	{
 		_metricsType = metricsType;
+		_diagnosticContextLogger = diagnosticContextLogger;
+		_isDisposing = false;
 	}
 
 	public void SetTotal(long total)
@@ -54,6 +58,9 @@ internal class DiagnosticContextMetricsHierarchicalValue
 
 	public void IncrementMetricsValue(string path, long increment)
 	{
+		if (_isDisposing)
+			_diagnosticContextLogger.Log($"A new metric ({path} - {increment}) added while disposing.", null!);
+
 		IncrementNamedValue(StepValues, path, _metricsType.ConvertMetricValue(increment));
 	}
 
@@ -63,7 +70,6 @@ internal class DiagnosticContextMetricsHierarchicalValue
 			buf = 0;
 
 		dictionary[name] = buf + value;
-		_lastIncrementedNamedValue = new KeyValuePair<string, long>(name, buf + value);
 	}
 
 	private static long EvaluateSubStepsSum(IDictionary<string, long> dictionary, string path)
@@ -88,32 +94,22 @@ internal class DiagnosticContextMetricsHierarchicalValue
 			.Sum(e => e.Value);
 	}
 
-	public DiagnosticContextMetricsNormalizedValue ToNormalizedValue(IDiagnosticContextLogger diagnosticContextLogger)
+	public DiagnosticContextMetricsNormalizedValue ToNormalizedValue(bool isDisposing)
 	{
 		if (!TotalValue.HasValue)
 			throw new InvalidOperationException("!TotalValue.HasValue");
 
-		var result = new Dictionary<string, long>();
-		var stepValuesCount = StepValues.Count;
-		var lastIncrementedNamedValue = _lastIncrementedNamedValue;
+		_isDisposing = isDisposing;
 
-		try
+		var result = new Dictionary<string, long>();
+
+		foreach (var metric in StepValues)
 		{
-			foreach (var metric in StepValues)
-			{
-				var metricSubStepsSum = EvaluateSubStepsSum(StepValues, metric.Key);
-				result[metric.Key] = metric.Value > metricSubStepsSum ? metric.Value - metricSubStepsSum : 0;
-			}
-			var subStepSum = EvaluateSubStepsSum(StepValues);
-			IncrementNamedValue(result, OtherStepName, TotalValue > subStepSum ? TotalValue.Value - subStepSum : 0);
+			var metricSubStepsSum = EvaluateSubStepsSum(StepValues, metric.Key);
+			result[metric.Key] = metric.Value > metricSubStepsSum ? metric.Value - metricSubStepsSum : 0;
 		}
-		catch (InvalidOperationException e)
-		{
-			var logMessage = $"StepValues.Count: {stepValuesCount} -> {StepValues.Count}\n" +
-			                 $"LastIncrementedNamedValue: {lastIncrementedNamedValue} -> {_lastIncrementedNamedValue}";
-			diagnosticContextLogger.Log(logMessage, e);
-			throw;
-		}
+		var subStepSum = EvaluateSubStepsSum(StepValues);
+		IncrementNamedValue(result, OtherStepName, TotalValue > subStepSum ? TotalValue.Value - subStepSum : 0);
 
 		return new DiagnosticContextMetricsNormalizedValue(MetricsTypeSystemName, result);
 	}

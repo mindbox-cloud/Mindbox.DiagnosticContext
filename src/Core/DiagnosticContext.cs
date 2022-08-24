@@ -22,7 +22,6 @@ namespace Mindbox.DiagnosticContext;
 
 public class DiagnosticContext : IDiagnosticContext
 {
-	private readonly IDiagnosticContextLogger _diagnosticContextLogger;
 	private readonly DiagnosticContextCollection _diagnosticContextCollection = new();
 	private IDiagnosticContextMetricsCollection _metricsCollection;
 	private DiagnosticContextMetricsItem _metricsItem;
@@ -42,14 +41,13 @@ public class DiagnosticContext : IDiagnosticContext
 		MetricsTypeCollection metricTypes,
 		bool isFeatureBoundaryCodePoint = false)
 	{
-		_diagnosticContextLogger = diagnosticContextLogger;
 		_safeExceptionHandler = new SafeExceptionHandler(diagnosticContextLogger);
 		_safeExceptionHandler.HandleExceptions(() =>
 		{
 			if (string.IsNullOrEmpty(metricPath))
 				throw new ArgumentNullException(nameof(metricPath));
 			_metricsCollection = metricsCollection ?? throw new ArgumentNullException(nameof(metricsCollection));
-			_metricsItem = new DiagnosticContextMetricsItem(metricTypes, metricPath);
+			_metricsItem = new DiagnosticContextMetricsItem(metricTypes, metricPath, diagnosticContextLogger);
 			_totalTimer = _metricsItem.DynamicSteps.StartTotal();
 
 			_sourceCodeLabelScope = isFeatureBoundaryCodePoint
@@ -150,7 +148,7 @@ public class DiagnosticContext : IDiagnosticContext
 				if (_metricsItem.DynamicSteps.IsInInvalidState)
 					return;
 
-				_metricsItem.PrepareForCollection(_diagnosticContextLogger);
+				_metricsItem.PrepareForCollection(true);
 
 				_metricsCollection?.CollectItemData(_metricsItem);
 			});

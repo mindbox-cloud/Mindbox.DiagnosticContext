@@ -25,10 +25,12 @@ namespace Mindbox.DiagnosticContext.DynamicSteps;
 internal class DiagnosticContextMetricsHierarchicalValueCollection
 {
 	public static DiagnosticContextMetricsHierarchicalValueCollection FromMetricsTypeCollection(
-		MetricsTypeCollection collection)
+		MetricsTypeCollection collection,
+		IDiagnosticContextLogger diagnosticContextLogger)
 	{
 		return new DiagnosticContextMetricsHierarchicalValueCollection(
-			collection.MetricsTypes.Select(mt => DiagnosticContextMetricsHierarchicalValue.FromMetricsType(mt)));
+			collection.MetricsTypes.Select(mt => DiagnosticContextMetricsHierarchicalValue
+				.FromMetricsType(mt, diagnosticContextLogger)));
 	}
 
 	private readonly IDictionary<string, DiagnosticContextMetricsHierarchicalValue> _metricTypeSystemNameToValuesMapping;
@@ -70,11 +72,9 @@ internal class DiagnosticContextMetricsHierarchicalValueCollection
 		}
 	}
 
-	public DiagnosticContextMetricsNormalizedValueCollection ToNormalizedValueCollection(
-		IDiagnosticContextLogger diagnosticContextLogger)
+	public DiagnosticContextMetricsNormalizedValueCollection ToNormalizedValueCollection(bool isDisposing)
 	{
 		return new DiagnosticContextMetricsNormalizedValueCollection(
-			_metricTypeSystemNameToValuesMapping.Values.Select(metricsValue => metricsValue
-				.ToNormalizedValue(diagnosticContextLogger)));
+			_metricTypeSystemNameToValuesMapping.Values.Select(metricsValue => metricsValue.ToNormalizedValue(isDisposing)));
 	}
 }
