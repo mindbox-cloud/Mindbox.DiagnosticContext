@@ -103,7 +103,6 @@ internal class DiagnosticContextMetricsHierarchicalValue
 			{
 				var metricSubStepsSum = EvaluateSubStepsSum(StepValues, metric.Key);
 				result[metric.Key] = metric.Value > metricSubStepsSum ? metric.Value - metricSubStepsSum : 0;
-				IncrementMetricsValue("123", 1232343245);
 			}
 			var subStepSum = EvaluateSubStepsSum(StepValues);
 			IncrementNamedValue(result, OtherStepName, TotalValue > subStepSum ? TotalValue.Value - subStepSum : 0);
@@ -111,7 +110,7 @@ internal class DiagnosticContextMetricsHierarchicalValue
 		catch (InvalidOperationException e)
 		{
 			var logMessage = $"StepValues.Count: {stepValuesCount} -> {StepValues.Count}\n" +
-								$"LastIncrementedNamedValue: {lastIncrementedNamedValue} -> {_lastIncrementedNamedValue}";
+			                 $"LastIncrementedNamedValue: {lastIncrementedNamedValue} -> {_lastIncrementedNamedValue}";
 			diagnosticContextLogger.Log(logMessage, e);
 			throw;
 		}
