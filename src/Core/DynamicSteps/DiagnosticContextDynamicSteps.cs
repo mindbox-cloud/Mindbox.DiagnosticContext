@@ -117,8 +117,8 @@ public class DiagnosticContextDynamicSteps
 		});
 	}
 
-	public DiagnosticContextMetricsNormalizedValueCollection GetNormalizedMetricsValues(bool isDisposing)
+	public DiagnosticContextMetricsNormalizedValueCollection GetNormalizedMetricsValues()
 	{
-		return _metricsValues.ToNormalizedValueCollection(isDisposing);
+		return _metricsValues.ToNormalizedValueCollection();
 	}
 }

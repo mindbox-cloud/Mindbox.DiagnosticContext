@@ -36,9 +36,9 @@ public class DiagnosticContextMetricsItem
 		DynamicSteps = new DiagnosticContextDynamicSteps(metricsTypes, diagnosticContextLogger);
 	}
 
-	internal void PrepareForCollection(bool isDisposing)
+	internal void PrepareForCollection()
 	{
-		_normalizedMetricsValues = DynamicSteps.GetNormalizedMetricsValues(isDisposing);
+		_normalizedMetricsValues = DynamicSteps.GetNormalizedMetricsValues();
 	}
 
 	public DiagnosticContextMetricsNormalizedValueCollection GetNormalizedMetricsValues()

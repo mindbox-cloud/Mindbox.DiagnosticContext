@@ -148,7 +148,7 @@ public class DiagnosticContext : IDiagnosticContext
 				if (_metricsItem.DynamicSteps.IsInInvalidState)
 					return;
 
-				_metricsItem.PrepareForCollection(true);
+				_metricsItem.PrepareForCollection();
 
 				_metricsCollection?.CollectItemData(_metricsItem);
 			});

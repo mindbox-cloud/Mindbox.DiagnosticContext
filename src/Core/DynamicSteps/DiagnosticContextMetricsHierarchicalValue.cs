@@ -59,7 +59,7 @@ internal class DiagnosticContextMetricsHierarchicalValue
 	public void IncrementMetricsValue(string path, long increment)
 	{
 		if (_isDisposing)
-			_diagnosticContextLogger.Log($"A new metric ({path} - {increment}) added while disposing.", null!);
+			_diagnosticContextLogger.Log($"A new metric ({path} - {increment}) added while disposing.");
 
 		IncrementNamedValue(StepValues, path, _metricsType.ConvertMetricValue(increment));
 	}
@@ -94,12 +94,12 @@ internal class DiagnosticContextMetricsHierarchicalValue
 			.Sum(e => e.Value);
 	}
 
-	public DiagnosticContextMetricsNormalizedValue ToNormalizedValue(bool isDisposing)
+	public DiagnosticContextMetricsNormalizedValue ToNormalizedValue()
 	{
 		if (!TotalValue.HasValue)
 			throw new InvalidOperationException("!TotalValue.HasValue");
 
-		_isDisposing = isDisposing;
+		_isDisposing = true;
 
 		var result = new Dictionary<string, long>();
 

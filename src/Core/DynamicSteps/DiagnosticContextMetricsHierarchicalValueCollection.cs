@@ -72,9 +72,9 @@ internal class DiagnosticContextMetricsHierarchicalValueCollection
 		}
 	}
 
-	public DiagnosticContextMetricsNormalizedValueCollection ToNormalizedValueCollection(bool isDisposing)
+	public DiagnosticContextMetricsNormalizedValueCollection ToNormalizedValueCollection()
 	{
 		return new DiagnosticContextMetricsNormalizedValueCollection(
-			_metricTypeSystemNameToValuesMapping.Values.Select(metricsValue => metricsValue.ToNormalizedValue(isDisposing)));
+			_metricTypeSystemNameToValuesMapping.Values.Select(metricsValue => metricsValue.ToNormalizedValue()));
 	}
 }
