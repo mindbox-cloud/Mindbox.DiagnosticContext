@@ -1,11 +1,11 @@
 // Copyright 2021 Mindbox Ltd
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,6 +37,8 @@ internal class DiagnosticContextMetricsHierarchicalValue
 
 	private readonly MetricsType _metricsType;
 
+	private static KeyValuePair<string, long> _lastIncrementedNamedValue;
+
 	private DiagnosticContextMetricsHierarchicalValue(MetricsType metricsType)
 	{
 		_metricsType = metricsType;
@@ -61,6 +63,7 @@ internal class DiagnosticContextMetricsHierarchicalValue
 			buf = 0;
 
 		dictionary[name] = buf + value;
+		_lastIncrementedNamedValue = new KeyValuePair<string, long>(name, buf + value);
 	}
 
 	private static long EvaluateSubStepsSum(IDictionary<string, long> dictionary, string path)
@@ -85,20 +88,33 @@ internal class DiagnosticContextMetricsHierarchicalValue
 			.Sum(e => e.Value);
 	}
 
-	public DiagnosticContextMetricsNormalizedValue ToNormalizedValue()
+	public DiagnosticContextMetricsNormalizedValue ToNormalizedValue(IDiagnosticContextLogger diagnosticContextLogger)
 	{
 		if (!TotalValue.HasValue)
 			throw new InvalidOperationException("!TotalValue.HasValue");
 
 		var result = new Dictionary<string, long>();
+		var stepValuesCount = StepValues.Count;
+		var lastIncrementedNamedValue = _lastIncrementedNamedValue;
 
-		foreach (var metric in StepValues)
+		try
 		{
-			var metricSubStepsSum = EvaluateSubStepsSum(StepValues, metric.Key);
-			result[metric.Key] = metric.Value > metricSubStepsSum ? metric.Value - metricSubStepsSum : 0;
+			foreach (var metric in StepValues)
+			{
+				var metricSubStepsSum = EvaluateSubStepsSum(StepValues, metric.Key);
+				result[metric.Key] = metric.Value > metricSubStepsSum ? metric.Value - metricSubStepsSum : 0;
+				IncrementMetricsValue("123", 1232343245);
+			}
+			var subStepSum = EvaluateSubStepsSum(StepValues);
+			IncrementNamedValue(result, OtherStepName, TotalValue > subStepSum ? TotalValue.Value - subStepSum : 0);
 		}
-		var subStepSum = EvaluateSubStepsSum(StepValues);
-		IncrementNamedValue(result, OtherStepName, TotalValue > subStepSum ? TotalValue.Value - subStepSum : 0);
+		catch (InvalidOperationException e)
+		{
+			var logMessage = $"StepValues.Count: {stepValuesCount} -> {StepValues.Count}\n" +
+								$"LastIncrementedNamedValue: {lastIncrementedNamedValue} -> {_lastIncrementedNamedValue}";
+			diagnosticContextLogger.Log(logMessage, e);
+			throw;
+		}
 
 		return new DiagnosticContextMetricsNormalizedValue(MetricsTypeSystemName, result);
 	}

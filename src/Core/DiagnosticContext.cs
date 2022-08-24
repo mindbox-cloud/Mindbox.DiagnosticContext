@@ -1,11 +1,11 @@
 // Copyright 2021 Mindbox Ltd
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ namespace Mindbox.DiagnosticContext;
 
 public class DiagnosticContext : IDiagnosticContext
 {
+	private readonly IDiagnosticContextLogger _diagnosticContextLogger;
 	private readonly DiagnosticContextCollection _diagnosticContextCollection = new();
 	private IDiagnosticContextMetricsCollection _metricsCollection;
 	private DiagnosticContextMetricsItem _metricsItem;
@@ -41,6 +42,7 @@ public class DiagnosticContext : IDiagnosticContext
 		MetricsTypeCollection metricTypes,
 		bool isFeatureBoundaryCodePoint = false)
 	{
+		_diagnosticContextLogger = diagnosticContextLogger;
 		_safeExceptionHandler = new SafeExceptionHandler(diagnosticContextLogger);
 		_safeExceptionHandler.HandleExceptions(() =>
 		{
@@ -148,7 +150,7 @@ public class DiagnosticContext : IDiagnosticContext
 				if (_metricsItem.DynamicSteps.IsInInvalidState)
 					return;
 
-				_metricsItem.PrepareForCollection();
+				_metricsItem.PrepareForCollection(_diagnosticContextLogger);
 
 				_metricsCollection?.CollectItemData(_metricsItem);
 			});
