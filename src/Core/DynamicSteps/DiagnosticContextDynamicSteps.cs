@@ -1,11 +1,11 @@
 // Copyright 2021 Mindbox Ltd
-//
+// 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-//
+// 
 //     http://www.apache.org/licenses/LICENSE-2.0
-//
+// 
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,11 +29,10 @@ public class DiagnosticContextDynamicSteps
 	private readonly DiagnosticContextMetricsHierarchicalValueCollection _metricsValues;
 	private readonly MetricsTypeCollection _metricsTypes;
 
-	internal DiagnosticContextDynamicSteps(MetricsTypeCollection metricsTypes, IDiagnosticContextLogger diagnosticContextLogger)
+	internal DiagnosticContextDynamicSteps(MetricsTypeCollection metricsTypes)
 	{
 		_metricsTypes = metricsTypes;
-		_metricsValues = DiagnosticContextMetricsHierarchicalValueCollection
-			.FromMetricsTypeCollection(metricsTypes, diagnosticContextLogger);
+		_metricsValues = DiagnosticContextMetricsHierarchicalValueCollection.FromMetricsTypeCollection(metricsTypes);
 	}
 
 	internal bool IsInInvalidState => _safeExceptionHandler.IsInInvalidState;
