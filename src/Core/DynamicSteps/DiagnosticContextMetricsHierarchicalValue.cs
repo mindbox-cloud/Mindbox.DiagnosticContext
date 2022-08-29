@@ -58,7 +58,7 @@ internal class DiagnosticContextMetricsHierarchicalValue
 
 	public void IncrementMetricsValue(string path, long increment)
 	{
-		if (_isDisposing)
+		if (_isDisposing && !path.Equals("ModelContextOnRetry"))
 			_diagnosticContextLogger.Log($"A new metric ({path} - {increment}) added while disposing.");
 
 		IncrementNamedValue(StepValues, path, _metricsType.ConvertMetricValue(increment));
