@@ -16,7 +16,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 using Mindbox.DiagnosticContext.MetricItem;
 
 namespace Mindbox.DiagnosticContext.DynamicSteps;
@@ -37,7 +39,7 @@ internal class DiagnosticContextMetricsHierarchicalValue
 
 	public string MetricsTypeSystemName => _metricsType.SystemName;
 
-	// private bool _isDisposing;
+	private bool _isDisposing;
 	private readonly MetricsType _metricsType;
 #pragma warning disable IDE0052
 	private readonly IDiagnosticContextLogger _diagnosticContextLogger;
@@ -47,7 +49,7 @@ internal class DiagnosticContextMetricsHierarchicalValue
 	{
 		_metricsType = metricsType;
 		_diagnosticContextLogger = diagnosticContextLogger;
-		// _isDisposing = false;
+		_isDisposing = false;
 	}
 
 	public void SetTotal(long total)
@@ -60,8 +62,14 @@ internal class DiagnosticContextMetricsHierarchicalValue
 
 	public void IncrementMetricsValue(string path, long increment)
 	{
-		/*if (_isDisposing)
-			_diagnosticContextLogger.Log($"A new metric ({path} - {increment}) added while disposing.");*/
+		if (_isDisposing)
+		{
+			var stackTrace = new StackTrace(true).ToString();
+			_diagnosticContextLogger.Log(
+				$"A new metric ({path} - {increment}) added while disposing.",
+				logLevel: LogLevel.Warning,
+				additionalProperties: new Dictionary<string, object> { { "stackTrace", stackTrace } });
+		}
 
 		IncrementNamedValue(StepValues, path, _metricsType.ConvertMetricValue(increment));
 	}
@@ -101,7 +109,7 @@ internal class DiagnosticContextMetricsHierarchicalValue
 		if (!TotalValue.HasValue)
 			throw new InvalidOperationException("!TotalValue.HasValue");
 
-		// _isDisposing = true;
+		_isDisposing = true;
 
 		var result = new Dictionary<string, long>();
 

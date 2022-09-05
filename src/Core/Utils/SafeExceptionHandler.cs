@@ -13,18 +13,28 @@
 // limitations under the License.
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace Mindbox.DiagnosticContext;
 
 public interface IDiagnosticContextLogger
 {
-	void Log(string message, Exception? exception = null);
+	void Log(
+		string message,
+		Exception? exception = null,
+		LogLevel? logLevel = null,
+		IDictionary<string, object>? additionalProperties = null);
 }
 
 internal class NullDiagnosticContextLogger : IDiagnosticContextLogger
 {
-	public void Log(string message, Exception? exception)
+	public void Log(
+		string message,
+		Exception? exception,
+		LogLevel? logLevel = null,
+		IDictionary<string, object>? additionalProperties = null)
 	{
 	}
 }
