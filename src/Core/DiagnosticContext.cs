@@ -72,7 +72,7 @@ public class DiagnosticContext : IDiagnosticContext
 			() =>
 			{
 				_diagnosticContextCollection.LinkDiagnosticContext(diagnosticContext);
-				return diagnosticContext;
+				return new AdditionalContextDisposableContainer(diagnosticContext, _diagnosticContextCollection);
 			},
 			() => NullDisposable.Instance);
 	}

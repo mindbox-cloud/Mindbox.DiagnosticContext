@@ -1,11 +1,11 @@
 // Copyright 2021 Mindbox Ltd
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -172,6 +172,41 @@ public class DiagnosticContextTests
 		await AssertMetricsNotReportedAsync(
 			"diagnosticcontext_test_processingtime{step=\"Span/InnerSpan\",unit=\"[ms]\"}",
 			"diagnosticcontext_test_processingtime{step=\"Other\",unit=\"[ms]\"}");
+	}
+
+	[TestMethod]
+	public async System.Threading.Tasks.Task MeasureForAdditionalMetric_OneLinkedDiagnosticContext_CorrectMetrics()
+	{
+		var diagnosticContext = CreateDiagnosticContext("Main_DC");
+
+		using (diagnosticContext.Measure("Span"))
+		{
+			using (diagnosticContext.MeasureForAdditionalMetric(CreateDiagnosticContext("Additional_DC")))
+			{
+				using (diagnosticContext.Measure("InnerSpan"))
+				{
+					_currentTimeAccessor.CurrentDateTimeUtc = _currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(10);
+				}
+			}
+			_currentTimeAccessor.CurrentDateTimeUtc = _currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(5);
+		}
+
+		using (diagnosticContext.Measure("FinalSpan"))
+		{
+			_currentTimeAccessor.CurrentDateTimeUtc = _currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(15);
+		}
+
+		diagnosticContext.Dispose();
+
+		await AssertMetricsReportedAsync(
+			"diagnosticcontext_main_dc_processingtime_total 30",
+			"diagnosticcontext_main_dc_processingtime_count 1",
+			"diagnosticcontext_main_dc_processingtime{step=\"FinalSpan\",unit=\"[ms]\"} 15",
+			"diagnosticcontext_main_dc_processingtime{step=\"Span/InnerSpan\",unit=\"[ms]\"} 10",
+			"diagnosticcontext_main_dc_processingtime{step=\"Span\",unit=\"[ms]\"} 5",
+			"diagnosticcontext_additional_dc_processingtime{step=\"InnerSpan\",unit=\"[ms]\"} 10",
+			"diagnosticcontext_additional_dc_processingtime_count 1",
+			"diagnosticcontext_additional_dc_processingtime_total 10");
 	}
 
 	[TestMethod]

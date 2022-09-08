@@ -18,23 +18,27 @@ using System;
 
 namespace Mindbox.DiagnosticContext;
 
-internal class DisposableContainer : IDisposable
+internal class AdditionalContextDisposableContainer : IDisposable
 {
-	private readonly IDisposable[] _items;
+	private readonly IDiagnosticContext _diagnosticContext;
+	private readonly DiagnosticContextCollection _diagnosticContextCollection;
 
 	private bool _disposed;
 
-	public DisposableContainer(params IDisposable[] items)
+	public AdditionalContextDisposableContainer(
+		IDiagnosticContext diagnosticContext,
+		DiagnosticContextCollection diagnosticContextCollection)
 	{
-		_items = items ?? throw new ArgumentNullException(nameof(items));
+		_diagnosticContext = diagnosticContext;
+		_diagnosticContextCollection = diagnosticContextCollection;
 	}
 
 	public void Dispose()
 	{
 		if (!_disposed)
 		{
-			foreach (var item in _items)
-				item?.Dispose();
+			_diagnosticContextCollection.RemoveLinkedDiagnosticContext(_diagnosticContext);
+			_diagnosticContext.Dispose();
 
 			_disposed = true;
 		}
