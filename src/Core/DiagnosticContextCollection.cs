@@ -31,8 +31,7 @@ internal class DiagnosticContextCollection : IDisposable
 
 	internal void RemoveLinkedDiagnosticContext(IDiagnosticContext context)
 	{
-		if (_linkedContexts.Contains(context))
-			_linkedContexts.Remove(context);
+		_linkedContexts.Remove(context);
 	}
 
 	public IDisposable Measure(string stepName)
