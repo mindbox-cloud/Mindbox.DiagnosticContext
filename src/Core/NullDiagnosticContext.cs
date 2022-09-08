@@ -21,9 +21,9 @@ public class NullDiagnosticContext : IDiagnosticContext
 	private readonly DiagnosticContextCollection _diagnosticContextCollection = new();
 	private readonly SafeExceptionHandler _safeExceptionHandler = new();
 
-	public string PrefixName => MetricName;
+	private bool _disposed;
 
-	public bool IsDisposed { get; private set; }
+	public string PrefixName => MetricName;
 
 	public NullDiagnosticContext() : this("NullDiagnosticContext")
 	{
@@ -71,11 +71,11 @@ public class NullDiagnosticContext : IDiagnosticContext
 
 	public void Dispose()
 	{
-		if (!IsDisposed)
+		if (!_disposed)
 		{
 			_safeExceptionHandler.HandleExceptions(
 				() => _diagnosticContextCollection.Dispose());
-			IsDisposed = true;
+			_disposed = true;
 		}
 	}
 

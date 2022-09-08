@@ -20,8 +20,6 @@ public interface IDiagnosticContext : IDisposable
 {
 	string PrefixName { get; }
 
-	bool IsDisposed { get; }
-
 	IDisposable MeasureForAdditionalMetric(IDiagnosticContext diagnosticContext);
 
 	IDisposable Measure(string stepName);

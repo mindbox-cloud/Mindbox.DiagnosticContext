@@ -28,8 +28,6 @@ internal class TracingDiagnosticContext : IDiagnosticContext
 
 	public string PrefixName => _innerDiagnosticContext.PrefixName;
 
-	public bool IsDisposed => _innerDiagnosticContext.IsDisposed;
-
 	public TracingDiagnosticContext(
 		IDiagnosticContext innerDiagnosticContext,
 		ITracer tracer,

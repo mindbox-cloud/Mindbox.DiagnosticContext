@@ -27,8 +27,7 @@ public class DiagnosticContext : IDiagnosticContext
 	private DiagnosticContextMetricsItem _metricsItem;
 	private IDisposable _totalTimer;
 
-	public bool IsDisposed { get; private set; }
-
+	private bool _disposed;
 	private readonly SafeExceptionHandler _safeExceptionHandler;
 
 	public string PrefixName => _metricsItem?.MetricPrefix;
@@ -73,7 +72,7 @@ public class DiagnosticContext : IDiagnosticContext
 			() =>
 			{
 				_diagnosticContextCollection.LinkDiagnosticContext(diagnosticContext);
-				return diagnosticContext;
+				return new AdditionalContextDisposableContainer(diagnosticContext, _diagnosticContextCollection);
 			},
 			() => NullDisposable.Instance);
 	}
@@ -135,7 +134,7 @@ public class DiagnosticContext : IDiagnosticContext
 
 	public void Dispose()
 	{
-		if (!IsDisposed)
+		if (!_disposed)
 		{
 			_safeExceptionHandler.HandleExceptions(() =>
 			{
@@ -157,6 +156,6 @@ public class DiagnosticContext : IDiagnosticContext
 			_safeExceptionHandler.HandleExceptions(() => _sourceCodeLabelScope?.Dispose());
 		}
 
-		IsDisposed = true;
+		_disposed = true;
 	}
 }

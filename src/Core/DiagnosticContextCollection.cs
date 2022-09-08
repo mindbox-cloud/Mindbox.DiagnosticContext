@@ -29,11 +29,16 @@ internal class DiagnosticContextCollection : IDisposable
 		_linkedContexts.Add(context);
 	}
 
+	internal void RemoveLinkedDiagnosticContext(IDiagnosticContext context)
+	{
+		if (_linkedContexts.Contains(context))
+			_linkedContexts.Remove(context);
+	}
+
 	public IDisposable Measure(string stepName)
 	{
 		return new DisposableContainer(
 			_linkedContexts
-				.Where(linkedContext => !linkedContext.IsDisposed)
 				.Select(context => context.Measure(stepName))
 				.ToArray());
 	}
