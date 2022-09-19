@@ -73,10 +73,7 @@ public class DiagnosticContextDynamicSteps
 		string stepName,
 		MetricsMeasurerCollection mc)
 	{
-		_safeExceptionHandler.HandleExceptions(() =>
-		{
-			mc.Stop();
-		});
+		_safeExceptionHandler.HandleExceptions(mc.Stop);
 
 		if (IsInInvalidState)
 			return;
