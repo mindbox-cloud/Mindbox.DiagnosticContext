@@ -393,6 +393,48 @@ public class DiagnosticContextTests
 		}
 	}
 
+	[TestMethod]
+	public async System.Threading.Tasks.Task InternalMetrics_ProcessingTime()
+	{
+		using (var diagnosticContext = CreateDiagnosticContext("Test"))
+		{
+			diagnosticContext.SetTag("tag", "tagValue");
+			using (diagnosticContext.Measure("Span"))
+			{
+				_currentTimeAccessor.CurrentDateTimeUtc = _currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(1);
+				using (diagnosticContext.Measure("InnerSpan"))
+				{
+					_currentTimeAccessor.CurrentDateTimeUtc = _currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(2);
+				}
+			}
+
+			_currentTimeAccessor.CurrentDateTimeUtc = _currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(3);
+		}
+
+		await AssertMetricsReportedAsync("diagnosticcontext_test_internalprocessingtime{tag=\"tagValue\"}");
+	}
+
+	[TestMethod]
+	public async System.Threading.Tasks.Task InternalMetrics_LayersCount()
+	{
+		using (var diagnosticContext = CreateDiagnosticContext("Test"))
+		{
+			diagnosticContext.SetTag("tag", "tagValue");
+			using (diagnosticContext.Measure("Span"))
+			{
+				_currentTimeAccessor.CurrentDateTimeUtc = _currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(1);
+				using (diagnosticContext.Measure("InnerSpan"))
+				{
+					_currentTimeAccessor.CurrentDateTimeUtc = _currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(2);
+				}
+			}
+
+			_currentTimeAccessor.CurrentDateTimeUtc = _currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(3);
+		}
+
+		await AssertMetricsReportedAsync("diagnosticcontext_test_processingtime_layerscount{tag=\"tagValue\"} 3");
+	}
+
 	private async System.Threading.Tasks.Task AssertMetricsNotReportedAsync(params string[] expectedMetrics)
 	{
 		var metrics = await GetMetricsAsTextAsync();
