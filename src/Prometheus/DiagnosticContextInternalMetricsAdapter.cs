@@ -41,24 +41,24 @@ internal class DiagnosticContextInternalMetricsAdapter
 
 		var metricDescriptionBase = $"Diagnostic context {collectedMetrics.MetricPrefix} ";
 
-		var internalProcessingGauge = _metricFactory.CreateCounter(
+		var internalProcessingCounter = _metricFactory.CreateCounter(
 			_metricNameBuilder.BuildFullMetricName(
 				$"{collectedMetrics.MetricPrefix}_{internalMetricsItem.ProcessingTimeMeasurer.MetricTypeSystemName}"),
 			$"{metricDescriptionBase} - internal processing time",
 			new CounterConfiguration { LabelNames = labelNames });
 
-		internalProcessingGauge
+		internalProcessingCounter
 			.WithLabels(labelValues)
 			.Inc(internalMetricsItem.ProcessingTimeMeasurer.Elapsed);
 
 		foreach (var measurer in internalMetricsItem.LayersCountMeasurers)
 		{
-			var layersGauge = _metricFactory.CreateCounter(
+			var layersCounter = _metricFactory.CreateCounter(
 				_metricNameBuilder.BuildFullMetricName($"{collectedMetrics.MetricPrefix}_{measurer.MetricTypeSystemName}"),
 				$"{metricDescriptionBase} - layers count",
 				new CounterConfiguration { LabelNames = labelNames});
 
-			layersGauge
+			layersCounter
 				.WithLabels(labelValues)
 				.Inc(measurer.LayersCount);
 		}
