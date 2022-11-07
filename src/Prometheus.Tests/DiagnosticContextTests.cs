@@ -68,6 +68,19 @@ public class DiagnosticContextTests
 			_currentTimeAccessor.CurrentDateTimeUtc = _currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(3);
 		}
 
+		using (var diagnosticContext = CreateDiagnosticContext("Test"))
+		{
+			using (diagnosticContext.Measure("Span"))
+			{
+				_currentTimeAccessor.CurrentDateTimeUtc = _currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(1);
+				using (diagnosticContext.Measure("InnerSpan"))
+				{
+					_currentTimeAccessor.CurrentDateTimeUtc = _currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(2);
+				}
+			}
+			_currentTimeAccessor.CurrentDateTimeUtc = _currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(3);
+		}
+
 		await AssertMetricsReportedAsync(
 			"diagnosticcontext_test_processingtime_count 1",
 			"diagnosticcontext_test_processingtime_total 6",
@@ -431,8 +444,6 @@ public class DiagnosticContextTests
 
 			_currentTimeAccessor.CurrentDateTimeUtc = _currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(3);
 		}
-
-		await AssertMetricsReportedAsync("diagnosticcontext_test_processingtime_layerscount{tag=\"tagValue\"} 3");
 	}
 
 	private async System.Threading.Tasks.Task AssertMetricsNotReportedAsync(params string[] expectedMetrics)

@@ -13,30 +13,24 @@
 // limitations under the License.
 
 using System;
+using System.Diagnostics;
 
 namespace Mindbox.DiagnosticContext.MetricsTypes;
 
 public class DiagnosticContextInternalProcessingTimeMeasurer
 {
-	private readonly WallClockTimeMeasurer _wallClockTimeMeasurer;
-
-	private readonly SafeExceptionHandler _safeExceptionHandler;
-
 	private const string InternalProcessingTime = "InternalProcessingTime";
-
-	public DiagnosticContextInternalProcessingTimeMeasurer(IDiagnosticContextLogger logger)
-	{
-		_safeExceptionHandler = new SafeExceptionHandler(logger);
-		_wallClockTimeMeasurer = new WallClockTimeMeasurer(new DefaultCurrentTimeAccessor(), InternalProcessingTime);
-	}
 
 	public void Measure(Action action)
 	{
-		_safeExceptionHandler.HandleExceptions(() => _wallClockTimeMeasurer.Start());
+		var stopwatch = Stopwatch.StartNew();
 		action();
-		_safeExceptionHandler.HandleExceptions(() => _wallClockTimeMeasurer.Stop());
+		stopwatch.Stop();
+
+		Elapsed = stopwatch.ElapsedMilliseconds;
 	}
 
-	public long Elapsed => _wallClockTimeMeasurer.GetValue() ?? 0;
-	public string MetricTypeSystemName => _wallClockTimeMeasurer.MetricsTypeSystemName;
+	public long Elapsed { get; private set; }
+
+	public string MetricTypeSystemName => InternalProcessingTime;
 }
