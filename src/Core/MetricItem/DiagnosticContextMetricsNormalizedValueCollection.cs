@@ -20,7 +20,7 @@ using System.Linq;
 
 namespace Mindbox.DiagnosticContext.MetricItem;
 
-public class  DiagnosticContextMetricsNormalizedValueCollection
+public class DiagnosticContextMetricsNormalizedValueCollection
 {
 	private readonly Dictionary<string, DiagnosticContextMetricsNormalizedValue> _diagnosticContextMetricsNormalizedValues;
 

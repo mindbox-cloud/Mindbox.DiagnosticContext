@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using System.Collections.Generic;
 using Mindbox.DiagnosticContext.MetricItem;
 
@@ -34,11 +35,8 @@ public class DiagnosticContextLayersCountMeasurer
 		get => _layersCount;
 		private set
 		{
-			if (_isFinished)
-				return;
-
-			_isFinished = true;
 			_layersCount = value;
+			_isFinished = true;
 		}
 	}
 
@@ -46,6 +44,9 @@ public class DiagnosticContextLayersCountMeasurer
 
 	public void Measure(DiagnosticContextMetricsItem metricsItem)
 	{
+		if (_isFinished)
+			throw new InvalidOperationException("Cannot use one measurer twice");
+
 		var normalizedMetricValue = metricsItem
 			.GetNormalizedMetricsValues()
 			.GetValueByMetricsTypeSystemName(_collectedMetricTypeSystemName);

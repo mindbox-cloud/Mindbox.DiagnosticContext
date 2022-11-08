@@ -25,6 +25,9 @@ public class DiagnosticContextInternalProcessingTimeMeasurer
 
 	public void Measure(Action action)
 	{
+		if (_isFinished)
+			throw new InvalidOperationException("Cannot use one measurer twice");
+
 		var stopwatch = Stopwatch.StartNew();
 		action();
 		stopwatch.Stop();
@@ -37,9 +40,6 @@ public class DiagnosticContextInternalProcessingTimeMeasurer
 		get => _elapsed;
 		private set
 		{
-			if (_isFinished)
-				return;
-
 			_elapsed = value;
 			_isFinished = true;
 		}
