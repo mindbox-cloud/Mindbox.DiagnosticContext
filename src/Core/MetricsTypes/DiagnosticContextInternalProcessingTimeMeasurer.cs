@@ -20,6 +20,8 @@ namespace Mindbox.DiagnosticContext.MetricsTypes;
 public class DiagnosticContextInternalProcessingTimeMeasurer
 {
 	private const string InternalProcessingTime = "InternalProcessingTime";
+	private bool _isFinished;
+	private long _elapsed;
 
 	public void Measure(Action action)
 	{
@@ -30,7 +32,18 @@ public class DiagnosticContextInternalProcessingTimeMeasurer
 		Elapsed = stopwatch.ElapsedMilliseconds;
 	}
 
-	public long Elapsed { get; private set; }
+	public long Elapsed
+	{
+		get => _elapsed;
+		private set
+		{
+			if (_isFinished)
+				return;
+
+			_elapsed = value;
+			_isFinished = true;
+		}
+	}
 
 	public string MetricTypeSystemName => InternalProcessingTime;
 }
