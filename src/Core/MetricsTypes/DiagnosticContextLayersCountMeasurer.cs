@@ -23,7 +23,6 @@ public class DiagnosticContextLayersCountMeasurer
 	private const string LayersCountMetricType = "LayersCount";
 	private bool _isFinished;
 	private long _layersCount;
-	private readonly List<string> collectedKeys = new List<string>();
 
 	public DiagnosticContextLayersCountMeasurer(string collectedMetricTypeSystemName)
 	{
@@ -52,8 +51,6 @@ public class DiagnosticContextLayersCountMeasurer
 			.GetValueByMetricsTypeSystemName(_collectedMetricTypeSystemName);
 
 		LayersCount = normalizedMetricValue.NormalizedValues.Count;
-
-		collectedKeys.AddRange(normalizedMetricValue.NormalizedValues.Keys);
 	}
 }
 
