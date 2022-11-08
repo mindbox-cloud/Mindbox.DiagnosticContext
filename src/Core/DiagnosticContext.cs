@@ -25,6 +25,7 @@ public class DiagnosticContext : IDiagnosticContext
 	private readonly DiagnosticContextCollection _diagnosticContextCollection = new();
 	private IDiagnosticContextMetricsCollection _metricsCollection;
 	private DiagnosticContextMetricsItem _metricsItem;
+	private DiagnosticContextInternalMetricsItem _internalMetricsItem;
 	private IDisposable _totalTimer;
 
 	private bool _disposed;
@@ -48,6 +49,7 @@ public class DiagnosticContext : IDiagnosticContext
 				throw new ArgumentNullException(nameof(metricPath));
 			_metricsCollection = metricsCollection ?? throw new ArgumentNullException(nameof(metricsCollection));
 			_metricsItem = new DiagnosticContextMetricsItem(metricTypes, metricPath, diagnosticContextLogger);
+			_internalMetricsItem = new DiagnosticContextInternalMetricsItem(metricTypes);
 			_totalTimer = _metricsItem.DynamicSteps.StartTotal();
 
 			_sourceCodeLabelScope = isFeatureBoundaryCodePoint
@@ -148,9 +150,15 @@ public class DiagnosticContext : IDiagnosticContext
 				if (_metricsItem.DynamicSteps.IsInInvalidState)
 					return;
 
-				_metricsItem.PrepareForCollection();
+				_internalMetricsItem.ProcessingTimeMeasurer.Measure(() => _metricsItem.PrepareForCollection());
+				_internalMetricsItem.LayersCountMeasurers.Measure(_metricsItem);
 
 				_metricsCollection?.CollectItemData(_metricsItem);
+
+				_safeExceptionHandler.HandleExceptions(() =>
+				{
+					_metricsCollection?.CollectDiagnosticContextInternalMetrics(_internalMetricsItem, _metricsItem);
+				});
 			});
 
 			_safeExceptionHandler.HandleExceptions(() => _sourceCodeLabelScope?.Dispose());

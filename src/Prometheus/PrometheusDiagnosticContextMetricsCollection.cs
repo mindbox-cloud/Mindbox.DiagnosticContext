@@ -1,11 +1,11 @@
 // Copyright 2021 Mindbox Ltd
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,6 +28,7 @@ internal class PrometheusDiagnosticContextMetricsCollection : IDiagnosticContext
 	private readonly DynamicStepsPrometheusAdapter _dynamicStepsAdapter;
 	private readonly CountersPrometheusAdapter _countersAdapter;
 	private readonly ReportedValuesPrometheusAdapter _reportedValuesAdapter;
+	private readonly DiagnosticContextInternalMetricsAdapter _internalMetricsAdapter;
 
 	private readonly object _syncRoot = new();
 
@@ -38,6 +39,7 @@ internal class PrometheusDiagnosticContextMetricsCollection : IDiagnosticContext
 		_dynamicStepsAdapter = new DynamicStepsPrometheusAdapter(metricFactory, metricNameBuilder);
 		_countersAdapter = new CountersPrometheusAdapter(metricFactory, metricNameBuilder);
 		_reportedValuesAdapter = new ReportedValuesPrometheusAdapter(metricFactory, metricNameBuilder);
+		_internalMetricsAdapter = new DiagnosticContextInternalMetricsAdapter(metricFactory, metricNameBuilder);
 	}
 
 	public void CollectItemData(DiagnosticContextMetricsItem metricsItem)
@@ -58,6 +60,13 @@ internal class PrometheusDiagnosticContextMetricsCollection : IDiagnosticContext
 		{
 			Console.WriteLine(ex.Message);
 		}
+	}
+
+	public void CollectDiagnosticContextInternalMetrics(
+		DiagnosticContextInternalMetricsItem internalMetricsItem,
+		DiagnosticContextMetricsItem collectedMetrics)
+	{
+		_internalMetricsAdapter.Update(internalMetricsItem, collectedMetrics, _tags);
 	}
 
 	public void SetTag(string tag, string value)
