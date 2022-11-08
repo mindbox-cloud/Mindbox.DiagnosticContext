@@ -23,9 +23,7 @@ public class DiagnosticContextInternalMetricsItem
 	public DiagnosticContextInternalProcessingTimeMeasurer ProcessingTimeMeasurer { get; }
 	public IEnumerable<DiagnosticContextLayersCountMeasurer> LayersCountMeasurers { get; }
 
-	public DiagnosticContextInternalMetricsItem(
-		MetricsTypeCollection metricTypes,
-		IDiagnosticContextLogger logger)
+	public DiagnosticContextInternalMetricsItem(MetricsTypeCollection metricTypes)
 	{
 		ProcessingTimeMeasurer = new DiagnosticContextInternalProcessingTimeMeasurer();
 		LayersCountMeasurers = metricTypes.MetricsTypes

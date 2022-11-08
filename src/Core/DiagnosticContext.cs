@@ -49,7 +49,7 @@ public class DiagnosticContext : IDiagnosticContext
 				throw new ArgumentNullException(nameof(metricPath));
 			_metricsCollection = metricsCollection ?? throw new ArgumentNullException(nameof(metricsCollection));
 			_metricsItem = new DiagnosticContextMetricsItem(metricTypes, metricPath, diagnosticContextLogger);
-			_internalMetricsItem = new DiagnosticContextInternalMetricsItem(metricTypes, diagnosticContextLogger);
+			_internalMetricsItem = new DiagnosticContextInternalMetricsItem(metricTypes);
 			_totalTimer = _metricsItem.DynamicSteps.StartTotal();
 
 			_sourceCodeLabelScope = isFeatureBoundaryCodePoint
