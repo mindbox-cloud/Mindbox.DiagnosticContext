@@ -43,7 +43,7 @@ internal class DiagnosticContextInternalMetricsAdapter
 		
 		var countCounter = _metricFactory.CreateCounter(
 			_metricNameBuilder.BuildFullMetricName(
-				$"{collectedMetrics.MetricPrefix}_internalmetrics_count"),
+			$"{collectedMetrics.MetricPrefix}_internalmetrics_count"),
 			$"{metricDescriptionBase} - internal metrics count",
 			new CounterConfiguration { LabelNames = labelNames });
 
