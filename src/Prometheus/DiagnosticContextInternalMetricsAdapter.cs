@@ -40,10 +40,18 @@ internal class DiagnosticContextInternalMetricsAdapter
 		var labelValues = tags.Values.ToArray();
 
 		var metricDescriptionBase = $"Diagnostic context {collectedMetrics.MetricPrefix} ";
+		
+		var countCounter = _metricFactory.CreateCounter(
+			_metricNameBuilder.BuildFullMetricName(
+			$"{collectedMetrics.MetricPrefix}_internalmetrics_count"),
+			$"{metricDescriptionBase} - internal metrics count",
+			new CounterConfiguration { LabelNames = labelNames });
+
+		countCounter.WithLabels(labelValues).Inc();
 
 		var internalProcessingCounter = _metricFactory.CreateCounter(
 			_metricNameBuilder.BuildFullMetricName(
-				$"{collectedMetrics.MetricPrefix}_{internalMetricsItem.ProcessingTimeMeasurer.MetricTypeSystemName}"),
+			$"{collectedMetrics.MetricPrefix}_{internalMetricsItem.ProcessingTimeMeasurer.MetricTypeSystemName}"),
 			$"{metricDescriptionBase} - internal processing time",
 			new CounterConfiguration { LabelNames = labelNames });
 
