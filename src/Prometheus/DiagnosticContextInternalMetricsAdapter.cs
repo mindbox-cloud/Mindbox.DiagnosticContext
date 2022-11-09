@@ -51,7 +51,7 @@ internal class DiagnosticContextInternalMetricsAdapter
 
 		var internalProcessingCounter = _metricFactory.CreateCounter(
 			_metricNameBuilder.BuildFullMetricName(
-				$"{collectedMetrics.MetricPrefix}_{internalMetricsItem.ProcessingTimeMeasurer.MetricTypeSystemName}"),
+			$"{collectedMetrics.MetricPrefix}_{internalMetricsItem.ProcessingTimeMeasurer.MetricTypeSystemName}"),
 			$"{metricDescriptionBase} - internal processing time",
 			new CounterConfiguration { LabelNames = labelNames });
 
