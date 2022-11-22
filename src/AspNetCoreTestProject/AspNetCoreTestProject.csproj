@@ -8,7 +8,7 @@
     <ProjectReference Include="..\Prometheus\Prometheus.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="prometheus-net" Version="6.0.0" />
-    <PackageReference Include="prometheus-net.AspNetCore" Version="6.0.0" />
+    <PackageReference Include="prometheus-net" Version="7.0.0" />
+    <PackageReference Include="prometheus-net.AspNetCore" Version="7.0.0" />
   </ItemGroup>
 </Project>

@@ -5,7 +5,7 @@
     <AssemblyName>Mindbox.DiagnosticContext.Prometheus</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="prometheus-net" Version="6.0.0" />
+    <PackageReference Include="prometheus-net" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
   </ItemGroup>
   <ItemGroup>
