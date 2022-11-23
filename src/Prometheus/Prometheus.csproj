@@ -1,11 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>Mindbox.DiagnosticContext.Prometheus</RootNamespace>
     <AssemblyName>Mindbox.DiagnosticContext.Prometheus</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="prometheus-net" Version="6.0.0" />
+    <PackageReference Include="prometheus-net" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
   </ItemGroup>
   <ItemGroup>
