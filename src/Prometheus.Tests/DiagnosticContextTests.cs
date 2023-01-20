@@ -440,7 +440,7 @@ public class DiagnosticContextTests
 		var metrics = await GetMetricsAsTextAsync();
 
 		var foundMetrics = expectedMetrics
-			.Where(metric => metrics.Contains(metric))
+			.Where(metrics.Contains)
 			.ToArray();
 
 		if (foundMetrics.Any())
