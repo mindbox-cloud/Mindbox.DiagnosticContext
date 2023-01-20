@@ -14,18 +14,12 @@
     <PackageTags>diagnostics</PackageTags>
   </PropertyGroup>
   <PropertyGroup>
-    <VersionMajor>4</VersionMajor>
+    <VersionMajor>5</VersionMajor>
     <VersionMinor>0</VersionMinor>
     <BuildNumber>$(BuildNumber)</BuildNumber>
     <BuildNumber Condition="'$(BuildNumber)' == ''">0</BuildNumber>
     <PackageVersion>$(VersionMajor).$(VersionMinor).$(BuildNumber)</PackageVersion>
   </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.2.32" PrivateAssets="all">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Mindbox.Analyzers.V3" Version="5.0.7" PrivateAssets="all" />
-  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
   </ItemGroup>
