@@ -73,8 +73,7 @@ public class NullDiagnosticContext : IDiagnosticContext
 	{
 		if (!_disposed)
 		{
-			_safeExceptionHandler.HandleExceptions(
-				() => _diagnosticContextCollection.Dispose());
+			_safeExceptionHandler.HandleExceptions(_diagnosticContextCollection.Dispose);
 			_disposed = true;
 		}
 	}

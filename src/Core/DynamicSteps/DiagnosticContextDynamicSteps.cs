@@ -95,10 +95,7 @@ public class DiagnosticContextDynamicSteps
 
 	private void ProcessTotal(MetricsMeasurerCollection mc)
 	{
-		_safeExceptionHandler.HandleExceptions(() =>
-		{
-			mc.Stop();
-		});
+		_safeExceptionHandler.HandleExceptions(mc.Stop);
 
 		if (IsInInvalidState)
 			return;
