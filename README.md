@@ -1,6 +1,6 @@
 # Mindbox.DiagnosticContext
 
-![](https://github.com/mindbox-moscow/Mindbox.DiagnosticContext/workflows/publish/badge.svg)
+![](https://github.com/mindbox-cloud/Mindbox.DiagnosticContext/workflows/publish/badge.svg)
 
 ## Adding diagnostic context to a Asp.Net Core app
 
@@ -38,17 +38,17 @@ app.UseMetricServer();
 
 ### Using diagnostic context + prometheus in .Net Framework
 
-1. [Register a factory with the desired settings](https://github.com/mindbox-moscow/DirectCRM/blob/51c6a6e418afd4a696b0f68998aaf9fa46056f62/Product/DirectCrm/DirectCrm.Core/DirectCrmCoreModule.cs#L177-L204).
-1. [Create a DiagnosticContext instance](https://github.com/mindbox-moscow/DirectCRM/blob/b16aca860a6c5c6d16c806c915f24af7a2703106/Product/DirectCrm/Mailings/Mailings.Model/BulkOperation/MailingBulkSendingOperation.cs#L44-L49)
+1. [Register a factory with the desired settings](https://github.com/mindbox-cloud/DirectCRM/blob/51c6a6e418afd4a696b0f68998aaf9fa46056f62/Product/DirectCrm/DirectCrm.Core/DirectCrmCoreModule.cs#L177-L204).
+1. [Create a DiagnosticContext instance](https://github.com/mindbox-cloud/DirectCRM/blob/b16aca860a6c5c6d16c806c915f24af7a2703106/Product/DirectCrm/Mailings/Mailings.Model/BulkOperation/MailingBulkSendingOperation.cs#L44-L49)
 1. Use the generated DiagnosticContext
 
 ### Using the diagnostic context in DirectCRM
 
-IDiagnosticContextFactory [already registered in DirectCrmCoreModule](https://github.com/mindbox-moscow/DirectCRM/blob/51c6a6e418afd4a696b0f68998aaf9fa46056f62/Product/DirectCrm/DirectCrm.Core/DirectCrmCoreModule.cs#L177-L204), just use it.
+IDiagnosticContextFactory [already registered in DirectCrmCoreModule](https://github.com/mindbox-cloud/DirectCRM/blob/51c6a6e418afd4a696b0f68998aaf9fa46056f62/Product/DirectCrm/DirectCrm.Core/DirectCrmCoreModule.cs#L177-L204), just use it.
 
 Metrics are sent to [special prometheus](https://kube-infra.mindbox.ru/common-dc/prometheus/), here you can see the values of metrics and build queries.
 
-[Eexample of creating a DiagnosticContext for a ModelContext](https://github.com/mindbox-moscow/DirectCRM/blob/b16aca860a6c5c6d16c806c915f24af7a2703106/Product/DirectCrm/Mailings/Mailings.Model/BulkOperation/MailingBulkSendingOperation.cs#L44-L49).
+[Eexample of creating a DiagnosticContext for a ModelContext](https://github.com/mindbox-cloud/DirectCRM/blob/b16aca860a6c5c6d16c806c915f24af7a2703106/Product/DirectCrm/Mailings/Mailings.Model/BulkOperation/MailingBulkSendingOperation.cs#L44-L49).
 
 To use an external DiagnosticContext, you need to use `IDiagnosticContextFactory` and create an instance of IDiagnosticContext. Remember to dispose it.
 
