@@ -4,7 +4,7 @@
     <RootNamespace>Mindbox.DiagnosticContext.AspNetCore</RootNamespace>
     <AssemblyName>Mindbox.DiagnosticContext.AspNetCore</AssemblyName>
     <Copyright>Mindbox</Copyright>
-    <RepositoryUrl>https://github.com/mindbox-moscow/Mindbox.DiagnosticContext</RepositoryUrl>
+    <RepositoryUrl>https://github.com/mindbox-cloud/Mindbox.DiagnosticContext</RepositoryUrl>
     <PackageTags>diagnostics</PackageTags>
   </PropertyGroup>
   <ItemGroup>
