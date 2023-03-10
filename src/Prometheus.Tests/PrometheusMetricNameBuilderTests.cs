@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using Mindbox.DiagnosticContext.Prometheus;
@@ -24,7 +25,7 @@ public class PrometheusMetricNameBuilderTests
 	[TestMethod]
 	public void BuildFullName_Default_InsertsDiagnosticContextPrefix()
 	{
-		var nameBuilder = new PrometheusMetricNameBuilder();
+		var nameBuilder = new PrometheusMetricNameBuilder(Options.Create<PrometheusMetricNameBuilderOptions>(new()));
 
 		Assert.AreEqual(expected: "diagnosticcontext_test", nameBuilder.BuildFullMetricName("test"));
 	}
@@ -32,7 +33,7 @@ public class PrometheusMetricNameBuilderTests
 	[TestMethod]
 	public void BuildFullName_ConvertsNameToLowerCase()
 	{
-		var nameBuilder = new PrometheusMetricNameBuilder();
+		var nameBuilder = new PrometheusMetricNameBuilder(Options.Create<PrometheusMetricNameBuilderOptions>(new()));
 
 		Assert.AreEqual(expected: "diagnosticcontext_test", nameBuilder.BuildFullMetricName("TeSt"));
 	}
@@ -40,7 +41,8 @@ public class PrometheusMetricNameBuilderTests
 	[TestMethod]
 	public void BuildFullName_CustomPrefix_InsertsPrefix()
 	{
-		var nameBuilder = new PrometheusMetricNameBuilder(prefix: "dc");
+		var nameBuilder = new PrometheusMetricNameBuilder(Options.Create<PrometheusMetricNameBuilderOptions>(
+				new() { Prefix = "dc" }));
 
 		Assert.AreEqual(expected: "dc_test", nameBuilder.BuildFullMetricName("test"));
 	}
@@ -48,27 +50,46 @@ public class PrometheusMetricNameBuilderTests
 	[TestMethod]
 	public void BuildFullName_CustomPostfix_InsertsPostfixAndDefaultPrefix()
 	{
-		var nameBuilder = new PrometheusMetricNameBuilder(postfix: "tenant");
+		var nameBuilder = new PrometheusMetricNameBuilder(Options.Create<PrometheusMetricNameBuilderOptions>(
+				new() { Postfix = "tenant" }));
 
 		Assert.AreEqual(expected: "diagnosticcontext_test_tenant", nameBuilder.BuildFullMetricName("test"));
+	}
+
+	[TestMethod]
+	public void BuildFullName_MicroServicePrefix_InsertsMicroServicePrefixAndDefaultPrefix()
+	{
+		var nameBuilder = new PrometheusMetricNameBuilder(Options.Create<PrometheusMetricNameBuilderOptions>(
+				new() { MicroServicePrefix = "MicroServicePrefix" }));
+
+		Assert.AreEqual(expected: "diagnosticcontext_microserviceprefix_test", nameBuilder.BuildFullMetricName("test"));
 	}
 
 	[TestMethod]
 	[DataRow(" ")]
 	[DataRow("-")]
 	[DataRow(".")]
+	[DataRow("/")]
+	[DataRow("\\")]
 	public void BuildFullName_MetricNameHasInvalidCharacters_ReturnsValidMetricName(string badChar)
 	{
 		const string metricName = "metric_name";
 		const string postfix = "postfix";
+		const string microServicePrefix = "microservice_prefix";
 
 		var metricNameWithInvalidCharacters = badChar + metricName;
 		var postfixWithInvalidCharacters = badChar + postfix + badChar;
+		var microServicePrefixWithInvalidCharacters = badChar + microServicePrefix + badChar;
 
-		var actualMetricFullName = new PrometheusMetricNameBuilder(postfix: postfixWithInvalidCharacters)
+		var actualMetricFullName = new PrometheusMetricNameBuilder(Options.Create<PrometheusMetricNameBuilderOptions>(
+				new()
+				{
+					Postfix = postfixWithInvalidCharacters,
+					MicroServicePrefix = microServicePrefixWithInvalidCharacters
+				}))
 			.BuildFullMetricName(metricNameWithInvalidCharacters);
 
-		Assert.AreEqual($"diagnosticcontext_{metricName}_{postfix}", actualMetricFullName);
+		Assert.AreEqual($"diagnosticcontext_{microServicePrefix}_{metricName}_{postfix}", actualMetricFullName);
 	}
 
 	[TestMethod]
@@ -77,7 +98,8 @@ public class PrometheusMetricNameBuilderTests
 		const string metricName = "metric_name_v3";
 		const string postfix = "v11_postfix";
 
-		var actualMetricFullName = new PrometheusMetricNameBuilder(postfix: postfix)
+		var actualMetricFullName = new PrometheusMetricNameBuilder(Options.Create<PrometheusMetricNameBuilderOptions>(
+				new() { Postfix = postfix }))
 			.BuildFullMetricName(metricName);
 
 		Assert.AreEqual($"diagnosticcontext_{metricName}_{postfix}", actualMetricFullName);

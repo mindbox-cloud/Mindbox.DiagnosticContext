@@ -19,8 +19,16 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class PrometheusDiagnosticContextExtensions
 {
-	public static IServiceCollection AddPrometheusDiagnosticContext(this IServiceCollection serviceCollection)
-	{
-		return serviceCollection.AddSingleton<IDiagnosticContextFactory, PrometheusDiagnosticContextFactory>();
-	}
+	public static IServiceCollection AddPrometheusDiagnosticContext(
+		this IServiceCollection serviceCollection,
+		string? microServicePrefix = null,
+		string? postfix = null)
+		=> serviceCollection
+			.Configure<PrometheusMetricNameBuilderOptions>(
+				options =>
+				{
+					options.MicroServicePrefix = microServicePrefix;
+					options.Postfix = postfix;
+				})
+			.AddSingleton<IDiagnosticContextFactory, PrometheusDiagnosticContextFactory>();
 }
