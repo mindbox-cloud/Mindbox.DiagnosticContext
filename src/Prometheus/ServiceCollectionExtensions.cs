@@ -24,7 +24,7 @@ public static class PrometheusDiagnosticContextExtensions
 	/// Adds all the necessary dependencies to collect metrics in Prometheus.
 	/// </summary>
 	/// <param name="serviceCollection">The <see cref="IServiceCollection"/> to add the service to.</param>
-	/// <param name="metricPrefix">String constant which will be added at the beginning of each metric name.
+	/// <param name="prefix">String constant which will be added at the beginning of each metric name.
 	/// It is strongly recommended to use a unique prefix that includes the name of the application -
 	/// this can guarantee that there is no intersection of metrics.</param>
 	/// <returns></returns>
