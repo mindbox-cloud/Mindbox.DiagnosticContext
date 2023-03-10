@@ -27,7 +27,7 @@ Add a reference to `Mindbox.DiagnosticContext.Prometheus` package. Then, add thi
 
 ```csharp
 services
-  .AddPrometheusDiagnosticContext(metricPrefix);
+  .AddPrometheusDiagnosticContext(orders);
 ```
 It is strongly recommended to use a unique prefix that includes the name of the application - this can guarantee that there is no intersection of metrics.
 
