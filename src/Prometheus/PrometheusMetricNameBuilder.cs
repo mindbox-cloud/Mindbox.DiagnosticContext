@@ -18,6 +18,8 @@ namespace Mindbox.DiagnosticContext.Prometheus;
 
 internal class PrometheusMetricNameBuilder
 {
+	private const string GlobalPrefix = "diagnosticcontext";
+
 	private readonly string _prefix;
 
 	private readonly string? _postfix;
@@ -25,9 +27,11 @@ internal class PrometheusMetricNameBuilder
 	private static readonly Regex _invalidCharactersRegex =
 		new("[^a-zA-Z0-9_:]+", RegexOptions.Compiled);
 
-	public PrometheusMetricNameBuilder(string prefix = "diagnosticcontext", string? postfix = null)
+	public PrometheusMetricNameBuilder(string? prefix = null, string? postfix = null)
 	{
-		_prefix = prefix;
+		_prefix = string.IsNullOrEmpty(prefix)
+			? GlobalPrefix
+			: $"{GlobalPrefix}_{prefix}";
 		_postfix = postfix;
 	}
 

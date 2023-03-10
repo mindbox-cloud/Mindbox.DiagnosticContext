@@ -28,12 +28,13 @@ public class PrometheusDiagnosticContextFactory : IDiagnosticContextFactory
 		DefaultMetricTypesConfiguration defaultMetricTypesConfiguration,
 		IDiagnosticContextLogger diagnosticContextLogger,
 		IMetricFactory? metricFactory = null,
-		string? metricPostfix = null)
+		string? metricPostfix = null,
+		string? metricPrefix = null)
 	{
 		_defaultMetricTypesConfiguration = defaultMetricTypesConfiguration;
 		_diagnosticContextLogger = diagnosticContextLogger;
 		_metricFactory = metricFactory ?? Metrics.WithCustomRegistry(Metrics.DefaultRegistry);
-		_metricNameBuilder = new PrometheusMetricNameBuilder(postfix: metricPostfix);
+		_metricNameBuilder = new PrometheusMetricNameBuilder(prefix: metricPrefix, postfix: metricPostfix);
 	}
 
 	public IDiagnosticContext CreateDiagnosticContext(

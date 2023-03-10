@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using Mindbox.DiagnosticContext.Prometheus;
@@ -42,7 +43,7 @@ public class PrometheusMetricNameBuilderTests
 	{
 		var nameBuilder = new PrometheusMetricNameBuilder(prefix: "dc");
 
-		Assert.AreEqual(expected: "dc_test", nameBuilder.BuildFullMetricName("test"));
+		Assert.AreEqual(expected: "diagnosticcontext_dc_test", nameBuilder.BuildFullMetricName("test"));
 	}
 
 	[TestMethod]
@@ -57,18 +58,25 @@ public class PrometheusMetricNameBuilderTests
 	[DataRow(" ")]
 	[DataRow("-")]
 	[DataRow(".")]
+	[DataRow("/")]
+	[DataRow("\\")]
 	public void BuildFullName_MetricNameHasInvalidCharacters_ReturnsValidMetricName(string badChar)
 	{
 		const string metricName = "metric_name";
 		const string postfix = "postfix";
+		const string prefix = "microservice_prefix";
 
 		var metricNameWithInvalidCharacters = badChar + metricName;
 		var postfixWithInvalidCharacters = badChar + postfix + badChar;
+		var prefixWithInvalidCharacters = badChar + prefix + badChar;
 
-		var actualMetricFullName = new PrometheusMetricNameBuilder(postfix: postfixWithInvalidCharacters)
+		var actualMetricFullName =
+			new PrometheusMetricNameBuilder(
+				prefix: prefixWithInvalidCharacters,
+				postfix: postfixWithInvalidCharacters)
 			.BuildFullMetricName(metricNameWithInvalidCharacters);
 
-		Assert.AreEqual($"diagnosticcontext_{metricName}_{postfix}", actualMetricFullName);
+		Assert.AreEqual($"diagnosticcontext_{prefix}_{metricName}_{postfix}", actualMetricFullName);
 	}
 
 	[TestMethod]
