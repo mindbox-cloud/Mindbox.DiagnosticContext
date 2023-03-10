@@ -13,22 +13,30 @@
 // limitations under the License.
 
 using Mindbox.DiagnosticContext;
+using Mindbox.DiagnosticContext.MetricsTypes;
 using Mindbox.DiagnosticContext.Prometheus;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
 public static class PrometheusDiagnosticContextExtensions
 {
+	/// <summary>
+	/// Adds a new instance of <see cref="PrometheusDiagnosticContextFactory"/>
+	/// as a singleton service of the type <see cref="IDiagnosticContextFactory"/>
+	/// to the specified <see cref="IServiceCollection"/>.
+	/// </summary>
+	/// <param name="serviceCollection">The <see cref="IServiceCollection"/> to add the service to.</param>
+	/// <param name="metricPrefix">String constant which will be added at the beginning of each metric name.
+	/// It is strongly recommended to use a unique prefix that includes the name of the application -
+	/// this can guarantee that there is no intersection of metrics.</param>
+	/// <returns></returns>
 	public static IServiceCollection AddPrometheusDiagnosticContext(
 		this IServiceCollection serviceCollection,
-		string? microServicePrefix = null,
-		string? postfix = null)
-		=> serviceCollection
-			.Configure<PrometheusMetricNameBuilderOptions>(
-				options =>
-				{
-					options.MicroServicePrefix = microServicePrefix;
-					options.Postfix = postfix;
-				})
-			.AddSingleton<IDiagnosticContextFactory, PrometheusDiagnosticContextFactory>();
+		string? metricPrefix = null)
+		=> serviceCollection.AddSingleton<IDiagnosticContextFactory, PrometheusDiagnosticContextFactory>(
+			serviceProvider =>
+				new PrometheusDiagnosticContextFactory(
+					serviceProvider.GetRequiredService<DefaultMetricTypesConfiguration>(),
+					serviceProvider.GetRequiredService<IDiagnosticContextLogger>(),
+					metricPrefix: metricPrefix));
 }

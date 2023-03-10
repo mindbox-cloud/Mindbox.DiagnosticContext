@@ -27,8 +27,9 @@ Add a reference to `Mindbox.DiagnosticContext.Prometheus` package. Then, add thi
 
 ```csharp
 services
-  .AddPrometheusDiagnosticContext();
+  .AddPrometheusDiagnosticContext(metricPrefix);
 ```
+It is strongly recommended to use a unique prefix that includes the name of the application - this can guarantee that there is no intersection of metrics.
 
 If your application doesn't yet expose prometheus metrics, add the following code to your `Startup` class or use the [prometheus-net documentation](https://github.com/prometheus-net/prometheus-net) to instrument your code: 
 

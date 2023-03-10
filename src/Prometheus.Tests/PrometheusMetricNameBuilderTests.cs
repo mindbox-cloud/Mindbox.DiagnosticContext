@@ -25,7 +25,7 @@ public class PrometheusMetricNameBuilderTests
 	[TestMethod]
 	public void BuildFullName_Default_InsertsDiagnosticContextPrefix()
 	{
-		var nameBuilder = new PrometheusMetricNameBuilder(Options.Create<PrometheusMetricNameBuilderOptions>(new()));
+		var nameBuilder = new PrometheusMetricNameBuilder();
 
 		Assert.AreEqual(expected: "diagnosticcontext_test", nameBuilder.BuildFullMetricName("test"));
 	}
@@ -33,7 +33,7 @@ public class PrometheusMetricNameBuilderTests
 	[TestMethod]
 	public void BuildFullName_ConvertsNameToLowerCase()
 	{
-		var nameBuilder = new PrometheusMetricNameBuilder(Options.Create<PrometheusMetricNameBuilderOptions>(new()));
+		var nameBuilder = new PrometheusMetricNameBuilder();
 
 		Assert.AreEqual(expected: "diagnosticcontext_test", nameBuilder.BuildFullMetricName("TeSt"));
 	}
@@ -41,28 +41,17 @@ public class PrometheusMetricNameBuilderTests
 	[TestMethod]
 	public void BuildFullName_CustomPrefix_InsertsPrefix()
 	{
-		var nameBuilder = new PrometheusMetricNameBuilder(Options.Create<PrometheusMetricNameBuilderOptions>(
-				new() { Prefix = "dc" }));
+		var nameBuilder = new PrometheusMetricNameBuilder(prefix: "dc");
 
-		Assert.AreEqual(expected: "dc_test", nameBuilder.BuildFullMetricName("test"));
+		Assert.AreEqual(expected: "diagnosticcontext_dc_test", nameBuilder.BuildFullMetricName("test"));
 	}
 
 	[TestMethod]
 	public void BuildFullName_CustomPostfix_InsertsPostfixAndDefaultPrefix()
 	{
-		var nameBuilder = new PrometheusMetricNameBuilder(Options.Create<PrometheusMetricNameBuilderOptions>(
-				new() { Postfix = "tenant" }));
+		var nameBuilder = new PrometheusMetricNameBuilder(postfix: "tenant");
 
 		Assert.AreEqual(expected: "diagnosticcontext_test_tenant", nameBuilder.BuildFullMetricName("test"));
-	}
-
-	[TestMethod]
-	public void BuildFullName_MicroServicePrefix_InsertsMicroServicePrefixAndDefaultPrefix()
-	{
-		var nameBuilder = new PrometheusMetricNameBuilder(Options.Create<PrometheusMetricNameBuilderOptions>(
-				new() { MicroServicePrefix = "MicroServicePrefix" }));
-
-		Assert.AreEqual(expected: "diagnosticcontext_microserviceprefix_test", nameBuilder.BuildFullMetricName("test"));
 	}
 
 	[TestMethod]
@@ -75,21 +64,19 @@ public class PrometheusMetricNameBuilderTests
 	{
 		const string metricName = "metric_name";
 		const string postfix = "postfix";
-		const string microServicePrefix = "microservice_prefix";
+		const string prefix = "microservice_prefix";
 
 		var metricNameWithInvalidCharacters = badChar + metricName;
 		var postfixWithInvalidCharacters = badChar + postfix + badChar;
-		var microServicePrefixWithInvalidCharacters = badChar + microServicePrefix + badChar;
+		var prefixWithInvalidCharacters = badChar + prefix + badChar;
 
-		var actualMetricFullName = new PrometheusMetricNameBuilder(Options.Create<PrometheusMetricNameBuilderOptions>(
-				new()
-				{
-					Postfix = postfixWithInvalidCharacters,
-					MicroServicePrefix = microServicePrefixWithInvalidCharacters
-				}))
+		var actualMetricFullName =
+			new PrometheusMetricNameBuilder(
+				prefix: prefixWithInvalidCharacters,
+				postfix: postfixWithInvalidCharacters)
 			.BuildFullMetricName(metricNameWithInvalidCharacters);
 
-		Assert.AreEqual($"diagnosticcontext_{microServicePrefix}_{metricName}_{postfix}", actualMetricFullName);
+		Assert.AreEqual($"diagnosticcontext_{prefix}_{metricName}_{postfix}", actualMetricFullName);
 	}
 
 	[TestMethod]
@@ -98,8 +85,7 @@ public class PrometheusMetricNameBuilderTests
 		const string metricName = "metric_name_v3";
 		const string postfix = "v11_postfix";
 
-		var actualMetricFullName = new PrometheusMetricNameBuilder(Options.Create<PrometheusMetricNameBuilderOptions>(
-				new() { Postfix = postfix }))
+		var actualMetricFullName = new PrometheusMetricNameBuilder(postfix: postfix)
 			.BuildFullMetricName(metricName);
 
 		Assert.AreEqual($"diagnosticcontext_{metricName}_{postfix}", actualMetricFullName);
