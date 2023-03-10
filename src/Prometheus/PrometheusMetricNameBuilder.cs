@@ -13,31 +13,29 @@
 // limitations under the License.
 
 using System.Text.RegularExpressions;
-using Microsoft.Extensions.Options;
 
 namespace Mindbox.DiagnosticContext.Prometheus;
 
 internal class PrometheusMetricNameBuilder
 {
-	private readonly PrometheusMetricNameBuilderOptions _prometheusMetricNameBuilderOptions;
+	private readonly string _prefix;
+
+	private readonly string? _postfix;
 
 	private static readonly Regex _invalidCharactersRegex =
 		new("[^a-zA-Z0-9_:]+", RegexOptions.Compiled);
 
-	public PrometheusMetricNameBuilder(IOptions<PrometheusMetricNameBuilderOptions> prometheusMetricNameBuilderOptions)
+	public PrometheusMetricNameBuilder(string prefix = "diagnosticcontext", string? postfix = null)
 	{
-		_prometheusMetricNameBuilderOptions = prometheusMetricNameBuilderOptions.Value;
+		_prefix = prefix;
+		_postfix = postfix;
 	}
 
 	public string BuildFullMetricName(string metricName)
 	{
-		var microServicePrefix = string.IsNullOrEmpty(_prometheusMetricNameBuilderOptions.MicroServicePrefix)
-			? "" : $"_{_prometheusMetricNameBuilderOptions.MicroServicePrefix}";
-		var postfix = string.IsNullOrEmpty(_prometheusMetricNameBuilderOptions.Postfix)
-			? "" : $"_{_prometheusMetricNameBuilderOptions.Postfix}";
-
-		var fullMetricName =
-			$"{_prometheusMetricNameBuilderOptions.Prefix}{microServicePrefix}_{metricName}{postfix}".ToLower();
+		var fullMetricName = string.IsNullOrEmpty(_postfix)
+			? $"{_prefix}_{metricName}".ToLower()
+			: $"{_prefix}_{metricName}_{_postfix}".ToLower();
 
 		return RemoveInvalidCharactersFromMetricName(fullMetricName);
 	}
