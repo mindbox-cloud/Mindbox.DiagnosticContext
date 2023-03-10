@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using Microsoft.Extensions.Options;
 using Mindbox.DiagnosticContext.MetricsTypes;
 using Prometheus;
 
@@ -28,13 +27,13 @@ public class PrometheusDiagnosticContextFactory : IDiagnosticContextFactory
 	public PrometheusDiagnosticContextFactory(
 		DefaultMetricTypesConfiguration defaultMetricTypesConfiguration,
 		IDiagnosticContextLogger diagnosticContextLogger,
-		IOptions<PrometheusMetricNameBuilderOptions> prometheusMetricNameBuilderOptions,
-		IMetricFactory? metricFactory = null)
+		IMetricFactory? metricFactory = null,
+		string? metricPostfix = null)
 	{
 		_defaultMetricTypesConfiguration = defaultMetricTypesConfiguration;
 		_diagnosticContextLogger = diagnosticContextLogger;
 		_metricFactory = metricFactory ?? Metrics.WithCustomRegistry(Metrics.DefaultRegistry);
-		_metricNameBuilder = new PrometheusMetricNameBuilder(prometheusMetricNameBuilderOptions);
+		_metricNameBuilder = new PrometheusMetricNameBuilder(postfix: metricPostfix);
 	}
 
 	public IDiagnosticContext CreateDiagnosticContext(
