@@ -16,7 +16,6 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Mindbox.DiagnosticContext;
 using Mindbox.DiagnosticContext.MetricsTypes;
@@ -50,7 +49,6 @@ public class DiagnosticContextTests
 		_factory = new PrometheusDiagnosticContextFactory(
 			_defaultMetricTypesConfiguration,
 			new NullDiagnosticContextLogger(),
-			Options.Create<PrometheusMetricNameBuilderOptions>(new()),
 			Metrics.WithCustomRegistry(_metricsRegistry));
 	}
 
