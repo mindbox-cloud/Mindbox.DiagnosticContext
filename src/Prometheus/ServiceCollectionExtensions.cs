@@ -21,9 +21,7 @@ namespace Microsoft.Extensions.DependencyInjection;
 public static class PrometheusDiagnosticContextExtensions
 {
 	/// <summary>
-	/// Adds a new instance of <see cref="PrometheusDiagnosticContextFactory"/>
-	/// as a singleton service of the type <see cref="IDiagnosticContextFactory"/>
-	/// to the specified <see cref="IServiceCollection"/>.
+	/// Adds all the necessary dependencies to collect metrics in Prometheus.
 	/// </summary>
 	/// <param name="serviceCollection">The <see cref="IServiceCollection"/> to add the service to.</param>
 	/// <param name="metricPrefix">String constant which will be added at the beginning of each metric name.
@@ -38,5 +36,5 @@ public static class PrometheusDiagnosticContextExtensions
 				new PrometheusDiagnosticContextFactory(
 					serviceProvider.GetRequiredService<DefaultMetricTypesConfiguration>(),
 					serviceProvider.GetRequiredService<IDiagnosticContextLogger>(),
-					metricPrefix: metricPrefix));
+					metricPrefix: prefix));
 }

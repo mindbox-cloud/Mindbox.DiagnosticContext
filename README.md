@@ -27,7 +27,7 @@ Add a reference to `Mindbox.DiagnosticContext.Prometheus` package. Then, add thi
 
 ```csharp
 services
-  .AddPrometheusDiagnosticContext(orders);
+  .AddPrometheusDiagnosticContext("orders");
 ```
 It is strongly recommended to use a unique prefix that includes the name of the application - this can guarantee that there is no intersection of metrics.
 
@@ -61,7 +61,7 @@ To use an external DiagnosticContext, you need to use `IDiagnosticContextFactory
 
 * To split the dashboard by projects, the name of the project must be selected from the name of the metric using the query and regex in Grafana. An example of a dashboard using such metrics, broken down by project, [here](https://grafana.mindbox.ru/d/uWOO6yjGk/mailings-dc?editview=templating&orgId=1&from=now-15m&to=now&refresh=5s).
 
-* When creating a `DiagnosticContext` using `IDiagnosticContextFactory`, the name of the metric being written is `diagnosticcontext_{metricName}_metric_projectSystemName`.
+* When creating a `DiagnosticContext` using `IDiagnosticContextFactory`, the name of the metric being written is `diagnosticcontext_orders_{metricName}_metric_projectSystemName`.
 In other words, several metrics are collected at once and `metric` can be: `processingtime`, `cpuprocessingtime`, `counters`, etc.
 
 Example:
@@ -71,17 +71,17 @@ using var diagnosticContext = diagnosticContextFactory.CreateDiagnosticContext("
 using diagnosticContext.Measure("some_step");
 ...
 ```
-The final metric name will look like: `diagnosticcontext_metric_name_[metric]_projectSystemName`.
-For example, if we want to build a pie based on the time spent, then we need to use the metric: `diagnosticcontext_metric_name_processingtime_projectSystemName`.
+The final metric name will look like: `diagnosticcontext_orders_metric_name_[metric]_projectSystemName`.
+For example, if we want to build a pie based on the time spent, then we need to use the metric: `diagnosticcontext_orders_metric_name_processingtime_projectSystemName`.
 The names of the steps will be recorded on the labels. The example shows one step: `some_step` - it will go to the label `step`.
 
 * Prometheus, unlike Relic, has a set of counters that differ in the name label.
-This metric is named: `diagnosticcontext_metricName_counters_projectSystemName`. In other words, `counters` is appended to the metric name specified when the `DiagnosticContext` was created.
-If you need to find out the value of a specific counter, you need to make the following request: `diagnosticcontext_metricName_counters_projectSystemName{name=~"counter_name"}`.
+This metric is named: `diagnosticcontext_orders_metricName_counters_projectSystemName`. In other words, `counters` is appended to the metric name specified when the `DiagnosticContext` was created.
+If you need to find out the value of a specific counter, you need to make the following request: `diagnosticcontext_orders_metricName_counters_projectSystemName{name=~"counter_name"}`.
 
 Example:
 ```csharp
 using var diagnosticContext = diagnosticContextFactory.CreateDiagnosticContext("metric_name");
 using diagnosticContext.Increment("some_counter");
 ```
-The final query for this counter will be as follows: `diagnosticcontext_metric_name_counters_projectSystemName{name=~"some_counter"}`.
+The final query for this counter will be as follows: `diagnosticcontext_orders_metric_name_counters_projectSystemName{name=~"some_counter"}`.
