@@ -32,7 +32,7 @@ public static class PrometheusDiagnosticContextExtensions
 	/// <returns></returns>
 	public static IServiceCollection AddPrometheusDiagnosticContext(
 		this IServiceCollection serviceCollection,
-		string? metricPrefix = null)
+		string? prefix = null)
 		=> serviceCollection.AddSingleton<IDiagnosticContextFactory, PrometheusDiagnosticContextFactory>(
 			serviceProvider =>
 				new PrometheusDiagnosticContextFactory(
