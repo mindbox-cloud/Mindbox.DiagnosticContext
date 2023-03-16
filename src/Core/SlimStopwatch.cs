@@ -19,7 +19,7 @@ using System;
 namespace Mindbox.DiagnosticContext;
 
 /// <summary>
-/// This class doesn't use the high-resolution here, instead it uses DateTime and ticks as a measurement.
+/// This class doesn't use the high-resolution, instead it uses DateTime and ticks as a measurement.
 /// </summary>
 public class SlimStopwatch
 {
