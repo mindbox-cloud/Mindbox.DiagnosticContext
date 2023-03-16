@@ -454,7 +454,7 @@ public class DiagnosticContextTests
 	private IDiagnosticContext CreateDiagnosticContext(string metricPath)
 	{
 		var onlyWallClockMetricTypes = _defaultMetricTypesConfiguration
-			.GetAsyncMetricsTypes()
+			.GetDefaultMetricsTypes()
 			.MetricsTypes
 			.ToArray();
 		return _factory.CreateDiagnosticContext(metricPath, metricsTypesOverride: onlyWallClockMetricTypes);

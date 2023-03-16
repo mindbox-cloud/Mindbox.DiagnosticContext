@@ -1,11 +1,11 @@
 // Copyright 2021 Mindbox Ltd
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,10 +22,9 @@ internal class CpuTimeMetricsType : MetricsType<CpuTimeMeasurer>
 {
 	public static CpuTimeMetricsType Create(
 		ICurrentTimeAccessor currentTimeAccessor,
-		string systemName,
-		IMetricsMeasurerCreationHandler handler)
+		string systemName)
 	{
-		return new CpuTimeMetricsType(currentTimeAccessor, systemName, handler);
+		return new CpuTimeMetricsType(currentTimeAccessor, systemName);
 	}
 
 	public override string Units => "[ms]";
@@ -33,9 +32,8 @@ internal class CpuTimeMetricsType : MetricsType<CpuTimeMeasurer>
 	public override long ConvertMetricValue(long rawMetricValue) =>
 		(long)TimeSpan.FromTicks(rawMetricValue).TotalMilliseconds;
 
-	private CpuTimeMetricsType(ICurrentTimeAccessor currentTimeAccessor,
-		string systemName,
-		IMetricsMeasurerCreationHandler handler) : base(currentTimeAccessor, systemName, handler)
+	private CpuTimeMetricsType(ICurrentTimeAccessor currentTimeAccessor, string systemName)
+		: base(currentTimeAccessor, systemName)
 	{
 	}
 
