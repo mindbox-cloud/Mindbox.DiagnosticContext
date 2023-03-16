@@ -13,14 +13,12 @@
 // limitations under the License.
 
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 
 namespace Mindbox.DiagnosticContext.MetricsTypes;
 
 public sealed class DefaultMetricTypesConfiguration
 {
 	private readonly ICurrentTimeAccessor _currentTimeAccessor;
-	private const string CpuTimeMetricsSystemName = "ProcessingCpuTime";
 	private const string WallClockTimeMetricsSystemName = "ProcessingTime";
 
 	public DefaultMetricTypesConfiguration(ICurrentTimeAccessor? currentTimeAccessor = null)
@@ -34,12 +32,6 @@ public sealed class DefaultMetricTypesConfiguration
 		{
 			WallClockTimeMetricsType.Create(_currentTimeAccessor, WallClockTimeMetricsSystemName),
 		};
-
-		if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-		{
-			// CPU metrics type uses WinAPI in CpuTimeMeasurer
-			metricsTypes.Add(CpuTimeMetricsType.Create(_currentTimeAccessor, CpuTimeMetricsSystemName));
-		}
 
 		return new MetricsTypeCollection(metricsTypes);
 	}
