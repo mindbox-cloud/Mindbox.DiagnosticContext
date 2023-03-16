@@ -15,7 +15,6 @@
 #nullable disable
 
 using System;
-using System.Diagnostics;
 
 namespace Mindbox.DiagnosticContext;
 
