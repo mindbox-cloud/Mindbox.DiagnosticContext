@@ -20,7 +20,7 @@ namespace Mindbox.DiagnosticContext.MetricsTypes;
 
 internal sealed class WallClockTimeMeasurer : MetricsMeasurer
 {
-	private ReliableStopwatch _stopwatch;
+	private SlimStopwatch _stopwatch;
 
 	public WallClockTimeMeasurer(ICurrentTimeAccessor currentTimeAccessor, string metricsTypeSystemName)
 		: base(currentTimeAccessor, metricsTypeSystemName)
@@ -34,7 +34,7 @@ internal sealed class WallClockTimeMeasurer : MetricsMeasurer
 
 	protected override void StartCore()
 	{
-		_stopwatch = new ReliableStopwatch(CurrentTimeAccessor);
+		_stopwatch = new SlimStopwatch(CurrentTimeAccessor);
 		_stopwatch.Start();
 	}
 

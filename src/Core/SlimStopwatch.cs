@@ -18,7 +18,10 @@ using System;
 
 namespace Mindbox.DiagnosticContext;
 
-internal class ReliableStopwatch
+/// <summary>
+/// We don't need to have high-resoultion here, so we use DateTime and ticks as a measurement.
+/// </summary>
+internal class SlimStopwatch
 {
 	private readonly ICurrentTimeAccessor _currentTimeAccessor;
 
@@ -26,7 +29,7 @@ internal class ReliableStopwatch
 	private TimeSpan _lastStopElapsed;
 
 
-	public ReliableStopwatch(ICurrentTimeAccessor currentTimeAccessor)
+	public SlimStopwatch(ICurrentTimeAccessor currentTimeAccessor)
 	{
 		_currentTimeAccessor = currentTimeAccessor;
 	}
