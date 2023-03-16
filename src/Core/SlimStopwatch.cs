@@ -21,7 +21,7 @@ namespace Mindbox.DiagnosticContext;
 /// <summary>
 /// We don't need to have the high-resoultion here, so we use DateTime and ticks as a measurement.
 /// </summary>
-internal class SlimStopwatch
+public class SlimStopwatch
 {
 	private readonly ICurrentTimeAccessor _currentTimeAccessor;
 
