@@ -1,11 +1,11 @@
 // Copyright 2021 Mindbox Ltd
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ namespace Mindbox.DiagnosticContext.MetricsTypes;
 
 internal sealed class WallClockTimeMeasurer : MetricsMeasurer
 {
-	private ReliableStopwatchWithCpuTime _stopwatch = null;
+	private SlimStopwatch _stopwatch;
 
 	public WallClockTimeMeasurer(ICurrentTimeAccessor currentTimeAccessor, string metricsTypeSystemName)
 		: base(currentTimeAccessor, metricsTypeSystemName)
@@ -34,7 +34,7 @@ internal sealed class WallClockTimeMeasurer : MetricsMeasurer
 
 	protected override void StartCore()
 	{
-		_stopwatch = new ReliableStopwatchWithCpuTime(CurrentTimeAccessor, false);
+		_stopwatch = new SlimStopwatch(CurrentTimeAccessor);
 		_stopwatch.Start();
 	}
 
