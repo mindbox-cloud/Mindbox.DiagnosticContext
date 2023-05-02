@@ -25,7 +25,7 @@ namespace Mindbox.DiagnosticContext.DynamicSteps;
 public class DiagnosticContextDynamicSteps
 {
 	private readonly Stack<string> _stepsStack = new();
-	private readonly SafeExceptionHandler _safeExceptionHandler = new();
+	private readonly SafeExceptionHandler _safeExceptionHandler;
 	private readonly DiagnosticContextMetricsHierarchicalValueCollection _metricsValues;
 	private readonly MetricsTypeCollection _metricsTypes;
 
@@ -34,6 +34,7 @@ public class DiagnosticContextDynamicSteps
 		_metricsTypes = metricsTypes;
 		_metricsValues = DiagnosticContextMetricsHierarchicalValueCollection
 			.FromMetricsTypeCollection(metricsTypes, diagnosticContextLogger);
+		_safeExceptionHandler = new SafeExceptionHandler(diagnosticContextLogger);
 	}
 
 	internal bool IsInInvalidState => _safeExceptionHandler.IsInInvalidState;
