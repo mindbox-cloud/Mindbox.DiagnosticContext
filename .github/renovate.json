@@ -1,5 +1,5 @@
 {
    "extends":[
-      "local>mindbox-cloud/renovate-config:everyhour"
+      "local>mindbox-cloud/renovate-config"
    ]
 }
