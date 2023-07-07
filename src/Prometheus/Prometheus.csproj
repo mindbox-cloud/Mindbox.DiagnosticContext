@@ -5,7 +5,7 @@
     <AssemblyName>Mindbox.DiagnosticContext.Prometheus</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="prometheus-net" Version="7.0.0" />
+    <PackageReference Include="prometheus-net" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
     <PackageReference Update="Mindbox.Analyzers.V3" Version="5.1.14" />
     <PackageReference Update="Microsoft.VisualStudio.Threading.Analyzers" Version="17.4.33" PrivateAssets="all">

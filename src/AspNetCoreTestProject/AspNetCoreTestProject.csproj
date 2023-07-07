@@ -8,8 +8,8 @@
     <ProjectReference Include="..\Prometheus\Prometheus.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="prometheus-net" Version="7.0.0" />
-    <PackageReference Include="prometheus-net.AspNetCore" Version="7.0.0" />
+    <PackageReference Include="prometheus-net" Version="8.0.0" />
+    <PackageReference Include="prometheus-net.AspNetCore" Version="8.0.0" />
     <PackageReference Update="Mindbox.Analyzers.V3" Version="5.1.14" />
     <PackageReference Update="Microsoft.VisualStudio.Threading.Analyzers" Version="17.4.33" PrivateAssets="all">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
