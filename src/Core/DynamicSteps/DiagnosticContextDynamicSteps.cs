@@ -48,7 +48,10 @@ public class DiagnosticContextDynamicSteps
 					throw new ArgumentException($"string.IsNullOrWhiteSpace({nameof(stepName)})");
 
 				if (stepName.Contains('/'))
-					throw new ArgumentException($"{nameof(stepName)}.Contains('/')");
+					throw new ArgumentException($"{nameof(stepName)}.Contains('/')")
+					{
+						Data = {{"stepName", stepName}}
+					};
 
 				_stepsStack.Push(stepName);
 
