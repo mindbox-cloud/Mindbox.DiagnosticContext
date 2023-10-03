@@ -36,7 +36,7 @@ public abstract class MetricsType
 	internal abstract MetricsMeasurer CreateMeasurer();
 }
 
-internal abstract class MetricsType<TMetricMeasurer> : MetricsType
+public abstract class MetricsType<TMetricMeasurer> : MetricsType
 	where TMetricMeasurer : MetricsMeasurer
 {
 	protected MetricsType(ICurrentTimeAccessor currentTimeAccessor, string systemName)
