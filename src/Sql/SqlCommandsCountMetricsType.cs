@@ -14,7 +14,7 @@
 
 namespace Mindbox.DiagnosticContext.Sql;
 
-public class SqlCommandsCountMetricsType : MetricsType<SqlCommandsCountMeasurer>
+public sealed class SqlCommandsCountMetricsType : MetricsType<SqlCommandsCountMeasurer>
 {
 	private readonly ISqlCommandsDiagnosticMetricsCollector _metricsCollector;
 

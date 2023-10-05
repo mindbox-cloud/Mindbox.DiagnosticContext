@@ -14,7 +14,7 @@
 
 namespace Mindbox.DiagnosticContext.Sql;
 
-public class AsyncLocalSqlCommandsDiagnosticMetricsCollector : ISqlCommandsDiagnosticMetricsCollector
+public sealed class AsyncLocalSqlCommandsDiagnosticMetricsCollector : ISqlCommandsDiagnosticMetricsCollector
 {
 	private static readonly AsyncLocal<MetricsBox> _metrics = new();
 
