@@ -1,13 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
     <PropertyGroup>
         <TargetFramework>net7.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <RootNamespace>Mindbox.DiagnosticContext.Sql</RootNamespace>
+        <AssemblyName>Mindbox.DiagnosticContext.Sql</AssemblyName>
+        <Copyright>Mindbox</Copyright>
+        <RepositoryUrl>https://github.com/mindbox-cloud/Mindbox.DiagnosticContext</RepositoryUrl>
+        <PackageTags>diagnostics</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\Core\Core.csproj" />
     </ItemGroup>
-
 </Project>
