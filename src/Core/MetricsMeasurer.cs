@@ -16,13 +16,13 @@ using System;
 
 namespace Mindbox.DiagnosticContext;
 
-internal abstract class MetricsMeasurer
+public abstract class MetricsMeasurer
 {
 	private const long InitialValue = 0;
 
 	protected bool IsRoot { get; private set; }
 
-	internal MetricsMeasurer(ICurrentTimeAccessor currentTimeAccessor, string metricsTypeSystemName)
+	public MetricsMeasurer(ICurrentTimeAccessor currentTimeAccessor, string metricsTypeSystemName)
 	{
 		if (string.IsNullOrEmpty(metricsTypeSystemName))
 			throw new ArgumentNullException(nameof(metricsTypeSystemName));
