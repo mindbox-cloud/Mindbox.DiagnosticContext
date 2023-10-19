@@ -14,8 +14,7 @@
 
 namespace Mindbox.DiagnosticContext.Sql;
 
-public interface ISqlCommandsDiagnosticMetricsCollector
+public interface ISqlCommandsMetricsProvider
 {
-	public void ReportCreatedCommand();
 	public int SqlCommandsExecuted { get; }
 }

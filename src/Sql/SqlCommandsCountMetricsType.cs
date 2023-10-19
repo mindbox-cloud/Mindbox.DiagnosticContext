@@ -16,15 +16,15 @@ namespace Mindbox.DiagnosticContext.Sql;
 
 public sealed class SqlCommandsCountMetricsType : MetricsType<SqlCommandsCountMeasurer>
 {
-	private readonly ISqlCommandsDiagnosticMetricsCollector _metricsCollector;
+	private readonly ISqlCommandsMetricsProvider _metricsProvider;
 
-	public SqlCommandsCountMetricsType(ISqlCommandsDiagnosticMetricsCollector metricsCollector)
+	public SqlCommandsCountMetricsType(ISqlCommandsMetricsProvider metricsProvider)
 		: base(new DefaultCurrentTimeAccessor(), "SqlCommandsExecuted")
 	{
-		_metricsCollector = metricsCollector;
+		_metricsProvider = metricsProvider;
 	}
 
 	public override string Units => "[commands]";
 
-	protected override SqlCommandsCountMeasurer CreateMeasurerCore() => new(_metricsCollector, CurrentTimeAccessor, SystemName);
+	protected override SqlCommandsCountMeasurer CreateMeasurerCore() => new(_metricsProvider, CurrentTimeAccessor, SystemName);
 }
