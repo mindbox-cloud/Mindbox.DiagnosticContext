@@ -5,6 +5,7 @@
     <RootNamespace>Mindbox.DiagnosticContext.Benchmarks</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <NoWarn>CS0642</NoWarn>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.13.1" />
