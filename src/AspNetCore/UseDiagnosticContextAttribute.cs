@@ -34,7 +34,9 @@ public class UseDiagnosticContextAttribute : ActionFilterAttribute
 	public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
 	{
 		var diagnosticContextFactory = context.HttpContext.RequestServices.GetRequiredService<IDiagnosticContextFactory>();
-		var diagnosticContext = diagnosticContextFactory.CreateDiagnosticContext(_metricName);
+		var diagnosticContext = diagnosticContextFactory.CreateDiagnosticContext(
+			metricPath: _metricName,
+			metricsTypesOverride: CreateMetricsTypesOverride());
 
 		context.HttpContext.Response.RegisterForDispose(diagnosticContext);
 		context.HttpContext.StoreDiagnosticContext(diagnosticContext);
@@ -44,4 +46,6 @@ public class UseDiagnosticContextAttribute : ActionFilterAttribute
 
 		await next();
 	}
+
+	protected virtual MetricsType[]? CreateMetricsTypesOverride() => null;
 }
