@@ -12,19 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-namespace Mindbox.DiagnosticContext.Sql;
+namespace Mindbox.DiagnosticContext.EntityFramework;
 
-public sealed class SqlCommandsCountMetricsType : MetricsType<SqlCommandsCountMeasurer>
+public sealed class EfExecutedCommandsMetricsType : MetricsType<EfExecutedCommandsMeasurer>
 {
-	private readonly ISqlCommandsMetricsProvider _metricsProvider;
-
-	public SqlCommandsCountMetricsType(ISqlCommandsMetricsProvider metricsProvider)
-		: base(new DefaultCurrentTimeAccessor(), "SqlCommandsExecuted")
+	public EfExecutedCommandsMetricsType() : base(new DefaultCurrentTimeAccessor(), "SqlCommandsExecuted")
 	{
-		_metricsProvider = metricsProvider;
 	}
 
 	public override string Units => "[commands]";
 
-	protected override SqlCommandsCountMeasurer CreateMeasurerCore() => new(_metricsProvider, CurrentTimeAccessor, SystemName);
+	protected override EfExecutedCommandsMeasurer CreateMeasurerCore() => new(CurrentTimeAccessor);
 }
