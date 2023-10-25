@@ -16,7 +16,7 @@ namespace Mindbox.DiagnosticContext.EntityFramework;
 
 public sealed class EfExecutedCommandsMetricsType : MetricsType<EfExecutedCommandsMeasurer>
 {
-	public EfExecutedCommandsMetricsType() : base(new DefaultCurrentTimeAccessor(), "SqlCommandsExecuted")
+	public EfExecutedCommandsMetricsType() : base(new DefaultCurrentTimeAccessor(), "EfExecutedCommands")
 	{
 	}
 
