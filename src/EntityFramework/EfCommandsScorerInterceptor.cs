@@ -1,66 +1,9 @@
-﻿using System.Data.Common;
+using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace Mindbox.DiagnosticContext.EntityFramework;
-
-public class EfExecutedCommandsMetrics
-{
-	private static readonly AsyncLocal<EfExecutedCommandsMetrics> _instance = new();
-
-	public static EfExecutedCommandsMetrics Instance
-	{
-		get
-		{
-			return _instance.Value ??= new EfExecutedCommandsMetrics();
-		}
-	}
-
-	public long NumOfExecutedCommands { get; private set; }
-
-	public void ReportCommandStarted()
-	{
-		NumOfExecutedCommands++;
-	}
-}
-
-public sealed class EfExecutedCommandsMetricsType : MetricsType<EfExecutedCommandsMeasurer>
-{
-	public EfExecutedCommandsMetricsType() : base(new DefaultCurrentTimeAccessor(), "SqlCommandsExecuted")
-	{
-	}
-
-	public override string Units => "[commands]";
-
-	protected override EfExecutedCommandsMeasurer CreateMeasurerCore() => new(CurrentTimeAccessor);
-}
-
-public sealed class EfExecutedCommandsMeasurer : MetricsMeasurer
-{
-	private long _commandsExecutedOnStop;
-	private long _commandsExecutedOnStart;
-
-	public EfExecutedCommandsMeasurer(ICurrentTimeAccessor currentTimeAccessor)
-		: base(currentTimeAccessor, "EfExecutedCommands")
-	{
-	}
-
-	protected override long? GetValueCore()
-	{
-		return _commandsExecutedOnStop - _commandsExecutedOnStart;
-	}
-
-	protected override void StartCore()
-	{
-		_commandsExecutedOnStart = EfExecutedCommandsMetrics.Instance.NumOfExecutedCommands;
-	}
-
-	protected override void StopCore()
-	{
-		_commandsExecutedOnStop = EfExecutedCommandsMetrics.Instance.NumOfExecutedCommands;
-	}
-}
 
 public class EfCommandsScorerInterceptor : DbCommandInterceptor
 {
@@ -132,7 +75,7 @@ public class EfCommandsScorerInterceptor : DbCommandInterceptor
 
 	private static T ReportCommandStarted<T>(T result)
 	{
-		EfExecutedCommandsMetrics.Instance.ReportCommandStarted();
+		EfCommandsMetrics.Instance.ReportCommandStarted();
 		return result;
 	}
 
