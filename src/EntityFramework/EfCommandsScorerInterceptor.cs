@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace Mindbox.DiagnosticContext.EntityFramework;
 
-public class EfCommandsScorerInterceptor : DbCommandInterceptor
+internal class EfCommandsScorerInterceptor : DbCommandInterceptor
 {
 	public override InterceptionResult<DbDataReader> ReaderExecuting(
 		DbCommand command,

@@ -2,7 +2,7 @@
 
 namespace Mindbox.DiagnosticContext.EntityFramework;
 
-public class EfCommandsMetrics
+internal class EfCommandsMetrics
 {
 	private static readonly AsyncLocal<EfCommandsMetrics> _instance = new();
 
