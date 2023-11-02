@@ -43,6 +43,39 @@ app.UseMetricServer();
 1. [Create a DiagnosticContext instance](https://github.com/mindbox-cloud/DirectCRM/blob/b16aca860a6c5c6d16c806c915f24af7a2703106/Product/DirectCrm/Mailings/Mailings.Model/BulkOperation/MailingBulkSendingOperation.cs#L44-L49)
 1. Use the generated DiagnosticContext
 
+### Collect EntityFramework metrics
+
+`Mindbox.DiagnosticContext.EntityFramework` provides mechanics to collect EF metrics:
+- number of executed sql commands (exposed by `EfExecutedCommandsMetricsType` metric type)
+
+How to add this metrics to you application:
+- Register required DbContext interceptors, using `AddEfCommandsMetrics` extension
+- Add required metrics to you diagnostic context factory:
+
+Sample
+```csharp
+// Register interceptors
+public class MyDbContext : DbContext
+{
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        // ...
+        optionsBuilder.AddEfCommandsMetrics();
+        // ...
+    }
+}
+
+// Adding metrics to DC factory
+IDiagnosticContextFactory dcFactory = ...
+dcFactory.CreateDiagnosticContext(
+    metricName,
+    metricsTypesOverride: new []
+    {  
+        new EfExecutedCommandsMetricsType()    
+    })
+
+```
+
 ### Using the diagnostic context in DirectCRM
 
 IDiagnosticContextFactory [already registered in DirectCrmCoreModule](https://github.com/mindbox-cloud/DirectCRM/blob/51c6a6e418afd4a696b0f68998aaf9fa46056f62/Product/DirectCrm/DirectCrm.Core/DirectCrmCoreModule.cs#L177-L204), just use it.
