@@ -18,7 +18,7 @@ public class EfCommandsCounter
 {
 	private readonly long _numOfCommandsBeforeStart;
 
-	public EfCommandsCounter(long numOfCommandsBeforeStart)
+	private EfCommandsCounter(long numOfCommandsBeforeStart)
 	{
 		_numOfCommandsBeforeStart = numOfCommandsBeforeStart;
 	}
