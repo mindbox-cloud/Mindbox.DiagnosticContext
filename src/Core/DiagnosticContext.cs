@@ -81,7 +81,7 @@ public class DiagnosticContext : IDiagnosticContext
 
 	public IMeasurement Measure(string stepName)
 	{
-		var measurement = _safeExceptionHandler.HandleExceptions(() =>
+		var measurement =  _safeExceptionHandler.HandleExceptions(() =>
 		{
 			if (_safeExceptionHandler.IsInInvalidState)
 				return new FakeTimer();
@@ -90,8 +90,9 @@ public class DiagnosticContext : IDiagnosticContext
 				throw new ArgumentNullException(stepName);
 
 			return new DisposableContainer(
-				_diagnosticContextCollection.Measure(stepName),
-				_metricsItem.DynamicSteps.StartStep(stepName)) as IDisposable;
+					_diagnosticContextCollection.Measure(stepName),
+					_metricsItem.DynamicSteps.StartStep(stepName))
+				as IDisposable;
 		},
 		() => new FakeTimer());
 
