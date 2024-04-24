@@ -81,7 +81,7 @@ public class DiagnosticContext : IDiagnosticContext
 
 	public IMeasurement Measure(string stepName)
 	{
-		var measurement =  _safeExceptionHandler.HandleExceptions(() =>
+		var measurement = _safeExceptionHandler.HandleExceptions(() =>
 		{
 			if (_safeExceptionHandler.IsInInvalidState)
 				return new FakeTimer();
