@@ -16,7 +16,7 @@ using System;
 
 namespace Mindbox.DiagnosticContext;
 
-public class NullMeasurementTagsAdapter : IMeasurement
+internal class NullMeasurementTagsAdapter : IMeasurement
 {
 	private readonly IDisposable _original;
 
