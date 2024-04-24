@@ -81,7 +81,7 @@ public class DiagnosticContext : IDiagnosticContext
 
 	public IMeasurement Measure(string stepName)
 	{
-		var measurements =  _safeExceptionHandler.HandleExceptions(() =>
+		var measurement =  _safeExceptionHandler.HandleExceptions(() =>
 		{
 			if (_safeExceptionHandler.IsInInvalidState)
 				return new FakeTimer();
@@ -95,7 +95,7 @@ public class DiagnosticContext : IDiagnosticContext
 		},
 		() => new FakeTimer());
 
-		return new NullMeasurementTagsAdapter(measurements);
+		return new NullMeasurementTagsAdapter(measurement);
 	}
 
 	public void SetTag(string tag, string value)
