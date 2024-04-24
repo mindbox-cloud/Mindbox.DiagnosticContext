@@ -16,19 +16,17 @@ using System;
 
 namespace Mindbox.DiagnosticContext;
 
-public interface IDiagnosticContext : IDisposable
+public class NullMeasurementTagsAdapter(IDisposable original) : IMeasurement
 {
-	string PrefixName { get; }
+	private readonly IDisposable _original = original;
 
-	IDisposable MeasureForAdditionalMetric(IDiagnosticContext diagnosticContext);
+	public IMeasurement SetTag(string tag, string value)
+	{
+		return this;
+	}
 
-	IMeasurement Measure(string stepName);
-
-	void SetTag(string tag, string value);
-
-	void Increment(string counterPath);
-
-	IDisposable ExtendCodeSourceLabel(string extensionCodeSourceLabel);
-
-	void ReportValue(string counterPath, long value);
+	public void Dispose()
+	{
+		_original.Dispose();
+	}
 }

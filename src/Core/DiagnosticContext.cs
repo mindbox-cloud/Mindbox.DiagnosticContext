@@ -79,9 +79,9 @@ public class DiagnosticContext : IDiagnosticContext
 			() => NullDisposable.Instance);
 	}
 
-	public IDisposable Measure(string stepName)
+	public IMeasurement Measure(string stepName)
 	{
-		return _safeExceptionHandler.HandleExceptions(() =>
+		var measurements =  _safeExceptionHandler.HandleExceptions(() =>
 		{
 			if (_safeExceptionHandler.IsInInvalidState)
 				return new FakeTimer();
@@ -90,11 +90,12 @@ public class DiagnosticContext : IDiagnosticContext
 				throw new ArgumentNullException(stepName);
 
 			return new DisposableContainer(
-					_diagnosticContextCollection.Measure(stepName),
-					_metricsItem.DynamicSteps.StartStep(stepName))
-				as IDisposable;
+				_diagnosticContextCollection.Measure(stepName),
+				_metricsItem.DynamicSteps.StartStep(stepName)) as IDisposable;
 		},
 		() => new FakeTimer());
+
+		return new NullMeasurementTagsAdapter(measurements);
 	}
 
 	public void SetTag(string tag, string value)

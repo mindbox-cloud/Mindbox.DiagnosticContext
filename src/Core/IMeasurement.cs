@@ -16,19 +16,7 @@ using System;
 
 namespace Mindbox.DiagnosticContext;
 
-public interface IDiagnosticContext : IDisposable
+public interface IMeasurement : IDisposable
 {
-	string PrefixName { get; }
-
-	IDisposable MeasureForAdditionalMetric(IDiagnosticContext diagnosticContext);
-
-	IMeasurement Measure(string stepName);
-
-	void SetTag(string tag, string value);
-
-	void Increment(string counterPath);
-
-	IDisposable ExtendCodeSourceLabel(string extensionCodeSourceLabel);
-
-	void ReportValue(string counterPath, long value);
+	public IMeasurement SetTag(string tag, string value);
 }
