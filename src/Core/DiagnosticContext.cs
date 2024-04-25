@@ -79,9 +79,9 @@ public class DiagnosticContext : IDiagnosticContext
 			() => NullDisposable.Instance);
 	}
 
-	public IDisposable Measure(string stepName)
+	public IMeasurement Measure(string stepName)
 	{
-		return _safeExceptionHandler.HandleExceptions(() =>
+		var measurement =  _safeExceptionHandler.HandleExceptions(() =>
 		{
 			if (_safeExceptionHandler.IsInInvalidState)
 				return new FakeTimer();
@@ -95,6 +95,8 @@ public class DiagnosticContext : IDiagnosticContext
 				as IDisposable;
 		},
 		() => new FakeTimer());
+
+		return new NullMeasurementTagsAdapter(measurement);
 	}
 
 	public void SetTag(string tag, string value)
