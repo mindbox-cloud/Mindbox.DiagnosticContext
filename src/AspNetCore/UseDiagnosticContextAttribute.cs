@@ -38,6 +38,8 @@ public class UseDiagnosticContextAttribute : ActionFilterAttribute
 			metricPath: _metricName,
 			metricsTypesOverride: CreateMetricsTypesOverride(context));
 
+		diagnosticContext = CreateDiagnosticContextOverride(diagnosticContext, context);
+
 		context.HttpContext.Response.RegisterForDispose(diagnosticContext);
 		context.HttpContext.StoreDiagnosticContext(diagnosticContext);
 
@@ -48,4 +50,7 @@ public class UseDiagnosticContextAttribute : ActionFilterAttribute
 	}
 
 	protected virtual MetricsType[]? CreateMetricsTypesOverride(ActionExecutingContext context) => null;
+
+	protected virtual IDiagnosticContext CreateDiagnosticContextOverride(IDiagnosticContext original, ActionExecutingContext context)
+		=> original;
 }
