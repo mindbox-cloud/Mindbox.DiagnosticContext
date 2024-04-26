@@ -51,6 +51,6 @@ public class UseDiagnosticContextAttribute : ActionFilterAttribute
 
 	protected virtual MetricsType[]? CreateMetricsTypesOverride(ActionExecutingContext context) => null;
 
-	protected virtual IDiagnosticContext? CreateDiagnosticContextOverride(IDiagnosticContext? original, ActionExecutingContext context)
+	protected virtual IDiagnosticContext CreateDiagnosticContextOverride(IDiagnosticContext original, ActionExecutingContext context)
 		=> original;
 }
