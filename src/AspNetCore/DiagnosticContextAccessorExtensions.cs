@@ -29,10 +29,4 @@ public static class DiagnosticContextHttpContextExtensions
 	{
 		httpContext.Items.Add(DiagnosticContextItemKey, diagnosticContext);
 	}
-
-	internal static void OverrideDiagnosticContext(this HttpContext httpContext, IDiagnosticContext newDiagnosticContext)
-	{
-		httpContext.Items.Remove(DiagnosticContextItemKey);
-		httpContext.Items.Add(DiagnosticContextItemKey, newDiagnosticContext);
-	}
 }
