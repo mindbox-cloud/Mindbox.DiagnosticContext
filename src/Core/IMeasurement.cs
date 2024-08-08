@@ -18,5 +18,5 @@ namespace Mindbox.DiagnosticContext;
 
 public interface IMeasurement : IDisposable
 {
-	IMeasurement SetTag(string tag, string value);
+	IMeasurement SetTraceTag(string tag, string value);
 }
