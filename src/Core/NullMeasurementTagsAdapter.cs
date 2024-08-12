@@ -25,7 +25,7 @@ internal class NullMeasurementTagsAdapter : IMeasurement
 		_original = original;
 	}
 
-	public IMeasurement SetTag(string tag, string value)
+	public IMeasurement SetSpanAttribute(string attribute, string value)
 	{
 		return this;
 	}
