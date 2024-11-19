@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Mindbox.DiagnosticContext.EntityFramework;
 
@@ -21,6 +22,19 @@ public static class EntityFrameworkDiagnosticContextExtensions
 	public static DbContextOptionsBuilder AddEfCommandsMetrics(this DbContextOptionsBuilder serviceCollection)
 	{
 		return serviceCollection
-			.AddInterceptors(new EfCommandsScorerInterceptor());
+			.AddInterceptors(new EfCommandsScorerInterceptor([new EfCommandsMetricsCounter()]));
+	}
+
+	public static DbContextOptionsBuilder AddEfCommandsMetrics(
+		this DbContextOptionsBuilder optionsBuilder,
+		IServiceCollection services)
+	{
+		services.AddSingleton<IEfCommandMetricsCounter, EfCommandsMetricsCounter>();
+		services.AddSingleton<EfCommandsScorerInterceptor>();
+
+		var serviceProvider = services.BuildServiceProvider();
+		var interceptor = serviceProvider.GetRequiredService<EfCommandsScorerInterceptor>();
+
+		return optionsBuilder.AddInterceptors(interceptor);
 	}
 }
