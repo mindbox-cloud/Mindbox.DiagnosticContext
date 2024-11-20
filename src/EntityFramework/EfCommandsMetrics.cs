@@ -16,7 +16,7 @@ using System.Threading;
 
 namespace Mindbox.DiagnosticContext.EntityFramework;
 
-internal class EfCommandsMetrics
+internal class EfCommandsMetrics : IEfCommandMetricsCounter
 {
 	private static readonly AsyncLocal<EfCommandsMetrics> _instance = new();
 
