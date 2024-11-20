@@ -20,10 +20,15 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace Mindbox.DiagnosticContext.EntityFramework;
 
-internal class EfCommandsScorerInterceptor(
-	IEnumerable<IEfCommandMetricsCounter> metricsCounters)
-	: DbCommandInterceptor
+internal class EfCommandsScorerInterceptor : DbCommandInterceptor
 {
+	private readonly IEnumerable<IEfCommandMetricsCounter> _metricsCounters;
+
+	public EfCommandsScorerInterceptor(IEnumerable<IEfCommandMetricsCounter> metricsCounters)
+	{
+		_metricsCounters = metricsCounters;
+	}
+
 	public override InterceptionResult<DbDataReader> ReaderExecuting(
 		DbCommand command,
 		CommandEventData eventData,
@@ -92,7 +97,7 @@ internal class EfCommandsScorerInterceptor(
 
 	private T ReportCommandStarted<T>(T result)
 	{
-		foreach (var counter in metricsCounters)
+		foreach (var counter in _metricsCounters)
 			counter.ReportCommandStarted();
 
 		return result;
