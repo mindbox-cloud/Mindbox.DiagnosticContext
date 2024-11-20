@@ -25,10 +25,13 @@ public static class EntityFrameworkDiagnosticContextExtensions
 		IEnumerable<IEfCommandMetricsCounter>? metricsCounters = null)
 	{
 		metricsCounters ??= [];
-		if (!metricsCounters.Any(counter => counter is EfCommandsMetrics))
-			metricsCounters = metricsCounters.Concat([EfCommandsMetrics.Instance]);
+
+		var materializedCounters = metricsCounters.ToList();
+
+		if (!materializedCounters.Any(counter => counter is EfCommandsMetrics))
+			materializedCounters.Add(EfCommandsMetrics.Instance);
 
 		return serviceCollection
-			.AddInterceptors(new EfCommandsScorerInterceptor(metricsCounters));
+			.AddInterceptors(new EfCommandsScorerInterceptor(materializedCounters));
 	}
 }
