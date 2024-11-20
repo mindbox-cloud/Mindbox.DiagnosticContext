@@ -24,14 +24,11 @@ public static class EntityFrameworkDiagnosticContextExtensions
 		this DbContextOptionsBuilder serviceCollection,
 		IEnumerable<IEfCommandMetricsCounter>? metricsCounters = null)
 	{
-		metricsCounters ??= [];
+		var counters = metricsCounters?.ToList() ?? [];
 
-		var materializedCounters = metricsCounters.ToList();
+		if (counters.All(counter => counter is not EfCommandsMetrics))
+			counters.Add(EfCommandsMetrics.Instance);
 
-		if (!materializedCounters.Any(counter => counter is EfCommandsMetrics))
-			materializedCounters.Add(EfCommandsMetrics.Instance);
-
-		return serviceCollection
-			.AddInterceptors(new EfCommandsScorerInterceptor(materializedCounters));
+		return serviceCollection.AddInterceptors(new EfCommandsScorerInterceptor(counters));
 	}
 }
