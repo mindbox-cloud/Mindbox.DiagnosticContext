@@ -12,15 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.EntityFrameworkCore;
 
 namespace Mindbox.DiagnosticContext.EntityFramework;
 
 public static class EntityFrameworkDiagnosticContextExtensions
 {
-	public static DbContextOptionsBuilder AddEfCommandsMetrics(this DbContextOptionsBuilder serviceCollection)
+	public static DbContextOptionsBuilder AddEfCommandsMetrics(
+		this DbContextOptionsBuilder serviceCollection,
+		IEnumerable<IEfCommandMetricsCounter>? metricsCounters = null)
 	{
-		return serviceCollection
-			.AddInterceptors(new EfCommandsScorerInterceptor());
+		var counters = metricsCounters?.ToList() ?? [];
+
+		if (counters.All(counter => counter is not EfCommandsMetrics))
+			counters.Add(EfCommandsMetrics.Instance);
+
+		return serviceCollection.AddInterceptors(new EfCommandsScorerInterceptor(counters));
 	}
 }

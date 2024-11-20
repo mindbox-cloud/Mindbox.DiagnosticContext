@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Collections.Generic;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,7 +20,9 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace Mindbox.DiagnosticContext.EntityFramework;
 
-internal class EfCommandsScorerInterceptor : DbCommandInterceptor
+internal class EfCommandsScorerInterceptor(
+	IEnumerable<IEfCommandMetricsCounter> metricsCounters)
+	: DbCommandInterceptor
 {
 	public override InterceptionResult<DbDataReader> ReaderExecuting(
 		DbCommand command,
@@ -87,9 +90,11 @@ internal class EfCommandsScorerInterceptor : DbCommandInterceptor
 		int result,
 		CancellationToken cancellationToken = default) => ReportCommandFinished(result);
 
-	private static T ReportCommandStarted<T>(T result)
+	private T ReportCommandStarted<T>(T result)
 	{
-		EfCommandsMetrics.Instance.ReportCommandStarted();
+		foreach (var counter in metricsCounters)
+			counter.ReportCommandStarted();
+
 		return result;
 	}
 
