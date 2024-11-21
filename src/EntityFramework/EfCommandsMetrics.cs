@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System.Threading;
+using Microsoft.EntityFrameworkCore;
 
 namespace Mindbox.DiagnosticContext.EntityFramework;
 
@@ -30,7 +31,7 @@ internal class EfCommandsMetrics : IEfCommandMetricsCounter
 
 	public long NumOfExecutedCommands { get; private set; }
 
-	public void ReportCommandStarted()
+	public void ReportCommandStarted(DbContext? dbContext)
 	{
 		NumOfExecutedCommands++;
 	}

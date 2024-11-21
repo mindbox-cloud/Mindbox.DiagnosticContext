@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using Microsoft.EntityFrameworkCore;
+
 namespace Mindbox.DiagnosticContext.EntityFramework;
 
 public interface IEfCommandMetricsCounter
 {
-	void ReportCommandStarted();
+	void ReportCommandStarted(DbContext? dbContext);
 }
