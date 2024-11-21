@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace Mindbox.DiagnosticContext.EntityFramework;
@@ -32,35 +33,35 @@ internal class EfCommandsScorerInterceptor : DbCommandInterceptor
 	public override InterceptionResult<DbDataReader> ReaderExecuting(
 		DbCommand command,
 		CommandEventData eventData,
-		InterceptionResult<DbDataReader> result) => ReportCommandStarted(result);
+		InterceptionResult<DbDataReader> result) => ReportCommandStarted(result, eventData.Context);
 
 	public override InterceptionResult<object> ScalarExecuting(
 		DbCommand command,
 		CommandEventData eventData,
-		InterceptionResult<object> result) => ReportCommandStarted(result);
+		InterceptionResult<object> result) => ReportCommandStarted(result, eventData.Context);
 
 	public override InterceptionResult<int> NonQueryExecuting(
 		DbCommand command,
 		CommandEventData eventData,
-		InterceptionResult<int> result) => ReportCommandStarted(result);
+		InterceptionResult<int> result) => ReportCommandStarted(result, eventData.Context);
 
 	public override async ValueTask<InterceptionResult<DbDataReader>> ReaderExecutingAsync(
 		DbCommand command,
 		CommandEventData eventData,
 		InterceptionResult<DbDataReader> result,
-		CancellationToken cancellationToken = default) => ReportCommandStarted(result);
+		CancellationToken cancellationToken = default) => ReportCommandStarted(result, eventData.Context);
 
 	public override async ValueTask<InterceptionResult<object>> ScalarExecutingAsync(
 		DbCommand command,
 		CommandEventData eventData,
 		InterceptionResult<object> result,
-		CancellationToken cancellationToken = default) => ReportCommandStarted(result);
+		CancellationToken cancellationToken = default) => ReportCommandStarted(result, eventData.Context);
 
 	public override async ValueTask<InterceptionResult<int>> NonQueryExecutingAsync(
 		DbCommand command,
 		CommandEventData eventData,
 		InterceptionResult<int> result,
-		CancellationToken cancellationToken = default) => ReportCommandStarted(result);
+		CancellationToken cancellationToken = default) => ReportCommandStarted(result, eventData.Context);
 
 	public override DbDataReader ReaderExecuted(
 		DbCommand command,
@@ -95,10 +96,10 @@ internal class EfCommandsScorerInterceptor : DbCommandInterceptor
 		int result,
 		CancellationToken cancellationToken = default) => ReportCommandFinished(result);
 
-	private T ReportCommandStarted<T>(T result)
+	private T ReportCommandStarted<T>(T result, DbContext? dbContext)
 	{
 		foreach (var counter in _metricsCounters)
-			counter.ReportCommandStarted();
+			counter.ReportCommandStarted(dbContext);
 
 		return result;
 	}
