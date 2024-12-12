@@ -142,6 +142,9 @@ dotnet_diagnostic.IDE0220.severity = none
 # JSON002 Enable json support 
 dotnet_diagnostic.JSON002.severity = none
 
+# IDE0290 Use primary constructor
+dotnet_diagnostic.IDE0290.severity = none
+
 # Naming convention - Private and internal fields should start with _ and be camelCased
 dotnet_naming_symbols.private_internal_fields.applicable_kinds = field
 dotnet_naming_symbols.private_internal_fields.applicable_accessibilities = private
