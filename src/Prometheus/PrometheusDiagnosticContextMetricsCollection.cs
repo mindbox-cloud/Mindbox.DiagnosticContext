@@ -21,7 +21,7 @@ namespace Mindbox.DiagnosticContext.Prometheus;
 
 internal class PrometheusDiagnosticContextMetricsCollection : IDiagnosticContextMetricsCollection
 {
-	private readonly Dictionary<string, DiagnosticContextMetricsStorage> _storagesByMetricPrefix = new();
+	private readonly Dictionary<string, DiagnosticContextMetricsStorage> _storagesByMetricPrefix = [];
 
 	private readonly IDictionary<string, string> _tags = new Dictionary<string, string>();
 
