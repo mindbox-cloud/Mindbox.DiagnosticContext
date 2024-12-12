@@ -2,7 +2,7 @@ name: Pull request
 on: pull_request
 
 env:
-  NETCORE_VERSION: '6.0'
+  NETCORE_VERSION: '8.0'
 
 jobs:
   build:
