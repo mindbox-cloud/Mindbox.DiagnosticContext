@@ -20,7 +20,7 @@ namespace Mindbox.DiagnosticContext;
 
 public class DiagnosticContextReportedValuesStorage
 {
-	private readonly Dictionary<string, Int64ValueAggregator> _reportedValues = new();
+	private readonly Dictionary<string, Int64ValueAggregator> _reportedValues = [];
 
 	public IReadOnlyDictionary<string, Int64ValueAggregator> ReportedValues => _reportedValues;
 
@@ -29,7 +29,7 @@ public class DiagnosticContextReportedValuesStorage
 		foreach (var itemCounter in itemReportedValues)
 		{
 			if (!_reportedValues.ContainsKey(itemCounter.Key))
-				_reportedValues.Add(itemCounter.Key, new Int64ValueAggregator());
+				_reportedValues.Add(itemCounter.Key, new());
 
 			_reportedValues[itemCounter.Key].Add(itemCounter.Value);
 		}

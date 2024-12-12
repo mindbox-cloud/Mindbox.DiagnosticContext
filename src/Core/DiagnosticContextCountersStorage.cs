@@ -20,7 +20,7 @@ namespace Mindbox.DiagnosticContext;
 
 public class DiagnosticContextCountersStorage
 {
-	private readonly Dictionary<string, int> _counters = new();
+	private readonly Dictionary<string, int> _counters = [];
 
 	public IReadOnlyDictionary<string, int> Counters => _counters;
 

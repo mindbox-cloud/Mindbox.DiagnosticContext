@@ -26,8 +26,7 @@ internal class DynamicStepsPrometheusAdapter
 
 	private readonly PrometheusMetricNameBuilder _metricNameBuilder;
 
-	private readonly Dictionary<(string, MetricsType), StepPrometheusCounterSet> _dynamicStepsPrometheusCounters =
-		new();
+	private readonly Dictionary<(string, MetricsType), StepPrometheusCounterSet> _dynamicStepsPrometheusCounters = [];
 
 	public DynamicStepsPrometheusAdapter(IMetricFactory metricFactory, PrometheusMetricNameBuilder metricNameBuilder)
 	{
@@ -84,12 +83,7 @@ internal class DynamicStepsPrometheusAdapter
 			string metricDescriptionBase =
 				$"Diagnostic context for {metricsItem.MetricPrefix} ({metricValue.MetricsType.SystemName})";
 
-			var totalLabelNames = tags.Keys.ToArray();
-			var stepLabelNames = tags.Keys
-				.Append("step")
-				.Append("unit")
-				.ToArray();
-			var counterConfiguration = new CounterConfiguration { LabelNames = totalLabelNames.ToArray() };
+			var counterConfiguration = new CounterConfiguration { LabelNames = [.. tags.Keys] };
 
 			counterSet = new StepPrometheusCounterSet(
 				_metricFactory.CreateCounter(
@@ -103,7 +97,7 @@ internal class DynamicStepsPrometheusAdapter
 				_metricFactory.CreateCounter(
 					_metricNameBuilder.BuildFullMetricName(metricNameBase),
 					metricDescriptionBase,
-					new CounterConfiguration { LabelNames = stepLabelNames })
+					new CounterConfiguration { LabelNames = [.. tags.Keys, "step", "unit"] })
 				);
 
 			_dynamicStepsPrometheusCounters[counterSetKey] = counterSet;

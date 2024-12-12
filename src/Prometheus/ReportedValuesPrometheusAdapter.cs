@@ -32,8 +32,7 @@ internal class ReportedValuesPrometheusAdapter
 		public Counter Total { get; set; }
 	}
 
-	private readonly Dictionary<string, ReportedValuesCounters> _counters =
-		new();
+	private readonly Dictionary<string, ReportedValuesCounters> _counters = [];
 
 	public ReportedValuesPrometheusAdapter(IMetricFactory metricFactory, PrometheusMetricNameBuilder metricNameBuilder)
 	{
@@ -55,10 +54,7 @@ internal class ReportedValuesPrometheusAdapter
 
 				foreach (var diagnosticContextCounter in reportedValueCounters.Value.ReportedValues)
 				{
-					var labelValues = new List<string> { diagnosticContextCounter.Key };
-					labelValues.AddRange(tags.Values);
-
-					var labelValuesArray = labelValues.ToArray();
+					string[] labelValuesArray = [diagnosticContextCounter.Key, .. tags.Values];
 
 					prometheusCounter
 						.Total
@@ -87,9 +83,7 @@ internal class ReportedValuesPrometheusAdapter
 		var reportedValuesMetricDescription = _metricNameBuilder
 			.BuildFullMetricName($"Diagnostic context reported values count for {metricsItem.MetricPrefix}");
 
-		var labelNames = new List<string> { "name" };
-		labelNames.AddRange(tags.Keys);
-		var counterConfiguration = new CounterConfiguration { LabelNames = labelNames.ToArray() };
+		var counterConfiguration = new CounterConfiguration { LabelNames = ["name", .. tags.Keys] };
 
 		_counters[counterName] = new ReportedValuesCounters
 		{

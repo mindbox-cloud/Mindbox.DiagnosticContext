@@ -22,7 +22,7 @@ namespace Mindbox.DiagnosticContext;
 
 internal class DiagnosticContextCollection : IDisposable
 {
-	private readonly List<IDiagnosticContext> _linkedContexts = new();
+	private readonly List<IDiagnosticContext> _linkedContexts = [];
 
 	internal void LinkDiagnosticContext(IDiagnosticContext context)
 	{

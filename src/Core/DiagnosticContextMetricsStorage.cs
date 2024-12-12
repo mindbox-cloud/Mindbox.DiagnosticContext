@@ -25,11 +25,11 @@ namespace Mindbox.DiagnosticContext;
 
 public class DiagnosticContextMetricsStorage
 {
-	private readonly Dictionary<string, DiagnosticContextDynamicStepsAggregatedStorage> _dynamicStepsPerMetricPrefix = new();
+	private readonly Dictionary<string, DiagnosticContextDynamicStepsAggregatedStorage> _dynamicStepsPerMetricPrefix = [];
 
-	private readonly Dictionary<string, DiagnosticContextCountersStorage> _countersPerMetricsPrefix = new();
+	private readonly Dictionary<string, DiagnosticContextCountersStorage> _countersPerMetricsPrefix = [];
 
-	private readonly Dictionary<string, DiagnosticContextReportedValuesStorage> _reportedValuesPerMetricsPrefix = new();
+	private readonly Dictionary<string, DiagnosticContextReportedValuesStorage> _reportedValuesPerMetricsPrefix = [];
 
 	public IReadOnlyDictionary<string, DiagnosticContextCountersStorage> CountersPerMetricsPrefix => _countersPerMetricsPrefix;
 

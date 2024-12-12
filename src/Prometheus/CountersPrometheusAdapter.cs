@@ -24,7 +24,7 @@ internal class CountersPrometheusAdapter
 
 	private readonly PrometheusMetricNameBuilder _metricNameBuilder;
 
-	private readonly Dictionary<string, Counter> _prometheusCounters = new();
+	private readonly Dictionary<string, Counter> _prometheusCounters = [];
 
 	public CountersPrometheusAdapter(IMetricFactory metricFactory, PrometheusMetricNameBuilder metricNameBuilder)
 	{
@@ -43,11 +43,8 @@ internal class CountersPrometheusAdapter
 
 			foreach (var diagnosticContextCounter in prefixCounters.Value.Counters)
 			{
-				var labelValues = new List<string> { diagnosticContextCounter.Key };
-				labelValues.AddRange(tags.Values);
-
 				prometheusCounter
-					.WithLabels(labelValues.ToArray())
+					.WithLabels([diagnosticContextCounter.Key, .. tags.Values])
 					.Inc(diagnosticContextCounter.Value);
 			}
 		}
@@ -63,13 +60,10 @@ internal class CountersPrometheusAdapter
 			string metricName = _metricNameBuilder.BuildFullMetricName($"{metricsItem.MetricPrefix}_counters");
 			string metricDescription = $"Diagnostic context counters for {metricsItem.MetricPrefix}";
 
-			var labelNames = new List<string> { "name" };
-			labelNames.AddRange(tags.Keys);
-
 			prometheusCounter = _metricFactory.CreateCounter(
 				metricName,
 				metricDescription,
-				new CounterConfiguration() { LabelNames = labelNames.ToArray() });
+				new CounterConfiguration() { LabelNames = ["name", .. tags.Keys] });
 
 			_prometheusCounters[counterName] = prometheusCounter;
 		}

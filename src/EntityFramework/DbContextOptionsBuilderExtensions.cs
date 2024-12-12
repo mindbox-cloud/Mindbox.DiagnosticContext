@@ -24,7 +24,7 @@ public static class EntityFrameworkDiagnosticContextExtensions
 		this DbContextOptionsBuilder serviceCollection,
 		IEnumerable<IEfCommandMetricsCounter>? metricsCounters = null)
 	{
-		var counters = metricsCounters?.ToList() ?? new List<IEfCommandMetricsCounter>();
+		var counters = metricsCounters?.ToList() ?? [];
 
 		if (counters.All(counter => counter is not EfCommandsMetrics))
 			counters.Add(EfCommandsMetrics.Instance);

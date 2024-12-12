@@ -40,7 +40,7 @@ internal class DiagnosticContextInternalMetricsAdapter
 		var labelValues = tags.Values.ToArray();
 
 		var metricDescriptionBase = $"Diagnostic context {collectedMetrics.MetricPrefix} ";
-		
+
 		var countCounter = _metricFactory.CreateCounter(
 			_metricNameBuilder.BuildFullMetricName(
 			$"{collectedMetrics.MetricPrefix}_internalmetrics_count"),
@@ -64,7 +64,7 @@ internal class DiagnosticContextInternalMetricsAdapter
 			var layersCounter = _metricFactory.CreateCounter(
 				_metricNameBuilder.BuildFullMetricName($"{collectedMetrics.MetricPrefix}_{measurer.MetricTypeSystemName}"),
 				$"{metricDescriptionBase} - layers count",
-				new CounterConfiguration { LabelNames = labelNames});
+				new CounterConfiguration { LabelNames = labelNames });
 
 			layersCounter
 				.WithLabels(labelValues)
