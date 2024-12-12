@@ -29,7 +29,7 @@ public class MetricsAggregatedValue
 
 	public MetricsType MetricsType { get; }
 
-	public Dictionary<string, Int64ValueAggregator> StepValues { get; } = new Dictionary<string, Int64ValueAggregator>();
+	public Dictionary<string, Int64ValueAggregator> StepValues { get; } = [];
 	public Int64ValueAggregator TotalValue { get; } = new Int64ValueAggregator();
 
 	public void Add(DiagnosticContextMetricsNormalizedValue metricsNormalizedValue)

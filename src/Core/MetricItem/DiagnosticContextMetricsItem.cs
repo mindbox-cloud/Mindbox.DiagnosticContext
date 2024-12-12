@@ -55,6 +55,6 @@ public class DiagnosticContextMetricsItem
 
 	public DiagnosticContextDynamicSteps DynamicSteps { get; }
 
-	public Dictionary<string, int> Counters { get; } = new Dictionary<string, int>();
-	public Dictionary<string, long> ReportedValues { get; } = new Dictionary<string, long>();
+	public Dictionary<string, int> Counters { get; } = [];
+	public Dictionary<string, long> ReportedValues { get; } = [];
 }
