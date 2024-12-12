@@ -14,7 +14,7 @@
     <PackageTags>diagnostics</PackageTags>
   </PropertyGroup>
   <PropertyGroup>
-    <VersionMajor>9</VersionMajor>
+    <VersionMajor>10</VersionMajor>
     <VersionMinor>1</VersionMinor>
     <BuildNumber>$(BuildNumber)</BuildNumber>
     <BuildNumber Condition="'$(BuildNumber)' == ''">0</BuildNumber>
