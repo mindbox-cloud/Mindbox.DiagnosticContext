@@ -1,11 +1,11 @@
 // Copyright 2021 Mindbox Ltd
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -59,40 +59,6 @@ public static class DiagnosticContextFactory
 		}
 	}
 
-	public static IDiagnosticContext BuildForMetric(
-		string metricPath,
-		bool isFeatureBoundaryCodePoint = false,
-		MetricsType[]? metricsTypesOverride = null)
-	{
-		return BuildForMetric(
-			metricPath,
-			true,
-			isFeatureBoundaryCodePoint,
-			metricsTypesOverride);
-	}
-
-	public static IDiagnosticContext TryBuildForMetric(
-		string metricPath,
-		bool isFeatureBoundaryCodePoint = false,
-		MetricsType[]? metricsTypesOverride = null)
-	{
-		return BuildForMetric(
-			metricPath,
-			false,
-			isFeatureBoundaryCodePoint,
-			metricsTypesOverride);
-	}
-
-	private static IDiagnosticContext BuildForMetric(
-#pragma warning disable IDE0060 // Remove unused parameter
-		string metricPath,
-		bool isPluginRequired,
-		bool isFeatureBoundaryCodePoint,
-		MetricsType[]? metricsTypesOverride)
-#pragma warning restore IDE0060 // Remove unused parameter
-	{
-		return new NullDiagnosticContext();
-	}
 
 	public static IDiagnosticContext BuildCustom(
 		Func<IDiagnosticContext> diagnosticContextProvider,
@@ -105,22 +71,5 @@ public static class DiagnosticContextFactory
 	{
 		get => (bool?)CallContext.LogicalGetData(DiagnosticContextCreationLogicalCallContextKey) ?? false;
 		set => CallContext.LogicalSetData(DiagnosticContextCreationLogicalCallContextKey, value ? true : null);
-	}
-
-	/// <summary>
-	/// Сделан для мест в которых еще недоступен ApplicationHostController и нет возможности получить плагин
-	/// </summary>
-	/// <param name="metricsItem">Пустая метрика транзакции</param>
-	/// <returns>DiagnosticContext либо NullDiagnosticContext если произошла ошибка.</returns>
-	internal static IDiagnosticContext BuildForMetricsItem(DiagnosticContextMetricsItem metricsItem)
-	{
-		try
-		{
-			return new DiagnosticContext(metricsItem);
-		}
-		catch (Exception)
-		{
-			return new NullDiagnosticContext();
-		}
 	}
 }
