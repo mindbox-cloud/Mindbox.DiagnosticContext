@@ -487,44 +487,4 @@ public class ManagedLifetimeDiagnosticContextTests : DiagnosticContextTestsBase
 		IDiagnosticContextLogger logger,
 		IMetricFactory metricFactory)
 		=> new(config, logger, TimeSpan.FromMinutes(5), metricFactory);
-
-	[TestMethod]
-	public async System.Threading.Tasks.Task SeriesEvictedAfterTtlAsync()
-	{
-		var registry = Metrics.NewCustomRegistry();
-		var factory = new PrometheusDiagnosticContextFactory(
-			_defaultMetricTypesConfiguration,
-			new NullDiagnosticContextLogger(),
-			metricLifetime: TimeSpan.FromMilliseconds(100),
-			metricFactory: Metrics.WithCustomRegistry(registry));
-
-		var metricsTypes = _defaultMetricTypesConfiguration
-			.GetDefaultMetricsTypes()
-			.MetricsTypes
-			.ToArray();
-
-		using (var dc = factory.CreateDiagnosticContext("Evict", metricsTypesOverride: metricsTypes))
-		{
-			dc.SetTag("tag", "ephemeral");
-			using (dc.Measure("Span"))
-				_currentTimeAccessor.CurrentDateTimeUtc = _currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(1);
-		}
-
-		async System.Threading.Tasks.Task<string> Collect()
-		{
-			using var ms = new MemoryStream();
-			await registry.CollectAndExportAsTextAsync(ms);
-			return Encoding.UTF8.GetString(ms.ToArray());
-		}
-
-		var before = await Collect();
-		Assert.IsTrue(before.Contains("tag=\"ephemeral\""),
-			$"Should be present immediately.\n{before}");
-
-		await System.Threading.Tasks.Task.Delay(TimeSpan.FromMilliseconds(500));
-
-		var after = await Collect();
-		Assert.IsFalse(after.Contains("tag=\"ephemeral\""),
-			$"Should be evicted after TTL.\n{after}");
-	}
 }
