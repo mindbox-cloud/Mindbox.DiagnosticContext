@@ -12,39 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using Prometheus;
 
 namespace Mindbox.DiagnosticContext.Prometheus;
 
 internal sealed class DiagnosticMetricCreator
 {
-	private readonly IMetricFactory? _plainFactory;
-	private readonly IManagedLifetimeMetricFactory? _managedLifetimeFactory;
+	private readonly Func<string, string, string[], ICounterAdapter> _createCounter;
 
 	public DiagnosticMetricCreator(IMetricFactory factory)
 	{
-		_plainFactory = factory;
+		_createCounter = (name, help, labelNames) =>
+			new PlainCounterAdapter(factory.CreateCounter(name, help,
+				new CounterConfiguration { LabelNames = labelNames }));
 	}
 
 	public DiagnosticMetricCreator(IManagedLifetimeMetricFactory factory)
 	{
-		_managedLifetimeFactory = factory;
+		_createCounter = (name, help, labelNames) =>
+			new ManagedLifetimeCounterAdapter(
+				factory.CreateCounter(name, help, labelNames).WithExtendLifetimeOnUse());
 	}
 
-	public ICounterAdapter CreateCounter(string name, string help, string[] labelNames)
-	{
-		if (_managedLifetimeFactory != null)
-		{
-			var handle = _managedLifetimeFactory.CreateCounter(name, help, labelNames);
-			return new ManagedLifetimeCounterAdapter(handle.WithExtendLifetimeOnUse());
-		}
-
-		var counter = _plainFactory!.CreateCounter(
-			name,
-			help,
-			new CounterConfiguration { LabelNames = labelNames });
-		return new PlainCounterAdapter(counter);
-	}
+	public ICounterAdapter CreateCounter(string name, string help, string[] labelNames) =>
+		_createCounter(name, help, labelNames);
 }
 
 internal interface ICounterAdapter
