@@ -521,7 +521,7 @@ public class ManagedLifetimeDiagnosticContextTests : DiagnosticContextTestsBase
 		Assert.IsTrue(before.Contains("tag=\"ephemeral\""),
 			$"Should be present immediately.\n{before}");
 
-		await System.Threading.Tasks.Task.Delay(TimeSpan.FromMilliseconds(2000));
+		await System.Threading.Tasks.Task.Delay(TimeSpan.FromMilliseconds(500));
 
 		var after = await Collect();
 		Assert.IsFalse(after.Contains("tag=\"ephemeral\""),
