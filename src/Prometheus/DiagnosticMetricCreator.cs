@@ -19,7 +19,7 @@ namespace Mindbox.DiagnosticContext.Prometheus;
 internal sealed class DiagnosticMetricCreator
 {
 	private readonly IMetricFactory? _plainFactory;
-	private readonly IManagedLifetimeMetricFactory? _managedFactory;
+	private readonly IManagedLifetimeMetricFactory? _managedLifetimeFactory;
 
 	public DiagnosticMetricCreator(IMetricFactory factory)
 	{
@@ -28,15 +28,15 @@ internal sealed class DiagnosticMetricCreator
 
 	public DiagnosticMetricCreator(IManagedLifetimeMetricFactory factory)
 	{
-		_managedFactory = factory;
+		_managedLifetimeFactory = factory;
 	}
 
 	public ICounterAdapter CreateCounter(string name, string help, string[] labelNames)
 	{
-		if (_managedFactory != null)
+		if (_managedLifetimeFactory != null)
 		{
-			var handle = _managedFactory.CreateCounter(name, help, labelNames);
-			return new ManagedCounterAdapter(handle.WithExtendLifetimeOnUse());
+			var handle = _managedLifetimeFactory.CreateCounter(name, help, labelNames);
+			return new ManagedLifetimeCounterAdapter(handle.WithExtendLifetimeOnUse());
 		}
 
 		var counter = _plainFactory!.CreateCounter(
@@ -62,11 +62,11 @@ internal sealed class PlainCounterAdapter : ICounterAdapter
 		_counter.WithLabels(labelValues).Inc(amount);
 }
 
-internal sealed class ManagedCounterAdapter : ICounterAdapter
+internal sealed class ManagedLifetimeCounterAdapter : ICounterAdapter
 {
 	private readonly ICollector<ICounter> _collector;
 
-	public ManagedCounterAdapter(ICollector<ICounter> collector) => _collector = collector;
+	public ManagedLifetimeCounterAdapter(ICollector<ICounter> collector) => _collector = collector;
 
 	public void Inc(string[] labelValues, double amount) =>
 		_collector.WithLabels(labelValues).Inc(amount);
