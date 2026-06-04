@@ -107,14 +107,14 @@ internal class DynamicStepsPrometheusAdapter
 
 	private class StepPrometheusCounterSet
 	{
-		public ILabeledMetric CountCounter { get; }
-		public ILabeledMetric TotalCounter { get; }
-		public ILabeledMetric StepCounter { get; }
+		public ICounterAdapter CountCounter { get; }
+		public ICounterAdapter TotalCounter { get; }
+		public ICounterAdapter StepCounter { get; }
 
 		public StepPrometheusCounterSet(
-			ILabeledMetric countCounter,
-			ILabeledMetric totalCounter,
-			ILabeledMetric stepCounter)
+			ICounterAdapter countCounter,
+			ICounterAdapter totalCounter,
+			ICounterAdapter stepCounter)
 		{
 			CountCounter = countCounter;
 			TotalCounter = totalCounter;

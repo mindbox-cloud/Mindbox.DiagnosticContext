@@ -31,7 +31,7 @@ internal sealed class DiagnosticMetricCreator
 		_managedFactory = factory;
 	}
 
-	public ILabeledMetric CreateCounter(string name, string help, string[] labelNames)
+	public ICounterAdapter CreateCounter(string name, string help, string[] labelNames)
 	{
 		if (_managedFactory != null)
 		{
@@ -47,12 +47,12 @@ internal sealed class DiagnosticMetricCreator
 	}
 }
 
-internal interface ILabeledMetric
+internal interface ICounterAdapter
 {
 	void Inc(string[] labelValues, double amount);
 }
 
-internal sealed class PlainLabeledMetric : ILabeledMetric
+internal sealed class PlainLabeledMetric : ICounterAdapter
 {
 	private readonly Counter _counter;
 
@@ -62,7 +62,7 @@ internal sealed class PlainLabeledMetric : ILabeledMetric
 		_counter.WithLabels(labelValues).Inc(amount);
 }
 
-internal sealed class ManagedLabeledMetric : ILabeledMetric
+internal sealed class ManagedLabeledMetric : ICounterAdapter
 {
 	private readonly ICollector<ICounter> _collector;
 

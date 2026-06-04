@@ -23,7 +23,7 @@ internal class CountersPrometheusAdapter
 
 	private readonly PrometheusMetricNameBuilder _metricNameBuilder;
 
-	private readonly Dictionary<string, ILabeledMetric> _prometheusCounters = new();
+	private readonly Dictionary<string, ICounterAdapter> _prometheusCounters = new();
 
 	public CountersPrometheusAdapter(DiagnosticMetricCreator metricCreator, PrometheusMetricNameBuilder metricNameBuilder)
 	{
@@ -50,7 +50,7 @@ internal class CountersPrometheusAdapter
 		}
 	}
 
-	private ILabeledMetric GetOrCreatePrometheusCounter(
+	private ICounterAdapter GetOrCreatePrometheusCounter(
 		DiagnosticContextMetricsItem metricsItem,
 		string counterName,
 		IDictionary<string, string> tags)

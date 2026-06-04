@@ -26,9 +26,9 @@ internal class ReportedValuesPrometheusAdapter
 
 	private struct ReportedValuesCounters
 	{
-		public ILabeledMetric Count { get; set; }
+		public ICounterAdapter Count { get; set; }
 
-		public ILabeledMetric Total { get; set; }
+		public ICounterAdapter Total { get; set; }
 	}
 
 	private readonly Dictionary<string, ReportedValuesCounters> _counters =
