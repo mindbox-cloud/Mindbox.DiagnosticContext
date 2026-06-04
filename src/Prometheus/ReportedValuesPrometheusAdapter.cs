@@ -1,11 +1,11 @@
 // Copyright 2021 Mindbox Ltd
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,29 +15,28 @@
 using System.Collections.Generic;
 using System.Linq;
 using Mindbox.DiagnosticContext.MetricItem;
-using Prometheus;
 
 namespace Mindbox.DiagnosticContext.Prometheus;
 
 internal class ReportedValuesPrometheusAdapter
 {
-	private readonly IMetricFactory _metricFactory;
+	private readonly DiagnosticMetricCreator _metricCreator;
 
 	private readonly PrometheusMetricNameBuilder _metricNameBuilder;
 
 	private struct ReportedValuesCounters
 	{
-		public Counter Count { get; set; }
+		public ILabeledMetric Count { get; set; }
 
-		public Counter Total { get; set; }
+		public ILabeledMetric Total { get; set; }
 	}
 
 	private readonly Dictionary<string, ReportedValuesCounters> _counters =
 		new();
 
-	public ReportedValuesPrometheusAdapter(IMetricFactory metricFactory, PrometheusMetricNameBuilder metricNameBuilder)
+	public ReportedValuesPrometheusAdapter(DiagnosticMetricCreator metricCreator, PrometheusMetricNameBuilder metricNameBuilder)
 	{
-		_metricFactory = metricFactory;
+		_metricCreator = metricCreator;
 		_metricNameBuilder = metricNameBuilder;
 	}
 
@@ -60,15 +59,8 @@ internal class ReportedValuesPrometheusAdapter
 
 					var labelValuesArray = labelValues.ToArray();
 
-					prometheusCounter
-						.Total
-						.WithLabels(labelValuesArray)
-						.Inc(diagnosticContextCounter.Value.Total);
-
-					prometheusCounter
-						.Count
-						.WithLabels(labelValuesArray)
-						.Inc(diagnosticContextCounter.Value.Count);
+					prometheusCounter.Total.Inc(labelValuesArray, diagnosticContextCounter.Value.Total);
+					prometheusCounter.Count.Inc(labelValuesArray, diagnosticContextCounter.Value.Count);
 				}
 			}
 		}
@@ -89,18 +81,18 @@ internal class ReportedValuesPrometheusAdapter
 
 		var labelNames = new List<string> { "name" };
 		labelNames.AddRange(tags.Keys);
-		var counterConfiguration = new CounterConfiguration { LabelNames = labelNames.ToArray() };
+		var labelNamesArray = labelNames.ToArray();
 
 		_counters[counterName] = new ReportedValuesCounters
 		{
-			Total = _metricFactory.CreateCounter(
+			Total = _metricCreator.CreateCounter(
 				totalMetricName,
 				totalMetricDescription,
-				counterConfiguration),
-			Count = _metricFactory.CreateCounter(
+				labelNamesArray),
+			Count = _metricCreator.CreateCounter(
 				reportedValuesMetricName,
 				reportedValuesMetricDescription,
-				counterConfiguration)
+				labelNamesArray)
 		};
 
 		return _counters[counterName];

@@ -15,7 +15,6 @@
 using System;
 using System.Collections.Generic;
 using Mindbox.DiagnosticContext.MetricItem;
-using Prometheus;
 
 namespace Mindbox.DiagnosticContext.Prometheus;
 
@@ -33,13 +32,13 @@ internal class PrometheusDiagnosticContextMetricsCollection : IDiagnosticContext
 	private readonly object _syncRoot = new();
 
 	public PrometheusDiagnosticContextMetricsCollection(
-		IMetricFactory metricFactory,
+		DiagnosticMetricCreator metricCreator,
 		PrometheusMetricNameBuilder metricNameBuilder)
 	{
-		_dynamicStepsAdapter = new DynamicStepsPrometheusAdapter(metricFactory, metricNameBuilder);
-		_countersAdapter = new CountersPrometheusAdapter(metricFactory, metricNameBuilder);
-		_reportedValuesAdapter = new ReportedValuesPrometheusAdapter(metricFactory, metricNameBuilder);
-		_internalMetricsAdapter = new DiagnosticContextInternalMetricsAdapter(metricFactory, metricNameBuilder);
+		_dynamicStepsAdapter = new DynamicStepsPrometheusAdapter(metricCreator, metricNameBuilder);
+		_countersAdapter = new CountersPrometheusAdapter(metricCreator, metricNameBuilder);
+		_reportedValuesAdapter = new ReportedValuesPrometheusAdapter(metricCreator, metricNameBuilder);
+		_internalMetricsAdapter = new DiagnosticContextInternalMetricsAdapter(metricCreator, metricNameBuilder);
 	}
 
 	public void CollectItemData(DiagnosticContextMetricsItem metricsItem)
