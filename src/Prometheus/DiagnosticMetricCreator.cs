@@ -36,14 +36,14 @@ internal sealed class DiagnosticMetricCreator
 		if (_managedFactory != null)
 		{
 			var handle = _managedFactory.CreateCounter(name, help, labelNames);
-			return new ManagedLabeledMetric(handle.WithExtendLifetimeOnUse());
+			return new ManagedCounterAdapter(handle.WithExtendLifetimeOnUse());
 		}
 
 		var counter = _plainFactory!.CreateCounter(
 			name,
 			help,
 			new CounterConfiguration { LabelNames = labelNames });
-		return new PlainLabeledMetric(counter);
+		return new PlainCounterAdapter(counter);
 	}
 }
 
@@ -52,21 +52,21 @@ internal interface ICounterAdapter
 	void Inc(string[] labelValues, double amount);
 }
 
-internal sealed class PlainLabeledMetric : ICounterAdapter
+internal sealed class PlainCounterAdapter : ICounterAdapter
 {
 	private readonly Counter _counter;
 
-	public PlainLabeledMetric(Counter counter) => _counter = counter;
+	public PlainCounterAdapter(Counter counter) => _counter = counter;
 
 	public void Inc(string[] labelValues, double amount) =>
 		_counter.WithLabels(labelValues).Inc(amount);
 }
 
-internal sealed class ManagedLabeledMetric : ICounterAdapter
+internal sealed class ManagedCounterAdapter : ICounterAdapter
 {
 	private readonly ICollector<ICounter> _collector;
 
-	public ManagedLabeledMetric(ICollector<ICounter> collector) => _collector = collector;
+	public ManagedCounterAdapter(ICollector<ICounter> collector) => _collector = collector;
 
 	public void Inc(string[] labelValues, double amount) =>
 		_collector.WithLabels(labelValues).Inc(amount);
