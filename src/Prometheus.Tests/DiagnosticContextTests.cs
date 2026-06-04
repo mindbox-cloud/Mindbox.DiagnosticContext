@@ -28,14 +28,17 @@ public class TestDateTimeAccessor : ICurrentTimeAccessor
 	public DateTime CurrentDateTimeUtc { get; set; }
 }
 
-[TestClass]
-public class DiagnosticContextTests
+public abstract class DiagnosticContextTestsBase
 {
-	private CollectorRegistry _metricsRegistry = null!;
-	private PrometheusDiagnosticContextFactory _factory = null!;
-	private TestDateTimeAccessor _currentTimeAccessor = null!;
-	private DefaultMetricTypesConfiguration _defaultMetricTypesConfiguration = null!;
+	protected CollectorRegistry _metricsRegistry = null!;
+	protected PrometheusDiagnosticContextFactory _factory = null!;
+	protected TestDateTimeAccessor _currentTimeAccessor = null!;
+	protected DefaultMetricTypesConfiguration _defaultMetricTypesConfiguration = null!;
 
+	protected abstract PrometheusDiagnosticContextFactory CreateFactory(
+		DefaultMetricTypesConfiguration config,
+		IDiagnosticContextLogger logger,
+		IMetricFactory metricFactory);
 
 	[TestInitialize]
 	public void TestInitialize()
@@ -46,7 +49,7 @@ public class DiagnosticContextTests
 			CurrentDateTimeUtc = new DateTime(2021, 02, 03, 04, 05, 06, 07, DateTimeKind.Utc)
 		};
 		_defaultMetricTypesConfiguration = new DefaultMetricTypesConfiguration(_currentTimeAccessor);
-		_factory = new PrometheusDiagnosticContextFactory(
+		_factory = CreateFactory(
 			_defaultMetricTypesConfiguration,
 			new NullDiagnosticContextLogger(),
 			Metrics.WithCustomRegistry(_metricsRegistry));
@@ -116,7 +119,6 @@ public class DiagnosticContextTests
 			}
 		}
 
-
 		Measure(1);
 		Measure(2);
 		await AssertMetricsReportedAsync(
@@ -138,7 +140,6 @@ public class DiagnosticContextTests
 				_currentTimeAccessor.CurrentDateTimeUtc = _currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(milliseconds);
 			}
 		}
-
 
 		Measure("tagValue1", 1);
 		Measure("tagValue2", 2);
@@ -377,22 +378,6 @@ public class DiagnosticContextTests
 			"diagnosticcontext_test_reportedvalues_count{name=\"TestValue\",tag=\"tagValue2\"} 1");
 	}
 
-	private async System.Threading.Tasks.Task AssertMetricsReportedAsync(params string[] expectedMetrics)
-	{
-		var metrics = await GetMetricsAsTextAsync();
-
-		var notFoundMetrics = expectedMetrics
-			.Where(metric => !metrics.Contains(metric))
-			.ToArray();
-
-		if (notFoundMetrics.Any())
-		{
-			Assert.Fail(
-				$"Following metrics where not reported:\r\n{string.Join("\r\n", notFoundMetrics)}\r\n\r\n" +
-				$"Full metrics:\r\n{metrics}");
-		}
-	}
-
 	[TestMethod]
 	public async System.Threading.Tasks.Task InternalMetrics_ProcessingTime()
 	{
@@ -435,7 +420,23 @@ public class DiagnosticContextTests
 		await AssertMetricsReportedAsync("diagnosticcontext_test_processingtime_layerscount{tag=\"tagValue\"} 3");
 	}
 
-	private async System.Threading.Tasks.Task AssertMetricsNotReportedAsync(params string[] expectedMetrics)
+	protected async System.Threading.Tasks.Task AssertMetricsReportedAsync(params string[] expectedMetrics)
+	{
+		var metrics = await GetMetricsAsTextAsync();
+
+		var notFoundMetrics = expectedMetrics
+			.Where(metric => !metrics.Contains(metric))
+			.ToArray();
+
+		if (notFoundMetrics.Any())
+		{
+			Assert.Fail(
+				$"Following metrics where not reported:\r\n{string.Join("\r\n", notFoundMetrics)}\r\n\r\n" +
+				$"Full metrics:\r\n{metrics}");
+		}
+	}
+
+	protected async System.Threading.Tasks.Task AssertMetricsNotReportedAsync(params string[] expectedMetrics)
 	{
 		var metrics = await GetMetricsAsTextAsync();
 
@@ -451,7 +452,7 @@ public class DiagnosticContextTests
 		}
 	}
 
-	private IDiagnosticContext CreateDiagnosticContext(string metricPath)
+	protected IDiagnosticContext CreateDiagnosticContext(string metricPath)
 	{
 		var onlyWallClockMetricTypes = _defaultMetricTypesConfiguration
 			.GetDefaultMetricsTypes()
@@ -460,10 +461,30 @@ public class DiagnosticContextTests
 		return _factory.CreateDiagnosticContext(metricPath, metricsTypesOverride: onlyWallClockMetricTypes);
 	}
 
-	private async System.Threading.Tasks.Task<string> GetMetricsAsTextAsync()
+	protected async System.Threading.Tasks.Task<string> GetMetricsAsTextAsync()
 	{
 		using var memoryStream = new MemoryStream();
 		await _metricsRegistry.CollectAndExportAsTextAsync(memoryStream);
 		return Encoding.UTF8.GetString(memoryStream.ToArray());
 	}
+}
+
+[TestClass]
+public class PlainDiagnosticContextTests : DiagnosticContextTestsBase
+{
+	protected override PrometheusDiagnosticContextFactory CreateFactory(
+		DefaultMetricTypesConfiguration config,
+		IDiagnosticContextLogger logger,
+		IMetricFactory metricFactory)
+		=> new(config, logger, metricFactory);
+}
+
+[TestClass]
+public class ManagedLifetimeDiagnosticContextTests : DiagnosticContextTestsBase
+{
+	protected override PrometheusDiagnosticContextFactory CreateFactory(
+		DefaultMetricTypesConfiguration config,
+		IDiagnosticContextLogger logger,
+		IMetricFactory metricFactory)
+		=> new(config, logger, TimeSpan.FromMinutes(5), metricFactory);
 }

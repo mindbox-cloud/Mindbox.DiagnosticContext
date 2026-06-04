@@ -1,11 +1,11 @@
 // Copyright 2021 Mindbox Ltd
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,21 +14,20 @@
 
 using System.Collections.Generic;
 using Mindbox.DiagnosticContext.MetricItem;
-using Prometheus;
 
 namespace Mindbox.DiagnosticContext.Prometheus;
 
 internal class CountersPrometheusAdapter
 {
-	private readonly IMetricFactory _metricFactory;
+	private readonly DiagnosticMetricCreator _metricCreator;
 
 	private readonly PrometheusMetricNameBuilder _metricNameBuilder;
 
-	private readonly Dictionary<string, Counter> _prometheusCounters = new();
+	private readonly Dictionary<string, ICounterAdapter> _prometheusCounters = new();
 
-	public CountersPrometheusAdapter(IMetricFactory metricFactory, PrometheusMetricNameBuilder metricNameBuilder)
+	public CountersPrometheusAdapter(DiagnosticMetricCreator metricCreator, PrometheusMetricNameBuilder metricNameBuilder)
 	{
-		_metricFactory = metricFactory;
+		_metricCreator = metricCreator;
 		_metricNameBuilder = metricNameBuilder;
 	}
 
@@ -46,14 +45,12 @@ internal class CountersPrometheusAdapter
 				var labelValues = new List<string> { diagnosticContextCounter.Key };
 				labelValues.AddRange(tags.Values);
 
-				prometheusCounter
-					.WithLabels(labelValues.ToArray())
-					.Inc(diagnosticContextCounter.Value);
+				prometheusCounter.Inc(labelValues.ToArray(), diagnosticContextCounter.Value);
 			}
 		}
 	}
 
-	private Counter GetOrCreatePrometheusCounter(
+	private ICounterAdapter GetOrCreatePrometheusCounter(
 		DiagnosticContextMetricsItem metricsItem,
 		string counterName,
 		IDictionary<string, string> tags)
@@ -66,10 +63,10 @@ internal class CountersPrometheusAdapter
 			var labelNames = new List<string> { "name" };
 			labelNames.AddRange(tags.Keys);
 
-			prometheusCounter = _metricFactory.CreateCounter(
+			prometheusCounter = _metricCreator.CreateCounter(
 				metricName,
 				metricDescription,
-				new CounterConfiguration() { LabelNames = labelNames.ToArray() });
+				labelNames.ToArray());
 
 			_prometheusCounters[counterName] = prometheusCounter;
 		}

@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using Mindbox.DiagnosticContext.MetricsTypes;
 using Prometheus;
 
@@ -19,9 +20,11 @@ namespace Mindbox.DiagnosticContext.Prometheus;
 
 public class PrometheusDiagnosticContextFactory : IDiagnosticContextFactory
 {
+	public static readonly TimeSpan DefaultMetricLifetime = TimeSpan.FromMinutes(5);
+
 	private readonly DefaultMetricTypesConfiguration _defaultMetricTypesConfiguration;
 	private readonly IDiagnosticContextLogger _diagnosticContextLogger;
-	private readonly IMetricFactory _metricFactory;
+	private readonly DiagnosticMetricCreator _metricCreator;
 	private readonly PrometheusMetricNameBuilder _metricNameBuilder;
 
 	public PrometheusDiagnosticContextFactory(
@@ -33,7 +36,24 @@ public class PrometheusDiagnosticContextFactory : IDiagnosticContextFactory
 	{
 		_defaultMetricTypesConfiguration = defaultMetricTypesConfiguration;
 		_diagnosticContextLogger = diagnosticContextLogger;
-		_metricFactory = metricFactory ?? Metrics.WithCustomRegistry(Metrics.DefaultRegistry);
+		_metricCreator = new DiagnosticMetricCreator(
+			metricFactory ?? Metrics.WithCustomRegistry(Metrics.DefaultRegistry));
+		_metricNameBuilder = new PrometheusMetricNameBuilder(prefix: metricPrefix, postfix: metricPostfix);
+	}
+
+	public PrometheusDiagnosticContextFactory(
+		DefaultMetricTypesConfiguration defaultMetricTypesConfiguration,
+		IDiagnosticContextLogger diagnosticContextLogger,
+		TimeSpan metricLifetime,
+		IMetricFactory? metricFactory = null,
+		string? metricPostfix = null,
+		string? metricPrefix = null)
+	{
+		_defaultMetricTypesConfiguration = defaultMetricTypesConfiguration;
+		_diagnosticContextLogger = diagnosticContextLogger;
+		var baseFactory = metricFactory ?? Metrics.WithCustomRegistry(Metrics.DefaultRegistry);
+		_metricCreator = new DiagnosticMetricCreator(
+			baseFactory.WithManagedLifetime(metricLifetime));
 		_metricNameBuilder = new PrometheusMetricNameBuilder(prefix: metricPrefix, postfix: metricPostfix);
 	}
 
@@ -42,7 +62,7 @@ public class PrometheusDiagnosticContextFactory : IDiagnosticContextFactory
 		bool isFeatureBoundaryCodePoint = false,
 		MetricsType[]? metricsTypesOverride = null)
 	{
-		var collection = new PrometheusDiagnosticContextMetricsCollection(_metricFactory, _metricNameBuilder);
+		var collection = new PrometheusDiagnosticContextMetricsCollection(_metricCreator, _metricNameBuilder);
 
 		return DiagnosticContextFactory.BuildCustom(
 			() =>
