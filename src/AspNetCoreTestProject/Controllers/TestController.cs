@@ -14,7 +14,6 @@
 
 using System;
 using System.Threading;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mindbox.DiagnosticContext.AspNetCore;
 
