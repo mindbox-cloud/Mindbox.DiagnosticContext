@@ -38,7 +38,9 @@ public class Startup
 			.AddControllers();
 
 		services
-			.AddPrometheusDiagnosticContextWithManagedLifetime(prefix: "AspNetCoreTestProject");
+			.AddSingleton<DefaultMetricTypesConfiguration>()
+			.AddSingleton<IDiagnosticContextLogger>(new NullLogger())
+			.AddPrometheusDiagnosticContextWithManagedLifetime(prefix: "AspNetCoreTestProject", metricLifetime: TimeSpan.FromSeconds(30));
 	}
 
 	// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
