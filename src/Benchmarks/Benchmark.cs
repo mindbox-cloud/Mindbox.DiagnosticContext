@@ -21,12 +21,11 @@ namespace Mindbox.DiagnosticContext.Benchmarks;
 [MemoryDiagnoser]
 public class DiagnosticContextBenchmarks
 {
-#pragma warning disable CS0618
 	private readonly IDiagnosticContextFactory _diagnosticContextFactory = new PrometheusDiagnosticContextFactory(
 		new DefaultMetricTypesConfiguration(),
-		new NullDiagnosticContextLogger()
+		new NullDiagnosticContextLogger(),
+		PrometheusDiagnosticContextFactory.DefaultMetricLifetime
 	);
-#pragma warning restore CS0618
 
 	[Benchmark]
 	public void WithoutSteps()
