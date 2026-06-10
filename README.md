@@ -27,9 +27,21 @@ Add a reference to `Mindbox.DiagnosticContext.Prometheus` package. Then, add thi
 
 ```csharp
 services
-  .AddPrometheusDiagnosticContext("orders");
+  .AddPrometheusDiagnosticContextWithManagedLifetime(prefix: "orders");
 ```
+
+This registers a factory that automatically evicts inactive metric series after 5 minutes (default). You can customize the lifetime:
+
+```csharp
+services
+  .AddPrometheusDiagnosticContextWithManagedLifetime(
+      metricLifetime: TimeSpan.FromMinutes(10),
+      prefix: "orders");
+```
+
 It is strongly recommended to use a unique prefix that includes the name of the application - this can guarantee that there is no intersection of metrics.
+
+> **Note:** The previous `AddPrometheusDiagnosticContext` method (without managed lifetime) is now marked as `[Obsolete]`. It creates metric series that live indefinitely.
 
 If your application doesn't yet expose prometheus metrics, add the following code to your `Startup` class or use the [prometheus-net documentation](https://github.com/prometheus-net/prometheus-net) to instrument your code: 
 

@@ -23,7 +23,8 @@ public class DiagnosticContextBenchmarks
 {
 	private readonly IDiagnosticContextFactory _diagnosticContextFactory = new PrometheusDiagnosticContextFactory(
 		new DefaultMetricTypesConfiguration(),
-		new NullDiagnosticContextLogger()
+		new NullDiagnosticContextLogger(),
+		PrometheusDiagnosticContextFactory.DefaultMetricLifetime
 	);
 
 	[Benchmark]
