@@ -41,7 +41,7 @@ services
 
 It is strongly recommended to use a unique prefix that includes the name of the application - this can guarantee that there is no intersection of metrics.
 
-> **Note:** The previous `AddPrometheusDiagnosticContext` method (without managed lifetime) is now marked as `[Obsolete]`. It creates metric series that live indefinitely, which can lead to OOM in high-cardinality scenarios.
+> **Note:** The previous `AddPrometheusDiagnosticContext` method (without managed lifetime) is now marked as `[Obsolete]`. It creates metric series that live indefinitely.
 
 If your application doesn't yet expose prometheus metrics, add the following code to your `Startup` class or use the [prometheus-net documentation](https://github.com/prometheus-net/prometheus-net) to instrument your code: 
 
