@@ -39,7 +39,7 @@ public class Startup
 
 		services
 			.AddSingleton<DefaultMetricTypesConfiguration>()
-			.AddSingleton<IDiagnosticContextLogger>(new NullLogger())
+			.AddSingleton<IDiagnosticContextLogger, NullDiagnosticContextLogger>()
 			.AddPrometheusDiagnosticContextWithManagedLifetime(prefix: "AspNetCoreTestProject", metricLifetime: TimeSpan.FromSeconds(30));
 	}
 
@@ -64,7 +64,7 @@ public class Startup
 	}
 }
 
-public class NullLogger : IDiagnosticContextLogger
+public class NullDiagnosticContextLogger : IDiagnosticContextLogger
 {
 	public void Log(
 		string message,
