@@ -13,12 +13,10 @@
 // limitations under the License.
 
 using System;
-using System.Collections.Generic;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Mindbox.DiagnosticContext;
 using Mindbox.DiagnosticContext.MetricsTypes;
 using Prometheus;
@@ -61,16 +59,5 @@ public class Startup
 			{
 				endpoints.MapControllers();
 			});
-	}
-}
-
-public class NullDiagnosticContextLogger : IDiagnosticContextLogger
-{
-	public void Log(
-		string message,
-		Exception? exception,
-		LogLevel? logLevel = null,
-		IDictionary<string, object>? additionalProperties = null)
-	{
 	}
 }
