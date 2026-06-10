@@ -472,11 +472,13 @@ public abstract class DiagnosticContextTestsBase
 [TestClass]
 public class PlainDiagnosticContextTests : DiagnosticContextTestsBase
 {
+#pragma warning disable CS0618
 	protected override PrometheusDiagnosticContextFactory CreateFactory(
 		DefaultMetricTypesConfiguration config,
 		IDiagnosticContextLogger logger,
 		IMetricFactory metricFactory)
 		=> new(config, logger, metricFactory);
+#pragma warning restore CS0618
 }
 
 [TestClass]

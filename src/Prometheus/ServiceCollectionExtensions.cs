@@ -25,15 +25,18 @@ public static class PrometheusDiagnosticContextExtensions
 	/// Adds all the necessary dependencies to collect metrics in Prometheus.
 	/// Metric series live indefinitely (no automatic eviction).
 	/// </summary>
+	[Obsolete("Use AddPrometheusDiagnosticContextWithManagedLifetime to enable automatic eviction of inactive series.")]
 	public static IServiceCollection AddPrometheusDiagnosticContext(
 		this IServiceCollection serviceCollection,
 		string? prefix = null)
+#pragma warning disable CS0618
 		=> serviceCollection.AddSingleton<IDiagnosticContextFactory, PrometheusDiagnosticContextFactory>(
 			serviceProvider =>
 				new PrometheusDiagnosticContextFactory(
 					serviceProvider.GetRequiredService<DefaultMetricTypesConfiguration>(),
 					serviceProvider.GetRequiredService<IDiagnosticContextLogger>(),
 					metricPrefix: prefix));
+#pragma warning restore CS0618
 
 	/// <summary>
 	/// Adds all the necessary dependencies to collect metrics in Prometheus

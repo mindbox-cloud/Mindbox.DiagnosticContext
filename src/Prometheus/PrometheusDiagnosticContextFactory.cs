@@ -27,6 +27,7 @@ public class PrometheusDiagnosticContextFactory : IDiagnosticContextFactory
 	private readonly DiagnosticMetricCreator _metricCreator;
 	private readonly PrometheusMetricNameBuilder _metricNameBuilder;
 
+	[Obsolete("Use the constructor with metricLifetime parameter to enable automatic eviction of inactive series.")]
 	public PrometheusDiagnosticContextFactory(
 		DefaultMetricTypesConfiguration defaultMetricTypesConfiguration,
 		IDiagnosticContextLogger diagnosticContextLogger,
