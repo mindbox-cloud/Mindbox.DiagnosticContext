@@ -47,6 +47,7 @@ public class DiagnosticContextMetricsHierarchicalValueTests
 			("A", 50), ("a/B", 15), ("A/b/c", 3), ("a/B/c/D", 2), ("b", 10), ("B/a", 4));
 	}
 
+	// The original algorithm looks for '/' beyond the end of such paths and throws.
 	[TestMethod]
 	public void ToNormalizedValue_PathsEqualIgnoringCase()
 	{
@@ -72,6 +73,27 @@ public class DiagnosticContextMetricsHierarchicalValueTests
 	{
 		AssertSameAsReference(10,
 			("A", 5), ("A/B", 7), ("A/C", 3), ("D", 20));
+	}
+
+	[TestMethod]
+	public void ToNormalizedValue_SubStepsSumOverflow()
+	{
+		AssertSameAsReference(100,
+			("A", 10), ("A/a", long.MaxValue), ("A/b", 1));
+	}
+
+	[TestMethod]
+	public void ToNormalizedValue_NegativeValuesOverflowOnlyInSortedOrder()
+	{
+		AssertSameAsReference(100,
+			("A", 10), ("A/a", long.MaxValue), ("A/c", -long.MaxValue), ("A/b", 1));
+	}
+
+	[TestMethod]
+	public void ToNormalizedValue_NegativeValuesOverflowOnlyInInsertionOrder()
+	{
+		AssertSameAsReference(100,
+			("A", 10), ("A/a", long.MaxValue), ("A/c", 1), ("A/b", -long.MaxValue));
 	}
 
 	[TestMethod]
@@ -116,30 +138,32 @@ public class DiagnosticContextMetricsHierarchicalValueTests
 	private static void AssertSameAsReference(long total, params (string Path, long Value)[] steps)
 	{
 		var hierarchicalValue = DiagnosticContextMetricsHierarchicalValue.FromMetricsType(
-			WallClockTimeMetricsType.Create(new TestDateTimeAccessor(), "test"),
+			new UnconvertedMetricsType(),
 			new NullDiagnosticContextLogger());
 		foreach (var (path, value) in steps)
-			hierarchicalValue.IncrementMetricsValue(path, TimeSpan.FromMilliseconds(value).Ticks);
-		hierarchicalValue.SetTotal(TimeSpan.FromMilliseconds(total).Ticks);
+			hierarchicalValue.IncrementMetricsValue(path, value);
+		hierarchicalValue.SetTotal(total);
 
-		Dictionary<string, long> expected;
+		var expected = Evaluate(() => EvaluateReferenceNormalizedValues(steps.ToDictionary(s => s.Path, s => s.Value), total));
+		var actual = Evaluate(() => hierarchicalValue.ToNormalizedValue().NormalizedValues);
+
+		var message = $"Steps: {string.Join(", ", steps.Select(s => $"{s.Path}={s.Value}"))}";
+		Assert.AreEqual(expected.Exception?.GetType(), actual.Exception?.GetType(), message);
+		if (expected.Exception == null)
+			CollectionAssert.AreEqual(expected.Values!.ToList(), actual.Values!.ToList(), message);
+	}
+
+	private static (IEnumerable<KeyValuePair<string, long>>? Values, Exception? Exception) Evaluate(
+		Func<IEnumerable<KeyValuePair<string, long>>> evaluate)
+	{
 		try
 		{
-			expected = EvaluateReferenceNormalizedValues(steps.ToDictionary(s => s.Path, s => s.Value), total);
+			return (evaluate(), null);
 		}
-		catch (ArgumentOutOfRangeException)
+		catch (Exception exception)
 		{
-			// Paths equal ignoring case make the original algorithm look for '/' beyond the end of the path.
-			Assert.ThrowsException<ArgumentOutOfRangeException>(hierarchicalValue.ToNormalizedValue);
-			return;
+			return (null, exception);
 		}
-
-		var actual = hierarchicalValue.ToNormalizedValue().NormalizedValues;
-
-		CollectionAssert.AreEqual(
-			expected.ToList(),
-			actual.ToList(),
-			$"Steps: {string.Join(", ", steps.Select(s => $"{s.Path}={s.Value}"))}");
 	}
 
 	// The original quadratic algorithm, kept as the reference for metric values.
@@ -161,5 +185,14 @@ public class DiagnosticContextMetricsHierarchicalValueTests
 		result.TryGetValue("Other", out var other);
 		result["Other"] = other + (total > topLevelSum ? total - topLevelSum : 0);
 		return result;
+	}
+
+	private sealed class UnconvertedMetricsType : MetricsType<WallClockTimeMeasurer>
+	{
+		public UnconvertedMetricsType() : base(new TestDateTimeAccessor(), "test")
+		{
+		}
+
+		protected override WallClockTimeMeasurer CreateMeasurerCore() => throw new NotSupportedException();
 	}
 }

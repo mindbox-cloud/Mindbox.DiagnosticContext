@@ -96,7 +96,7 @@ internal class DiagnosticContextMetricsHierarchicalValue
 	// After sorting with OrdinalIgnoreCase, all paths starting with a path follow it as one range.
 	// A path equal to another one ignoring case may sort before it, but IsFirstLevelChild throws for such a pair
 	// when the earlier one is evaluated, as it does in the per-path evaluation.
-	// The range is proven contiguous only for ASCII, so callers fall back to the per-path evaluation for other paths.
+	// Callers use it only when CanEvaluateSubStepsSumsInOnePass holds.
 	private static Dictionary<string, long> EvaluateSubStepsSums(IDictionary<string, long> dictionary)
 	{
 		var paths = new string[dictionary.Count];
@@ -127,9 +127,11 @@ internal class DiagnosticContextMetricsHierarchicalValue
 		return result;
 	}
 
-	private static bool AreAllPathsAscii(IEnumerable<string> paths)
+	// The range is proven contiguous only for ASCII paths.
+	// The order of summation differs from the per-path evaluation, which matters for overflow only with negative values.
+	private static bool CanEvaluateSubStepsSumsInOnePass(IDictionary<string, long> dictionary)
 	{
-		return paths.All(path => path.All(char.IsAscii));
+		return dictionary.All(e => e.Value >= 0 && e.Key.All(char.IsAscii));
 	}
 
 	private static bool IsFirstLevelChild(string parent, string child)
@@ -152,7 +154,7 @@ internal class DiagnosticContextMetricsHierarchicalValue
 		_isDisposing = true;
 
 		var result = new Dictionary<string, long>();
-		var subStepsSums = AreAllPathsAscii(StepValues.Keys) ? EvaluateSubStepsSums(StepValues) : null;
+		var subStepsSums = CanEvaluateSubStepsSumsInOnePass(StepValues) ? EvaluateSubStepsSums(StepValues) : null;
 
 		foreach (var metric in StepValues)
 		{
