@@ -92,6 +92,46 @@ internal class DiagnosticContextMetricsHierarchicalValue
 			.Sum(e => e.Value);
 	}
 
+	// Same result as EvaluateSubStepsSum(dictionary, path) for every path, without comparing each path with all others.
+	// After sorting with OrdinalIgnoreCase, all paths starting with a path follow it as one range.
+	// A path equal to another one ignoring case may sort before it, but IsFirstLevelChild throws for such a pair
+	// when the earlier one is evaluated, as it does in the per-path evaluation.
+	// The range is proven contiguous only for ASCII, so callers fall back to the per-path evaluation for other paths.
+	private static Dictionary<string, long> EvaluateSubStepsSums(IDictionary<string, long> dictionary)
+	{
+		var paths = new string[dictionary.Count];
+		var values = new long[dictionary.Count];
+		var index = 0;
+		foreach (var step in dictionary)
+		{
+			paths[index] = step.Key;
+			values[index] = step.Value;
+			index++;
+		}
+		Array.Sort(paths, values, StringComparer.OrdinalIgnoreCase);
+
+		var result = new Dictionary<string, long>(paths.Length);
+		for (var i = 0; i < paths.Length; i++)
+		{
+			var path = paths[i];
+			long sum = 0;
+			for (var j = i + 1; j < paths.Length && paths[j].StartsWith(path, StringComparison.OrdinalIgnoreCase); j++)
+			{
+				if (IsFirstLevelChild(path, paths[j]))
+					sum = checked(sum + values[j]);
+			}
+
+			result[path] = sum;
+		}
+
+		return result;
+	}
+
+	private static bool AreAllPathsAscii(IEnumerable<string> paths)
+	{
+		return paths.All(path => path.All(char.IsAscii));
+	}
+
 	private static bool IsFirstLevelChild(string parent, string child)
 	{
 		return child.IndexOf('/', parent.Length + 1) == -1;
@@ -112,10 +152,11 @@ internal class DiagnosticContextMetricsHierarchicalValue
 		_isDisposing = true;
 
 		var result = new Dictionary<string, long>();
+		var subStepsSums = AreAllPathsAscii(StepValues.Keys) ? EvaluateSubStepsSums(StepValues) : null;
 
 		foreach (var metric in StepValues)
 		{
-			var metricSubStepsSum = EvaluateSubStepsSum(StepValues, metric.Key);
+			var metricSubStepsSum = subStepsSums?[metric.Key] ?? EvaluateSubStepsSum(StepValues, metric.Key);
 			result[metric.Key] = metric.Value > metricSubStepsSum ? metric.Value - metricSubStepsSum : 0;
 		}
 		var subStepSum = EvaluateSubStepsSum(StepValues);
