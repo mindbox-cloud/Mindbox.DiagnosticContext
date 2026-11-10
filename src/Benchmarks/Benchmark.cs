@@ -27,6 +27,8 @@ public class DiagnosticContextBenchmarks
 		PrometheusDiagnosticContextFactory.DefaultMetricLifetime
 	);
 
+	private static readonly string[] _manyStepsNames = Enumerable.Range(0, 7).Select(i => $"Step{i}").ToArray();
+
 	[Benchmark]
 	public void WithoutSteps()
 	{
@@ -166,4 +168,24 @@ public class DiagnosticContextBenchmarks
 		}
 	}
 
+	[Benchmark]
+	public void ManySteps()
+	{
+		using var diagnosticContext = _diagnosticContextFactory.CreateDiagnosticContext("test");
+
+		for (var i = 0; i < 5; i++)
+		{
+			using (diagnosticContext.Measure(_manyStepsNames[i]))
+			{
+				foreach (var substepName in _manyStepsNames)
+				{
+					using (diagnosticContext.Measure(substepName))
+					{
+						foreach (var innerStepName in _manyStepsNames)
+							using (diagnosticContext.Measure(innerStepName)) ;
+					}
+				}
+			}
+		}
+	}
 }
