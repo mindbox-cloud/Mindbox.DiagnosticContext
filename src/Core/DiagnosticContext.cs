@@ -81,22 +81,27 @@ public class DiagnosticContext : IDiagnosticContext
 
 	public IMeasurement Measure(string stepName)
 	{
-		var measurement =  _safeExceptionHandler.HandleExceptions(() =>
-		{
-			if (_safeExceptionHandler.IsInInvalidState)
-				return new FakeTimer();
+		if (_safeExceptionHandler.IsInInvalidState)
+			return EmptyMeasurement.Instance;
 
+		// try/catch instead of SafeExceptionHandler with closures: this is the hottest call of the library,
+		// and every closure that captures an argument costs an object per step.
+		try
+		{
 			if (string.IsNullOrEmpty(stepName))
 				throw new ArgumentNullException(stepName);
 
-			return new DisposableContainer(
-					_diagnosticContextCollection.Measure(stepName),
-					_metricsItem.DynamicSteps.StartStep(stepName))
-				as IDisposable;
-		},
-		() => new FakeTimer());
+			var additionalMetrics = _diagnosticContextCollection.Measure(stepName);
+			var stepTimer = _metricsItem.DynamicSteps.StartStep(stepName);
 
-		return new NullMeasurementTagsAdapter(measurement);
+			return new StepMeasurement(additionalMetrics, stepTimer);
+		}
+		catch (Exception exception)
+		{
+			_safeExceptionHandler.ProcessException(exception);
+
+			return EmptyMeasurement.Instance;
+		}
 	}
 
 	public void SetTag(string tag, string value)

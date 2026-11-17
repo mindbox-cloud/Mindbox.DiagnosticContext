@@ -30,6 +30,12 @@ public class DiagnosticContextMetricsNormalizedValueCollection
 		_diagnosticContextMetricsNormalizedValues = normalizedValues.ToDictionary(v => v.MetricTypeSystemName);
 	}
 
+	internal DiagnosticContextMetricsNormalizedValueCollection(
+		Dictionary<string, DiagnosticContextMetricsNormalizedValue> normalizedValues)
+	{
+		_diagnosticContextMetricsNormalizedValues = normalizedValues;
+	}
+
 	public DiagnosticContextMetricsNormalizedValue GetValueByMetricsTypeSystemName(string metricsTypeSystemName)
 	{
 		if (!_diagnosticContextMetricsNormalizedValues.ContainsKey(metricsTypeSystemName))

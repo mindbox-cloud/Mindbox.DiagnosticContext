@@ -17,7 +17,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using Microsoft.Extensions.Logging;
 using Mindbox.DiagnosticContext.MetricItem;
 
@@ -84,12 +83,20 @@ internal class DiagnosticContextMetricsHierarchicalValue
 
 	private static long EvaluateSubStepsSum(IDictionary<string, long> dictionary, string path)
 	{
-		return dictionary
-			.Where(e =>
-				e.Key.StartsWith(path, StringComparison.OrdinalIgnoreCase)
-				&& e.Key != path
-				&& IsFirstLevelChild(path, e.Key))
-			.Sum(e => e.Value);
+		long sum = 0;
+
+		foreach (var entry in dictionary)
+		{
+			if (entry.Key.StartsWith(path, StringComparison.OrdinalIgnoreCase)
+				&& entry.Key != path
+				&& IsFirstLevelChild(path, entry.Key))
+			{
+				// checked: the LINQ Sum this replaced is checked for long, and the tests pin that.
+				checked { sum += entry.Value; }
+			}
+		}
+
+		return sum;
 	}
 
 	// Same result as EvaluateSubStepsSum(dictionary, path) for every path, without comparing each path with all others.
@@ -131,7 +138,19 @@ internal class DiagnosticContextMetricsHierarchicalValue
 	// The order of summation differs from the per-path evaluation, which matters for overflow only with negative values.
 	private static bool CanEvaluateSubStepsSumsInOnePass(IDictionary<string, long> dictionary)
 	{
-		return dictionary.All(e => e.Value >= 0 && e.Key.All(char.IsAscii));
+		foreach (var entry in dictionary)
+		{
+			if (entry.Value < 0)
+				return false;
+
+			foreach (var character in entry.Key)
+			{
+				if (!char.IsAscii(character))
+					return false;
+			}
+		}
+
+		return true;
 	}
 
 	private static bool IsFirstLevelChild(string parent, string child)
@@ -141,9 +160,15 @@ internal class DiagnosticContextMetricsHierarchicalValue
 
 	private static long EvaluateSubStepsSum(IDictionary<string, long> dictionary)
 	{
-		return dictionary
-			.Where(e => !e.Key.Contains('/'))
-			.Sum(e => e.Value);
+		long sum = 0;
+
+		foreach (var entry in dictionary)
+		{
+			if (!entry.Key.Contains('/'))
+				checked { sum += entry.Value; }
+		}
+
+		return sum;
 	}
 
 	public DiagnosticContextMetricsNormalizedValue ToNormalizedValue()

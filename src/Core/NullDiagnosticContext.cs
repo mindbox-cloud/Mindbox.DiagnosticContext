@@ -53,11 +53,20 @@ public class NullDiagnosticContext : IDiagnosticContext
 
 	public IMeasurement Measure(string stepName)
 	{
-		var measurement = _safeExceptionHandler.HandleExceptions(
-			() => _diagnosticContextCollection.Measure(stepName),
-			() => NullDisposable.Instance);
+		try
+		{
+			var measurement = _diagnosticContextCollection.Measure(stepName);
 
-		return new NullMeasurementTagsAdapter(measurement);
+			return measurement == null
+				? EmptyMeasurement.Instance
+				: new NullMeasurementTagsAdapter(measurement);
+		}
+		catch (Exception exception)
+		{
+			_safeExceptionHandler.ProcessException(exception);
+
+			return EmptyMeasurement.Instance;
+		}
 	}
 
 	public void SetTag(string tag, string value)

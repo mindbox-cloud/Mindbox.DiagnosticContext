@@ -117,20 +117,29 @@ internal class SafeExceptionHandler
 		Func<string?>? errorMessageBuilder,
 		Exception innerException)
 	{
+		ProcessException(innerException, errorMessageBuilder);
+
+		return invalidResultBuilderAction();
+	}
+
+	/// <summary>
+	/// The same handling as <see cref="HandleExceptions{TResult}"/>, for call sites that write try/catch themselves
+	/// to avoid allocating a closure per measurement.
+	/// </summary>
+	internal void ProcessException(Exception exception, Func<string?>? errorMessageBuilder = null)
+	{
 		IsInInvalidState = true;
 
 		try
 		{
-			var errorMessage = errorMessageBuilder?.Invoke() ?? innerException.Message;
+			var errorMessage = errorMessageBuilder?.Invoke() ?? exception.Message;
 
 			_diagnosticContextLogger
-				.Log(errorMessage, innerException);
+				.Log(errorMessage, exception);
 		}
 		catch (Exception)
 		{
 			// Весь смысл SafeExceptionHandler - не допустить бросание исключений из action
 		}
-
-		return invalidResultBuilderAction();
 	}
 }

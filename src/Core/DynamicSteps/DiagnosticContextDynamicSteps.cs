@@ -24,7 +24,7 @@ namespace Mindbox.DiagnosticContext.DynamicSteps;
 
 public class DiagnosticContextDynamicSteps
 {
-	private readonly Stack<string> _stepsStack = new();
+	private readonly Stack<(string Name, string Path)> _stepsStack = new();
 	private readonly SafeExceptionHandler _safeExceptionHandler;
 	private readonly DiagnosticContextMetricsHierarchicalValueCollection _metricsValues;
 	private readonly MetricsTypeCollection _metricsTypes;
@@ -41,26 +41,32 @@ public class DiagnosticContextDynamicSteps
 
 	internal IDisposable StartStep(string stepName)
 	{
-		return _safeExceptionHandler.HandleExceptions<IDisposable>(
-			() =>
-			{
-				if (string.IsNullOrWhiteSpace(stepName))
-					throw new ArgumentException($"string.IsNullOrWhiteSpace({nameof(stepName)})");
+		try
+		{
+			if (string.IsNullOrWhiteSpace(stepName))
+				throw new ArgumentException($"string.IsNullOrWhiteSpace({nameof(stepName)})");
 
-				if (stepName.Contains('/'))
-					throw new ArgumentException($"{nameof(stepName)}.Contains('/')")
-					{
-						Data = {{"stepName", stepName}}
-					};
+			if (stepName.Contains('/'))
+				throw new ArgumentException($"{nameof(stepName)}.Contains('/')")
+				{
+					Data = {{"stepName", stepName}}
+				};
 
-				_stepsStack.Push(stepName);
+			// The path is built once per step and reused on disposal: joining the stack again on every dispose
+			// allocated an iterator and a string per step, and the string grows with the nesting depth.
+			var path = _stepsStack.Count == 0 ? stepName : _stepsStack.Peek().Path + "/" + stepName;
+			_stepsStack.Push((stepName, path));
 
-				return new DisposableAdapter<MetricsMeasurerCollection>(
-					_metricsTypes.CreateMeasurers(),
-					mc => mc.Start(),
-					mc => ProcessMeasurements(stepName, mc));
-			},
-			() => new FakeTimer());
+			var measurers = _metricsTypes.CreateMeasurers();
+			measurers.Start();
+
+			return new StepTimer(this, measurers, stepName);
+		}
+		catch (Exception exception)
+		{
+			_safeExceptionHandler.ProcessException(exception);
+			return new FakeTimer();
+		}
 	}
 
 	internal IDisposable StartTotal()
@@ -73,28 +79,36 @@ public class DiagnosticContextDynamicSteps
 			() => new FakeTimer());
 	}
 
-	private void ProcessMeasurements(
-		string stepName,
-		MetricsMeasurerCollection mc)
+	private void ProcessMeasurements(string stepName, MetricsMeasurerCollection mc)
 	{
-		_safeExceptionHandler.HandleExceptions(mc.Stop);
+		try
+		{
+			mc.Stop();
+		}
+		catch (Exception exception)
+		{
+			_safeExceptionHandler.ProcessException(exception);
+		}
 
 		if (IsInInvalidState)
 			return;
 
-		_safeExceptionHandler.HandleExceptions(() =>
+		try
 		{
-			if (_stepsStack.Peek() != stepName)
+			var currentStep = _stepsStack.Peek();
+			if (currentStep.Name != stepName)
 				throw new InvalidOperationException($"Шаг {stepName} закончился раньше чем должен был. " +
-					$"Текущий стек шагов: {string.Join("/", _stepsStack.Reverse())}. " +
+					$"Текущий стек шагов: {string.Join("/", _stepsStack.Reverse().Select(step => step.Name))}. " +
 					"Возможно ошибка связана с отсутствием вызова Dispose у одного из вложенных шагов.");
 
-			var stepPath = string.Join("/", _stepsStack.Reverse());
-
-			_metricsValues.SetStepMetricsValues(stepPath, mc);
+			_metricsValues.SetStepMetricsValues(currentStep.Path, mc);
 
 			_stepsStack.Pop();
-		});
+		}
+		catch (Exception exception)
+		{
+			_safeExceptionHandler.ProcessException(exception);
+		}
 	}
 
 	private void ProcessTotal(MetricsMeasurerCollection mc)
@@ -108,7 +122,7 @@ public class DiagnosticContextDynamicSteps
 		{
 			if (_stepsStack.Any())
 				throw new InvalidOperationException("Профилирование закончилось раньше чем один из шагов. " +
-					$"Текущий стек шагов: {string.Join("/", _stepsStack.Reverse())}. " +
+					$"Текущий стек шагов: {string.Join("/", _stepsStack.Reverse().Select(step => step.Name))}. " +
 					"Возможно ошибка связана с отсутствием вызова Dispose у одного из вложенных шагов.");
 
 			_metricsValues.SetTotal(mc);
@@ -118,5 +132,37 @@ public class DiagnosticContextDynamicSteps
 	public DiagnosticContextMetricsNormalizedValueCollection GetNormalizedMetricsValues()
 	{
 		return _metricsValues.ToNormalizedValueCollection();
+	}
+
+	/// <summary>
+	/// One open step and its measurers.
+	/// </summary>
+	private sealed class StepTimer : IDisposable
+	{
+		private readonly DiagnosticContextDynamicSteps _owner;
+		private readonly MetricsMeasurerCollection _measurers;
+		private readonly string _stepName;
+
+		private bool _disposed;
+
+		public StepTimer(
+			DiagnosticContextDynamicSteps owner,
+			MetricsMeasurerCollection measurers,
+			string stepName)
+		{
+			_owner = owner;
+			_measurers = measurers;
+			_stepName = stepName;
+		}
+
+		public void Dispose()
+		{
+			if (_disposed)
+				return;
+
+			_disposed = true;
+
+			_owner.ProcessMeasurements(_stepName, _measurers);
+		}
 	}
 }

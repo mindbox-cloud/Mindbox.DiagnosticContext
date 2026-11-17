@@ -15,24 +15,35 @@
 #nullable disable
 
 using System;
-using System.Collections.Generic;
 
 namespace Mindbox.DiagnosticContext.MetricsTypes;
 
-internal class MetricsMeasurerCollection
+/// <summary>
+/// The measurers of one step. A struct over an array: the step measurement allocates the array, this adds no object.
+/// </summary>
+internal readonly struct MetricsMeasurerCollection
 {
 	private static readonly SafeExceptionHandler _handler = new();
 
-	public MetricsMeasurerCollection(ICollection<MetricsMeasurer> measurers)
+	public MetricsMeasurerCollection(MetricsMeasurer[] measurers)
 	{
 		Measurers = measurers ?? throw new ArgumentNullException(nameof(measurers));
 	}
+
+	public MetricsMeasurer[] Measurers { get; }
 
 	public void Start()
 	{
 		foreach (var metricsMeasurer in Measurers)
 		{
-			_handler.HandleExceptions(metricsMeasurer.Start);
+			try
+			{
+				metricsMeasurer.Start();
+			}
+			catch (Exception exception)
+			{
+				_handler.ProcessException(exception);
+			}
 		}
 	}
 
@@ -40,9 +51,14 @@ internal class MetricsMeasurerCollection
 	{
 		foreach (var metricsMeasurer in Measurers)
 		{
-			_handler.HandleExceptions(metricsMeasurer.Stop);
+			try
+			{
+				metricsMeasurer.Stop();
+			}
+			catch (Exception exception)
+			{
+				_handler.ProcessException(exception);
+			}
 		}
 	}
-
-	public ICollection<MetricsMeasurer> Measurers { get; }
 }
