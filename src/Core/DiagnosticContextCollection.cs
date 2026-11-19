@@ -12,11 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#nullable disable
-
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Mindbox.DiagnosticContext;
 
@@ -34,12 +31,18 @@ internal class DiagnosticContextCollection : IDisposable
 		_linkedContexts.Remove(context);
 	}
 
-	public IDisposable Measure(string stepName)
+	public IDisposable? Measure(string stepName)
 	{
-		return new DisposableContainer(
-			_linkedContexts
-				.Select(context => context.Measure(stepName))
-				.ToArray());
+		// No linked contexts is the normal case: a measurement with nothing to record and nothing to dispose.
+		if (_linkedContexts.Count == 0)
+			return null;
+
+		var measurements = new IDisposable[_linkedContexts.Count];
+
+		for (var i = 0; i < measurements.Length; i++)
+			measurements[i] = _linkedContexts[i].Measure(stepName);
+
+		return new DisposableContainer(measurements);
 	}
 
 	public void Increment(string counterPath)

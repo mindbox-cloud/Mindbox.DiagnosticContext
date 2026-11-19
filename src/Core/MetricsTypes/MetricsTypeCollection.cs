@@ -13,7 +13,6 @@
 // limitations under the License.
 
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Mindbox.DiagnosticContext.MetricsTypes;
 
@@ -28,7 +27,15 @@ public class MetricsTypeCollection
 
 	internal MetricsMeasurerCollection CreateMeasurers()
 	{
-		var measurers = MetricsTypes.Select(mt => mt.CreateMeasurer()).ToList();
+		var metricsTypes = MetricsTypes;
+		var measurers = new MetricsMeasurer[metricsTypes.Count];
+
+		var index = 0;
+		foreach (var metricsType in metricsTypes)
+		{
+			measurers[index] = metricsType.CreateMeasurer();
+			index++;
+		}
 
 		return new MetricsMeasurerCollection(measurers);
 	}

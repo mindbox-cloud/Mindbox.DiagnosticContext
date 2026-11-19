@@ -74,7 +74,16 @@ internal class DiagnosticContextMetricsHierarchicalValueCollection
 
 	public DiagnosticContextMetricsNormalizedValueCollection ToNormalizedValueCollection()
 	{
-		return new DiagnosticContextMetricsNormalizedValueCollection(
-			_metricTypeSystemNameToValuesMapping.Values.Select(metricsValue => metricsValue.ToNormalizedValue()));
+		var normalizedValues =
+			new Dictionary<string, DiagnosticContextMetricsNormalizedValue>(_metricTypeSystemNameToValuesMapping.Count);
+
+		foreach (var metricsValue in _metricTypeSystemNameToValuesMapping.Values)
+		{
+			var normalizedValue = metricsValue.ToNormalizedValue();
+
+			normalizedValues.Add(normalizedValue.MetricTypeSystemName, normalizedValue);
+		}
+
+		return new DiagnosticContextMetricsNormalizedValueCollection(normalizedValues);
 	}
 }
