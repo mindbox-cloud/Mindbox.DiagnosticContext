@@ -46,8 +46,6 @@ internal sealed class StepMeasurement : IMeasurement
 		if (_disposed)
 			return;
 
-		// Linked contexts first, then the step of this context: the linked measurements do not include the time
-		// this context spends recording its step.
 		_additionalMetrics?.Dispose();
 		_stepTimer?.Dispose();
 
