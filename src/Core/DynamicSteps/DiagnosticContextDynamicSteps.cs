@@ -52,8 +52,8 @@ public class DiagnosticContextDynamicSteps
 					Data = {{"stepName", stepName}}
 				};
 
-			// The path is built once per step and reused on disposal: joining the stack again on every dispose
-			// allocated an iterator and a string per step, and the string grows with the nesting depth.
+			// The path is built once per step and reused on disposal: joining the stack on every dispose would
+			// allocate an iterator and a string per step, and the string grows with the nesting depth.
 			var path = _stepsStack.Count == 0 ? stepName : _stepsStack.Peek().Path + "/" + stepName;
 			_stepsStack.Push((stepName, path));
 

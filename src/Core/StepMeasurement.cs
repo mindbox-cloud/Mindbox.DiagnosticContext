@@ -20,7 +20,8 @@ namespace Mindbox.DiagnosticContext;
 
 /// <summary>
 /// One <see cref="DiagnosticContext.Measure"/> call: the step timer of this context plus the measurements of
-/// the contexts linked into it. Replaces a container, an array of items and a tags adapter on the hot path.
+/// the contexts linked into it. It is the <see cref="IMeasurement"/> returned to the caller itself, so a step
+/// needs no separate container or tags adapter on the hot path.
 /// </summary>
 internal sealed class StepMeasurement : IMeasurement
 {
@@ -45,11 +46,13 @@ internal sealed class StepMeasurement : IMeasurement
 		if (_disposed)
 			return;
 
-		// Same order as the container this replaced: linked contexts first, then the step of this context.
+		// Linked contexts first, then the step of this context: the linked measurements do not include the time
+		// this context spends recording its step.
 		_additionalMetrics?.Dispose();
 		_stepTimer?.Dispose();
 
-		// Only now: a throwing linked measurement leaves this one retryable, as the container was.
+		// Set only after both disposals: if a linked measurement throws, a second Dispose retries it and still
+		// stops the step timer.
 		_disposed = true;
 	}
 }

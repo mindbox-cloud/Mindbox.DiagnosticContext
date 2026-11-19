@@ -91,7 +91,7 @@ internal class DiagnosticContextMetricsHierarchicalValue
 				&& entry.Key != path
 				&& IsFirstLevelChild(path, entry.Key))
 			{
-				// checked: the LINQ Sum this replaced is checked for long, and the tests pin that.
+				// checked: an overflow must throw instead of wrapping into a wrong sum.
 				checked { sum += entry.Value; }
 			}
 		}

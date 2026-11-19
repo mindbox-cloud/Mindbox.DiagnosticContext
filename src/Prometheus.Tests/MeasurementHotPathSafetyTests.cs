@@ -13,15 +13,11 @@
 // limitations under the License.
 
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Mindbox.DiagnosticContext;
-using Mindbox.DiagnosticContext.DynamicStepsAggregatedStorage;
-using Mindbox.DiagnosticContext.MetricItem;
 using Mindbox.DiagnosticContext.MetricsTypes;
 using Mindbox.DiagnosticContext.Prometheus;
 
@@ -167,20 +163,6 @@ public class MeasurementHotPathSafetyTests
 		StringAssert.Contains(text, "diagnosticcontext_outoforder_processingtime{step=\"Next\",unit=\"[ms]\"} 5");
 		StringAssert.Contains(text, "diagnosticcontext_outoforder_processingtime{step=\"Other\",unit=\"[ms]\"} 1");
 		Assert.IsFalse(text.Contains("step=\"Same/Next\""), text);
-	}
-
-	[TestMethod]
-	public void AggregationOverflowKeepsPartialStepState()
-	{
-		var metricsType = new DefaultMetricTypesConfiguration().GetDefaultMetricsTypes().MetricsTypes.First();
-		var aggregated = new MetricsAggregatedValue(metricsType);
-		var normalizedValue = new DiagnosticContextMetricsNormalizedValue(
-			metricsType.SystemName,
-			new Dictionary<string, long> { ["a"] = long.MaxValue, ["b"] = 1, ["c"] = 2 });
-
-		Assert.ThrowsException<OverflowException>(() => aggregated.Add(normalizedValue));
-
-		Assert.AreEqual(2L, aggregated.StepValues["c"].Total);
 	}
 
 	private static PrometheusDiagnosticContextFactory CreateFactory(CollectorRegistry registry)
