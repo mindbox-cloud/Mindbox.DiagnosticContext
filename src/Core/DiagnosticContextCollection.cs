@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#nullable disable
-
 using System;
 using System.Collections.Generic;
 
@@ -33,7 +31,7 @@ internal class DiagnosticContextCollection : IDisposable
 		_linkedContexts.Remove(context);
 	}
 
-	public IDisposable Measure(string stepName)
+	public IDisposable? Measure(string stepName)
 	{
 		// No linked contexts is the normal case: a measurement with nothing to record and nothing to dispose.
 		if (_linkedContexts.Count == 0)

@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#nullable disable
-
 using System;
 
 namespace Mindbox.DiagnosticContext;
@@ -25,12 +23,12 @@ namespace Mindbox.DiagnosticContext;
 /// </summary>
 internal sealed class StepMeasurement : IMeasurement
 {
-	private readonly IDisposable _additionalMetrics;
+	private readonly IDisposable? _additionalMetrics;
 	private readonly IDisposable _stepTimer;
 
 	private bool _disposed;
 
-	public StepMeasurement(IDisposable additionalMetrics, IDisposable stepTimer)
+	public StepMeasurement(IDisposable? additionalMetrics, IDisposable stepTimer)
 	{
 		_additionalMetrics = additionalMetrics;
 		_stepTimer = stepTimer;
@@ -47,7 +45,7 @@ internal sealed class StepMeasurement : IMeasurement
 			return;
 
 		_additionalMetrics?.Dispose();
-		_stepTimer?.Dispose();
+		_stepTimer.Dispose();
 
 		// Set only after both disposals: if a linked measurement throws, a second Dispose retries it and still
 		// stops the step timer.
