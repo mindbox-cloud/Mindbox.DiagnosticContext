@@ -16,7 +16,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Mindbox.DiagnosticContext.MetricItem;
 using Mindbox.DiagnosticContext.MetricsTypes;
 
@@ -24,7 +23,10 @@ namespace Mindbox.DiagnosticContext.DynamicSteps;
 
 public class DiagnosticContextDynamicSteps
 {
-	private readonly Stack<(string Name, string Path)> _stepsStack = new();
+	// Only the names of the open steps are kept, with the root first: the path of a step is built when the step is
+	// disposed. Keeping a path per open step would retain memory quadratic in the number of steps whenever steps
+	// stay open, for example when they are never disposed.
+	private readonly List<string> _openSteps = new();
 	private readonly SafeExceptionHandler _safeExceptionHandler;
 	private readonly DiagnosticContextMetricsHierarchicalValueCollection _metricsValues;
 	private readonly MetricsTypeCollection _metricsTypes;
@@ -41,6 +43,11 @@ public class DiagnosticContextDynamicSteps
 
 	internal IDisposable StartStep(string stepName)
 	{
+		// An invalid context publishes nothing and never pops its open steps, so a new step would only add to the
+		// memory retained until the context is disposed.
+		if (IsInInvalidState)
+			return new FakeTimer();
+
 		try
 		{
 			if (string.IsNullOrWhiteSpace(stepName))
@@ -52,10 +59,7 @@ public class DiagnosticContextDynamicSteps
 					Data = {{"stepName", stepName}}
 				};
 
-			// The path is built once per step and reused on disposal: joining the stack on every dispose would
-			// allocate an iterator and a string per step, and the string grows with the nesting depth.
-			var path = _stepsStack.Count == 0 ? stepName : _stepsStack.Peek().Path + "/" + stepName;
-			_stepsStack.Push((stepName, path));
+			_openSteps.Add(stepName);
 
 			var measurers = _metricsTypes.CreateMeasurers();
 			measurers.Start();
@@ -95,15 +99,14 @@ public class DiagnosticContextDynamicSteps
 
 		try
 		{
-			var currentStep = _stepsStack.Peek();
-			if (currentStep.Name != stepName)
+			if (_openSteps[^1] != stepName)
 				throw new InvalidOperationException($"Шаг {stepName} закончился раньше чем должен был. " +
-					$"Текущий стек шагов: {string.Join("/", _stepsStack.Reverse().Select(step => step.Name))}. " +
+					$"Текущий стек шагов: {string.Join("/", _openSteps)}. " +
 					"Возможно ошибка связана с отсутствием вызова Dispose у одного из вложенных шагов.");
 
-			_metricsValues.SetStepMetricsValues(currentStep.Path, mc);
+			_metricsValues.SetStepMetricsValues(BuildCurrentStepPath(), mc);
 
-			_stepsStack.Pop();
+			_openSteps.RemoveAt(_openSteps.Count - 1);
 		}
 		catch (Exception exception)
 		{
@@ -120,12 +123,36 @@ public class DiagnosticContextDynamicSteps
 
 		_safeExceptionHandler.HandleExceptions(() =>
 		{
-			if (_stepsStack.Any())
+			if (_openSteps.Count > 0)
 				throw new InvalidOperationException("Профилирование закончилось раньше чем один из шагов. " +
-					$"Текущий стек шагов: {string.Join("/", _stepsStack.Reverse().Select(step => step.Name))}. " +
+					$"Текущий стек шагов: {string.Join("/", _openSteps)}. " +
 					"Возможно ошибка связана с отсутствием вызова Dispose у одного из вложенных шагов.");
 
 			_metricsValues.SetTotal(mc);
+		});
+	}
+
+	// Runs on every step disposal, so it allocates only the resulting string.
+	private string BuildCurrentStepPath()
+	{
+		if (_openSteps.Count == 1)
+			return _openSteps[0];
+
+		var length = _openSteps.Count - 1;
+		for (var i = 0; i < _openSteps.Count; i++)
+			length += _openSteps[i].Length;
+
+		return string.Create(length, _openSteps, static (path, steps) =>
+		{
+			var position = 0;
+			for (var i = 0; i < steps.Count; i++)
+			{
+				if (i > 0)
+					path[position++] = '/';
+
+				steps[i].AsSpan().CopyTo(path[position..]);
+				position += steps[i].Length;
+			}
 		});
 	}
 
