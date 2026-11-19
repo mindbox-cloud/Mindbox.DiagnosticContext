@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using Mindbox.DiagnosticContext.MetricItem;
@@ -24,6 +25,10 @@ internal class DiagnosticContextInternalMetricsAdapter
 
 	private readonly PrometheusMetricNameBuilder _metricNameBuilder;
 
+	private readonly ConcurrentDictionary<
+		(string MetricPrefix, string MetricNameSuffix, TagKeys TagKeys),
+		ICounterAdapter> _counters = new();
+
 	public DiagnosticContextInternalMetricsAdapter(
 		DiagnosticMetricCreator metricCreator,
 		PrometheusMetricNameBuilder metricNameBuilder)
@@ -35,38 +40,50 @@ internal class DiagnosticContextInternalMetricsAdapter
 	public void Update(
 		DiagnosticContextInternalMetricsItem internalMetricsItem,
 		DiagnosticContextMetricsItem collectedMetrics,
-		IDictionary<string, string> tags)
+		Dictionary<string, string> tags,
+		TagKeys tagKeys)
 	{
-		var labelNames = tags.Keys.ToArray();
-		var labelValues = tags.Values.ToArray();
+		var metricPrefix = collectedMetrics.MetricPrefix;
+		var labelValues = LabelValues.From(tags);
 
-		var metricDescriptionBase = $"Diagnostic context {collectedMetrics.MetricPrefix} ";
-
-		var countCounter = _metricCreator.CreateCounter(
-			_metricNameBuilder.BuildFullMetricName(
-			$"{collectedMetrics.MetricPrefix}_internalmetrics_count"),
-			$"{metricDescriptionBase} - internal metrics count",
-			labelNames);
+		var countCounter = GetOrCreateCounter(metricPrefix, "internalmetrics_count", "internal metrics count", tagKeys);
 
 		countCounter.Inc(labelValues, 1);
 
-		var internalProcessingCounter = _metricCreator.CreateCounter(
-			_metricNameBuilder.BuildFullMetricName(
-			$"{collectedMetrics.MetricPrefix}_{internalMetricsItem.ProcessingTimeMeasurer.MetricTypeSystemName}"),
-			$"{metricDescriptionBase} - internal processing time",
-			labelNames);
+		var internalProcessingCounter = GetOrCreateCounter(
+			metricPrefix,
+			internalMetricsItem.ProcessingTimeMeasurer.MetricTypeSystemName,
+			"internal processing time",
+			tagKeys);
 
 		internalProcessingCounter.Inc(labelValues, internalMetricsItem.ProcessingTimeMeasurer.Elapsed);
 
 		foreach (var measurer in internalMetricsItem.LayersCountMeasurers)
 		{
-			var layersCounter = _metricCreator.CreateCounter(
-				_metricNameBuilder.BuildFullMetricName(
-					$"{collectedMetrics.MetricPrefix}_{measurer.MetricTypeSystemName}"),
-				$"{metricDescriptionBase} - layers count",
-				labelNames);
+			var layersCounter = GetOrCreateCounter(metricPrefix, measurer.MetricTypeSystemName, "layers count", tagKeys);
 
 			layersCounter.Inc(labelValues, measurer.LayersCount);
 		}
+	}
+
+	private ICounterAdapter GetOrCreateCounter(
+		string metricPrefix,
+		string metricNameSuffix,
+		string description,
+		TagKeys tagKeys)
+	{
+		var counterKey = (metricPrefix, metricNameSuffix, tagKeys);
+
+		if (!_counters.TryGetValue(counterKey, out var counter))
+		{
+			counter = _metricCreator.CreateCounter(
+				_metricNameBuilder.BuildFullMetricName($"{metricPrefix}_{metricNameSuffix}"),
+				$"Diagnostic context {metricPrefix}  - {description}",
+				tagKeys.Names.ToArray());
+
+			_counters[counterKey] = counter;
+		}
+
+		return counter;
 	}
 }

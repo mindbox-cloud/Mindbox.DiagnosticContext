@@ -22,23 +22,15 @@ internal class PrometheusDiagnosticContextMetricsCollection : IDiagnosticContext
 {
 	private readonly Dictionary<string, DiagnosticContextMetricsStorage> _storagesByMetricPrefix = new();
 
-	private readonly IDictionary<string, string> _tags = new Dictionary<string, string>();
+	private readonly Dictionary<string, string> _tags = new();
 
-	private readonly DynamicStepsPrometheusAdapter _dynamicStepsAdapter;
-	private readonly CountersPrometheusAdapter _countersAdapter;
-	private readonly ReportedValuesPrometheusAdapter _reportedValuesAdapter;
-	private readonly DiagnosticContextInternalMetricsAdapter _internalMetricsAdapter;
+	private readonly PrometheusMetricsPublisher _metricsPublisher;
 
 	private readonly object _syncRoot = new();
 
-	public PrometheusDiagnosticContextMetricsCollection(
-		DiagnosticMetricCreator metricCreator,
-		PrometheusMetricNameBuilder metricNameBuilder)
+	public PrometheusDiagnosticContextMetricsCollection(PrometheusMetricsPublisher metricsPublisher)
 	{
-		_dynamicStepsAdapter = new DynamicStepsPrometheusAdapter(metricCreator, metricNameBuilder);
-		_countersAdapter = new CountersPrometheusAdapter(metricCreator, metricNameBuilder);
-		_reportedValuesAdapter = new ReportedValuesPrometheusAdapter(metricCreator, metricNameBuilder);
-		_internalMetricsAdapter = new DiagnosticContextInternalMetricsAdapter(metricCreator, metricNameBuilder);
+		_metricsPublisher = metricsPublisher;
 	}
 
 	public void CollectItemData(DiagnosticContextMetricsItem metricsItem)
@@ -50,9 +42,7 @@ internal class PrometheusDiagnosticContextMetricsCollection : IDiagnosticContext
 				var storage = GetOrCreateMetricStorageForMetric(metricsItem);
 				storage.CollectItemData(metricsItem);
 
-				_dynamicStepsAdapter.Update(metricsItem, storage, _tags);
-				_countersAdapter.Update(metricsItem, storage, _tags);
-				_reportedValuesAdapter.Update(metricsItem, storage, _tags);
+				_metricsPublisher.Publish(metricsItem, storage, _tags);
 			}
 		}
 		catch (Exception ex)
@@ -65,7 +55,7 @@ internal class PrometheusDiagnosticContextMetricsCollection : IDiagnosticContext
 		DiagnosticContextInternalMetricsItem internalMetricsItem,
 		DiagnosticContextMetricsItem collectedMetrics)
 	{
-		_internalMetricsAdapter.Update(internalMetricsItem, collectedMetrics, _tags);
+		_metricsPublisher.PublishInternalMetrics(internalMetricsItem, collectedMetrics, _tags);
 	}
 
 	public void SetTag(string tag, string value)

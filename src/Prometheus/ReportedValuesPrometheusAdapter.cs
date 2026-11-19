@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using Mindbox.DiagnosticContext.MetricItem;
@@ -31,7 +32,7 @@ internal class ReportedValuesPrometheusAdapter
 		public ICounterAdapter Total { get; set; }
 	}
 
-	private readonly Dictionary<string, ReportedValuesCounters> _counters =
+	private readonly ConcurrentDictionary<(string MetricPrefix, TagKeys TagKeys), ReportedValuesCounters> _counters =
 		new();
 
 	public ReportedValuesPrometheusAdapter(DiagnosticMetricCreator metricCreator, PrometheusMetricNameBuilder metricNameBuilder)
@@ -43,33 +44,31 @@ internal class ReportedValuesPrometheusAdapter
 	public void Update(
 		DiagnosticContextMetricsItem metricsItem,
 		DiagnosticContextMetricsStorage storage,
-		IDictionary<string, string> tags)
+		Dictionary<string, string> tags,
+		TagKeys tagKeys)
 	{
 		foreach (var reportedValueCounters in storage.ReportedValuesPerMetricsPrefix)
 		{
 			if (reportedValueCounters.Value.ReportedValues.Any())
 			{
-				var prometheusCounter = GetOrCreateReportedValuesCounters(
-					metricsItem, reportedValueCounters.Key, tags);
+				var prometheusCounter = GetOrCreateReportedValuesCounters(metricsItem, tagKeys);
 
 				foreach (var diagnosticContextCounter in reportedValueCounters.Value.ReportedValues)
 				{
-					var labelValues = new List<string> { diagnosticContextCounter.Key };
-					labelValues.AddRange(tags.Values);
+					var labelValues = LabelValues.Prepend(diagnosticContextCounter.Key, tags);
 
-					var labelValuesArray = labelValues.ToArray();
-
-					prometheusCounter.Total.Inc(labelValuesArray, diagnosticContextCounter.Value.Total);
-					prometheusCounter.Count.Inc(labelValuesArray, diagnosticContextCounter.Value.Count);
+					prometheusCounter.Total.Inc(labelValues, diagnosticContextCounter.Value.Total);
+					prometheusCounter.Count.Inc(labelValues, diagnosticContextCounter.Value.Count);
 				}
 			}
 		}
 	}
 
-	private ReportedValuesCounters GetOrCreateReportedValuesCounters(DiagnosticContextMetricsItem metricsItem,
-		string counterName, IDictionary<string, string> tags)
+	private ReportedValuesCounters GetOrCreateReportedValuesCounters(DiagnosticContextMetricsItem metricsItem, TagKeys tagKeys)
 	{
-		if (_counters.TryGetValue(counterName, out var prometheusCounter)) return prometheusCounter;
+		var countersKey = (metricsItem.MetricPrefix, tagKeys);
+
+		if (_counters.TryGetValue(countersKey, out var prometheusCounter)) return prometheusCounter;
 
 		var totalMetricName = _metricNameBuilder.BuildFullMetricName($"{metricsItem.MetricPrefix}_reportedvalues_total");
 		var totalMetricDescription = $"Diagnostic context reported values total for {metricsItem.MetricPrefix}";
@@ -80,10 +79,10 @@ internal class ReportedValuesPrometheusAdapter
 			.BuildFullMetricName($"Diagnostic context reported values count for {metricsItem.MetricPrefix}");
 
 		var labelNames = new List<string> { "name" };
-		labelNames.AddRange(tags.Keys);
+		labelNames.AddRange(tagKeys.Names);
 		var labelNamesArray = labelNames.ToArray();
 
-		_counters[counterName] = new ReportedValuesCounters
+		prometheusCounter = new ReportedValuesCounters
 		{
 			Total = _metricCreator.CreateCounter(
 				totalMetricName,
@@ -95,6 +94,8 @@ internal class ReportedValuesPrometheusAdapter
 				labelNamesArray)
 		};
 
-		return _counters[counterName];
+		_counters[countersKey] = prometheusCounter;
+
+		return prometheusCounter;
 	}
 }

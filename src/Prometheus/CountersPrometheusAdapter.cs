@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Mindbox.DiagnosticContext.MetricItem;
 
@@ -23,7 +24,8 @@ internal class CountersPrometheusAdapter
 
 	private readonly PrometheusMetricNameBuilder _metricNameBuilder;
 
-	private readonly Dictionary<string, ICounterAdapter> _prometheusCounters = new();
+	private readonly ConcurrentDictionary<(string MetricPrefix, TagKeys TagKeys), ICounterAdapter> _prometheusCounters =
+		new();
 
 	public CountersPrometheusAdapter(DiagnosticMetricCreator metricCreator, PrometheusMetricNameBuilder metricNameBuilder)
 	{
@@ -34,41 +36,40 @@ internal class CountersPrometheusAdapter
 	public void Update(
 		DiagnosticContextMetricsItem metricsItem,
 		DiagnosticContextMetricsStorage storage,
-		IDictionary<string, string> tags)
+		Dictionary<string, string> tags,
+		TagKeys tagKeys)
 	{
 		foreach (var prefixCounters in storage.CountersPerMetricsPrefix)
 		{
-			var prometheusCounter = GetOrCreatePrometheusCounter(metricsItem, prefixCounters.Key, tags);
+			var prometheusCounter = GetOrCreatePrometheusCounter(metricsItem, tagKeys);
 
 			foreach (var diagnosticContextCounter in prefixCounters.Value.Counters)
 			{
-				var labelValues = new List<string> { diagnosticContextCounter.Key };
-				labelValues.AddRange(tags.Values);
+				var labelValues = LabelValues.Prepend(diagnosticContextCounter.Key, tags);
 
-				prometheusCounter.Inc(labelValues.ToArray(), diagnosticContextCounter.Value);
+				prometheusCounter.Inc(labelValues, diagnosticContextCounter.Value);
 			}
 		}
 	}
 
-	private ICounterAdapter GetOrCreatePrometheusCounter(
-		DiagnosticContextMetricsItem metricsItem,
-		string counterName,
-		IDictionary<string, string> tags)
+	private ICounterAdapter GetOrCreatePrometheusCounter(DiagnosticContextMetricsItem metricsItem, TagKeys tagKeys)
 	{
-		if (!_prometheusCounters.TryGetValue(counterName, out var prometheusCounter))
+		var counterKey = (metricsItem.MetricPrefix, tagKeys);
+
+		if (!_prometheusCounters.TryGetValue(counterKey, out var prometheusCounter))
 		{
 			string metricName = _metricNameBuilder.BuildFullMetricName($"{metricsItem.MetricPrefix}_counters");
 			string metricDescription = $"Diagnostic context counters for {metricsItem.MetricPrefix}";
 
 			var labelNames = new List<string> { "name" };
-			labelNames.AddRange(tags.Keys);
+			labelNames.AddRange(tagKeys.Names);
 
 			prometheusCounter = _metricCreator.CreateCounter(
 				metricName,
 				metricDescription,
 				labelNames.ToArray());
 
-			_prometheusCounters[counterName] = prometheusCounter;
+			_prometheusCounters[counterKey] = prometheusCounter;
 		}
 
 		return prometheusCounter;

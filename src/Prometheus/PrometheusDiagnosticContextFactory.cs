@@ -24,8 +24,7 @@ public class PrometheusDiagnosticContextFactory : IDiagnosticContextFactory
 
 	private readonly DefaultMetricTypesConfiguration _defaultMetricTypesConfiguration;
 	private readonly IDiagnosticContextLogger _diagnosticContextLogger;
-	private readonly DiagnosticMetricCreator _metricCreator;
-	private readonly PrometheusMetricNameBuilder _metricNameBuilder;
+	private readonly PrometheusMetricsPublisher _metricsPublisher;
 
 	[Obsolete("Use the constructor with metricLifetime parameter to enable automatic eviction of inactive series.")]
 	public PrometheusDiagnosticContextFactory(
@@ -37,9 +36,9 @@ public class PrometheusDiagnosticContextFactory : IDiagnosticContextFactory
 	{
 		_defaultMetricTypesConfiguration = defaultMetricTypesConfiguration;
 		_diagnosticContextLogger = diagnosticContextLogger;
-		_metricCreator = new DiagnosticMetricCreator(
-			metricFactory ?? Metrics.WithCustomRegistry(Metrics.DefaultRegistry));
-		_metricNameBuilder = new PrometheusMetricNameBuilder(prefix: metricPrefix, postfix: metricPostfix);
+		_metricsPublisher = new PrometheusMetricsPublisher(
+			new DiagnosticMetricCreator(metricFactory ?? Metrics.WithCustomRegistry(Metrics.DefaultRegistry)),
+			new PrometheusMetricNameBuilder(prefix: metricPrefix, postfix: metricPostfix));
 	}
 
 	public PrometheusDiagnosticContextFactory(
@@ -53,9 +52,9 @@ public class PrometheusDiagnosticContextFactory : IDiagnosticContextFactory
 		_defaultMetricTypesConfiguration = defaultMetricTypesConfiguration;
 		_diagnosticContextLogger = diagnosticContextLogger;
 		var baseFactory = metricFactory ?? Metrics.WithCustomRegistry(Metrics.DefaultRegistry);
-		_metricCreator = new DiagnosticMetricCreator(
-			baseFactory.WithManagedLifetime(metricLifetime));
-		_metricNameBuilder = new PrometheusMetricNameBuilder(prefix: metricPrefix, postfix: metricPostfix);
+		_metricsPublisher = new PrometheusMetricsPublisher(
+			new DiagnosticMetricCreator(baseFactory.WithManagedLifetime(metricLifetime)),
+			new PrometheusMetricNameBuilder(prefix: metricPrefix, postfix: metricPostfix));
 	}
 
 	public IDiagnosticContext CreateDiagnosticContext(
@@ -63,7 +62,7 @@ public class PrometheusDiagnosticContextFactory : IDiagnosticContextFactory
 		bool isFeatureBoundaryCodePoint = false,
 		MetricsType[]? metricsTypesOverride = null)
 	{
-		var collection = new PrometheusDiagnosticContextMetricsCollection(_metricCreator, _metricNameBuilder);
+		var collection = new PrometheusDiagnosticContextMetricsCollection(_metricsPublisher);
 
 		return DiagnosticContextFactory.BuildCustom(
 			() =>

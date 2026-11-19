@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using Mindbox.DiagnosticContext.DynamicStepsAggregatedStorage;
@@ -25,8 +26,11 @@ internal class DynamicStepsPrometheusAdapter
 
 	private readonly PrometheusMetricNameBuilder _metricNameBuilder;
 
-	private readonly Dictionary<(string, MetricsType), StepPrometheusCounterSet> _dynamicStepsPrometheusCounters =
-		new();
+	// The key holds the name of the metrics type, not the instance: the default configuration creates new instances
+	// for every diagnostic context, so an instance would not be found again.
+	private readonly ConcurrentDictionary<
+		(string MetricPrefix, string MetricsTypeName, TagKeys TagKeys),
+		StepPrometheusCounterSet> _dynamicStepsPrometheusCounters = new();
 
 	public DynamicStepsPrometheusAdapter(DiagnosticMetricCreator metricCreator, PrometheusMetricNameBuilder metricNameBuilder)
 	{
@@ -37,27 +41,28 @@ internal class DynamicStepsPrometheusAdapter
 	public void Update(
 		DiagnosticContextMetricsItem metricsItem,
 		DiagnosticContextMetricsStorage storage,
-		IDictionary<string, string> tags)
+		Dictionary<string, string> tags,
+		TagKeys tagKeys)
 	{
 		foreach (var prefixSteps in storage.DynamicStepsPerMetricPrefix)
 		{
 			foreach (var metricValue in prefixSteps.Value.MetricsAggregatedValues.GetMetricsAggregatedValues())
 			{
-				var prometheusCounterSet = GetOrCreateMetricCounterSet(metricsItem, metricValue, tags);
+				var prometheusCounterSet = GetOrCreateMetricCounterSet(metricsItem, metricValue, tagKeys);
 
-				var totalLabelValues = tags.Values.ToArray();
+				var totalLabelValues = LabelValues.From(tags);
 
 				prometheusCounterSet.CountCounter
 					.Inc(totalLabelValues, metricValue.TotalValue.Count);
 				prometheusCounterSet.TotalCounter
 					.Inc(totalLabelValues, metricValue.TotalValue.Total);
 
-				foreach (var step in metricValue.StepValues.Where(s => s.Value.Total > 0))
+				foreach (var step in metricValue.StepValues)
 				{
-					var stepLabelValues = tags.Values
-						.Append(step.Key)
-						.Append(metricValue.MetricsType.Units)
-						.ToArray();
+					if (step.Value.Total <= 0)
+						continue;
+
+					var stepLabelValues = LabelValues.Append(tags, step.Key, metricValue.MetricsType.Units);
 
 					prometheusCounterSet.StepCounter
 						.Inc(stepLabelValues, step.Value.Total);
@@ -69,9 +74,9 @@ internal class DynamicStepsPrometheusAdapter
 	private StepPrometheusCounterSet GetOrCreateMetricCounterSet(
 		DiagnosticContextMetricsItem metricsItem,
 		MetricsAggregatedValue metricValue,
-		IDictionary<string, string> tags)
+		TagKeys tagKeys)
 	{
-		var counterSetKey = (metricsItem.MetricPrefix, metricValue.MetricsType);
+		var counterSetKey = (metricsItem.MetricPrefix, metricValue.MetricsType.SystemName, tagKeys);
 
 		if (!_dynamicStepsPrometheusCounters.TryGetValue(counterSetKey, out var counterSet))
 		{
@@ -79,8 +84,8 @@ internal class DynamicStepsPrometheusAdapter
 			string metricDescriptionBase =
 				$"Diagnostic context for {metricsItem.MetricPrefix} ({metricValue.MetricsType.SystemName})";
 
-			var totalLabelNames = tags.Keys.ToArray();
-			var stepLabelNames = tags.Keys
+			var totalLabelNames = tagKeys.Names.ToArray();
+			var stepLabelNames = tagKeys.Names
 				.Append("step")
 				.Append("unit")
 				.ToArray();

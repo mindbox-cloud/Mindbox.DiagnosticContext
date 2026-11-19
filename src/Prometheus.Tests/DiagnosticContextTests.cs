@@ -16,6 +16,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Mindbox.DiagnosticContext;
 using Mindbox.DiagnosticContext.MetricsTypes;
@@ -420,6 +421,107 @@ public abstract class DiagnosticContextTestsBase
 		await AssertMetricsReportedAsync("diagnosticcontext_test_processingtime_layerscount{tag=\"tagValue\"} 3");
 	}
 
+	[TestMethod]
+	public async System.Threading.Tasks.Task TwoContexts_WithAndWithoutTagAsync()
+	{
+		PublishAllMetricKinds();
+		PublishAllMetricKinds(("tag", "tagValue"));
+
+		await AssertMetricsReportedAsync(
+			"diagnosticcontext_test_processingtime_count 1",
+			"diagnosticcontext_test_processingtime_count{tag=\"tagValue\"} 1",
+			"diagnosticcontext_test_processingtime{step=\"Span\",unit=\"[ms]\"} 1",
+			"diagnosticcontext_test_processingtime{tag=\"tagValue\",step=\"Span\",unit=\"[ms]\"} 1",
+			"diagnosticcontext_test_counters{name=\"TestCounter\"} 1",
+			"diagnosticcontext_test_counters{name=\"TestCounter\",tag=\"tagValue\"} 1",
+			"diagnosticcontext_test_reportedvalues_total{name=\"TestValue\"} 5",
+			"diagnosticcontext_test_reportedvalues_total{name=\"TestValue\",tag=\"tagValue\"} 5",
+			"diagnosticcontext_test_internalmetrics_count 1",
+			"diagnosticcontext_test_internalmetrics_count{tag=\"tagValue\"} 1");
+	}
+
+	[TestMethod]
+	public async System.Threading.Tasks.Task TwoContexts_WithDifferentTagNamesAsync()
+	{
+		PublishAllMetricKinds(("firstTag", "firstValue"));
+		PublishAllMetricKinds(("secondTag", "secondValue"));
+
+		await AssertMetricsReportedAsync(
+			"diagnosticcontext_test_processingtime_count{firstTag=\"firstValue\"} 1",
+			"diagnosticcontext_test_processingtime_count{secondTag=\"secondValue\"} 1",
+			"diagnosticcontext_test_processingtime{firstTag=\"firstValue\",step=\"Span\",unit=\"[ms]\"} 1",
+			"diagnosticcontext_test_processingtime{secondTag=\"secondValue\",step=\"Span\",unit=\"[ms]\"} 1",
+			"diagnosticcontext_test_counters{name=\"TestCounter\",firstTag=\"firstValue\"} 1",
+			"diagnosticcontext_test_counters{name=\"TestCounter\",secondTag=\"secondValue\"} 1",
+			"diagnosticcontext_test_reportedvalues_total{name=\"TestValue\",firstTag=\"firstValue\"} 5",
+			"diagnosticcontext_test_reportedvalues_total{name=\"TestValue\",secondTag=\"secondValue\"} 5",
+			"diagnosticcontext_test_internalmetrics_count{firstTag=\"firstValue\"} 1",
+			"diagnosticcontext_test_internalmetrics_count{secondTag=\"secondValue\"} 1");
+		await AssertMetricsNotReportedAsync("firstTag=\"secondValue\"", "secondTag=\"firstValue\"");
+	}
+
+	[TestMethod]
+	public async System.Threading.Tasks.Task TwoContexts_WithSameTagsInDifferentOrderAsync()
+	{
+		PublishAllMetricKinds(("firstTag", "firstValue"), ("secondTag", "secondValue"));
+		PublishAllMetricKinds(("secondTag", "secondValue"), ("firstTag", "firstValue"));
+
+		await AssertMetricsReportedAsync(
+			"diagnosticcontext_test_counters{name=\"TestCounter\",firstTag=\"firstValue\",secondTag=\"secondValue\"} 1",
+			"diagnosticcontext_test_counters{name=\"TestCounter\",secondTag=\"secondValue\",firstTag=\"firstValue\"} 1",
+			"diagnosticcontext_test_internalmetrics_count{firstTag=\"firstValue\",secondTag=\"secondValue\"} 1",
+			"diagnosticcontext_test_internalmetrics_count{secondTag=\"secondValue\",firstTag=\"firstValue\"} 1");
+		await AssertMetricsNotReportedAsync("firstTag=\"secondValue\"", "secondTag=\"firstValue\"");
+	}
+
+	[TestMethod]
+	public async System.Threading.Tasks.Task ManyThreads_PublishSameMetricsAtOnceAsync()
+	{
+		const int threadCount = 8;
+		const int metricPathCount = 200;
+
+		using var start = new ManualResetEventSlim();
+
+		// Every thread goes through the same metric paths, so the threads meet at the first publish of each path.
+		var threads = Enumerable
+			.Range(0, threadCount)
+			.Select(_ => new Thread(() =>
+			{
+				start.Wait();
+
+				for (var pathIndex = 0; pathIndex < metricPathCount; pathIndex++)
+				{
+					using var diagnosticContext = CreateDiagnosticContext($"Test{pathIndex}");
+
+					diagnosticContext.SetTag("tag", "tagValue");
+					diagnosticContext.Increment("TestCounter");
+					diagnosticContext.ReportValue("TestValue", 5);
+				}
+			}))
+			.ToArray();
+
+		foreach (var thread in threads)
+			thread.Start();
+
+		start.Set();
+
+		foreach (var thread in threads)
+			thread.Join();
+
+		var expectedMetrics = Enumerable
+			.Range(0, metricPathCount)
+			.SelectMany(pathIndex => new[]
+			{
+				$"diagnosticcontext_test{pathIndex}_counters{{name=\"TestCounter\",tag=\"tagValue\"}} {threadCount}",
+				$"diagnosticcontext_test{pathIndex}_reportedvalues_total{{name=\"TestValue\",tag=\"tagValue\"}} {threadCount * 5}",
+				$"diagnosticcontext_test{pathIndex}_processingtime_count{{tag=\"tagValue\"}} {threadCount}",
+				$"diagnosticcontext_test{pathIndex}_internalmetrics_count{{tag=\"tagValue\"}} {threadCount}"
+			})
+			.ToArray();
+
+		await AssertMetricsReportedAsync(expectedMetrics);
+	}
+
 	protected async System.Threading.Tasks.Task AssertMetricsReportedAsync(params string[] expectedMetrics)
 	{
 		var metrics = await GetMetricsAsTextAsync();
@@ -450,6 +552,22 @@ public abstract class DiagnosticContextTestsBase
 				$"Following metrics where reported:\r\n{string.Join("\r\n", foundMetrics)}\r\n\r\n" +
 				$"Full metrics:\r\n{metrics}");
 		}
+	}
+
+	private void PublishAllMetricKinds(params (string Name, string Value)[] tags)
+	{
+		using var diagnosticContext = CreateDiagnosticContext("Test");
+
+		foreach (var tag in tags)
+			diagnosticContext.SetTag(tag.Name, tag.Value);
+
+		using (diagnosticContext.Measure("Span"))
+		{
+			_currentTimeAccessor.CurrentDateTimeUtc = _currentTimeAccessor.CurrentDateTimeUtc.AddMilliseconds(1);
+		}
+
+		diagnosticContext.Increment("TestCounter");
+		diagnosticContext.ReportValue("TestValue", 5);
 	}
 
 	protected IDiagnosticContext CreateDiagnosticContext(string metricPath)
